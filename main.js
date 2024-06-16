@@ -41,9 +41,13 @@ app.use('/user/profile', userProfileRouter);
 // app.user('/user/block', userBlockRouter);
 app.use('/auth', authRouter);
 
-
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).send('서버에 문제가 발생했습니다.');
+});
 
 // 서버 실행
 app.listen(port, () => {
     console.log(`App running on port ${port}...`);
 });
+

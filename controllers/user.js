@@ -24,8 +24,8 @@ biography : String 사용자 자기소개
 age : Number 사용자 나이
 gpsAllowedAt : Boolean GPS 사용 허용 여부 => Date로 반환 예정
 hastag : Object 사용자 해시태그
-location : Object 사용자 위치
-profileImage : String 사용자 프로필 이미지 => BASE64로 반환 예정
+region : Object 사용자 위치
+profileImages : String 사용자 프로필 이미지 => BASE64로 반환 예정
 }
 */
 
@@ -45,28 +45,35 @@ router.post('/create', function (req, res, next) {
             biography: req.body.biography,
             age: req.body.age,
             gpsAllowedAt: req.body.gpsAllowedAt,
-            hashtag: req.body.hashtag,
-            location: req.body.location,
-            profileImage: req.body.profileImage
+            hashtags: req.body.hashtags,
+            region: req.body.region,
+            profileImages: req.body.profileImages
         }
-        userSerivce.createUser(user);
+        const { error, user_id } = userSerivce.createUser(user);
+        if (error) {
+            return res.status(400).send(error);
+        }
+        user.id = user_id;
         res.send(user);
-    } catch
-    (error) {
-        res.status(400).send(error.message);
+    } catch (error) {
+        next(error);
     }
 });
 
 /* DELETE /user/delete
 */
 
-router.delete('/delete', function (req, res, next) {
-    this.logger.info('DELETE /user/delete');
+router.delete('/delete', async function (req, res, next) {
     try {
-        var user = userSerivce.deleteUser();
-        res.send(user);
+        //TODO : id magic number 제거
+        const error = await userSerivce.deleteUser(8);
+        if (error) {
+            console.log("controller");
+            return res.status(400).send(error);
+        }
+        res.send();
     } catch (error) {
-        res.send('사용자를 삭제할 수 없습니다.');
+        next(error);
     }
 });
 
