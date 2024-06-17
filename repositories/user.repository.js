@@ -205,6 +205,71 @@ const changePassword = async (hashedPassword, id) => {
     }
 }
 
+//TODO: 쿼리 안나오는 문제 해결
+const findUserByUsername = async (filter) => {
+    try {
+        console.log(filter)
+        let query = `
+            SELECT u.*
+            FROM users u
+            `
+
+        let params = [];
+
+        if (filter.minRate || filter.maxRate) {
+            query += `JOIN user_ratings ur ON u.id = ur.user_id`;
+        }
+
+        if (filter.hashtags) {
+            query += `JOIN user_hashtags uh ON u.id = uh.user_id`;
+        }
+
+        if (filter.minRate) {
+            query += ` AND ur.rate_score >= $${params.length + 1}`;
+            params.push(filter.minRate);
+        }
+
+        if (filter.maxRate) {
+            query += ` AND ur.rate_score <= $${params.length + 1}`;
+            params.push(filter.maxRate);
+        }
+
+        if (filter.hashtags) {
+            query += ` AND $${params.length + 1} <@ uh.hashtags`;
+            params.push(filter.hashtags);
+        }
+
+        if (filter.username) {
+            query += `WHERE u.username = $${params.length + 1}`;
+            params.push(filter.username);
+        }
+
+
+        if (filter.minAge) {
+            query += ` AND u.age >= $${params.length + 1}`;
+            params.push(filter.minAge);
+        }
+
+        if (filter.maxAge) {
+            query += ` AND u.age <= $${params.length + 1}`;
+            params.push(filter.maxAge);
+        }
+
+
+        console.log(query);
+        console.log(params);
+
+        const userInfos = await client.query(query, params);
+
+        return userInfos.rows;
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+};
+
+
+
 
 
 module.exports = {
@@ -215,5 +280,7 @@ module.exports = {
 
     deleteUser,
 
-    changePassword
+    changePassword,
+
+    findUserByUsername
 };

@@ -95,34 +95,44 @@ router.post('/change/password', function (req, res, next) {
         userSerivce.changePassword(password, 22);
         res.send();
     } catch (error) {
-        res.send('비밀번호를 변경할 수 없습니다.');
+        next(error);
     }
 });
 
 
 /* GET /user/find
 username : String 사용자 닉네임
-hashtag : String 사용자 해시태그
-age : Object 사용자 나이
-rate : Number 사용자 평점
+hashtags : String 사용자 해시태그
+minAge : Number 사용자 최소 나이
+maxAge : Number 사용자 최대 나이
+minRate : Number 사용자 평점
+maxRate : Number 사용자 평점
 */
 
-//age min max
 router.get('/find', function (req, res, next) {
-    this.logger.info('GET /user/find');
     try {
-        let { username, hashtag, age, rate } = req.query;
+        let { username, hashtags, minAge, maxAge, minRate, maxRate } = req.query;
 
-        let filter = {
+        const filter = {
             username,
-            hashtag,
-            age,
-            rate
+            hashtags: hashtags || undefined,
+            minAge: minAge ? Number(minAge) : undefined,
+            maxAge: maxAge ? Number(maxAge) : undefined,
+            minRate: minRate ? Number(minRate) : undefined,
+            maxRate: maxRate ? Number(maxRate) : undefined
+        };
+        if (minAge && maxAge && minAge > maxAge) {
+            return res.status(400).send('최소 나이가 최대 나이보다 큽니다.');
+        } else if (minAge && minAge < 0) {
+            return res.status(400).send('최소 나이가 0보다 작습니다.');
+        } else if (minRate && maxRate && minRate > maxRate) {
+            return res.status(400).send('최소 평점이 최대 평점보다 큽니다.');
         }
-        let userInfos = userSerivce.findUserByUsername(filter);
+
+        const userInfos = userSerivce.findUserByUsername(filter);
         res.send(userInfos);
     } catch (error) {
-        res.status(404).send('사용자를 찾을 수 없습니다.');
+        next(error);
     }
 });
 

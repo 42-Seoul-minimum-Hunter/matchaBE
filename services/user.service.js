@@ -16,6 +16,7 @@ const createUser = async (UserCreateDto) => {
         UserRepository.saveHashtag(UserCreateDto.hashtags, user_id);
         UserRepository.saveRegion(UserCreateDto.region, user_id);
         UserRepository.saveProfileImages(UserCreateDto.profileImages, user_id);
+
         return user_id;
     } catch (error) {
         return { error: error.message };
@@ -41,6 +42,15 @@ const changePassword = async (password, id) => {
     }
 }
 
+const findUserByUsername = async (filter) => {
+    try {
+        const userInfos = await UserRepository.findUserByUsername(filter);
+        return userInfos;
+    } catch (error) {
+        return { error: error.message };
+    }
+}
+
 
 
 
@@ -48,5 +58,6 @@ const changePassword = async (password, id) => {
 module.exports = {
     createUser,
     deleteUser,
-    changePassword
+    changePassword,
+    findUserByUsername
 };
