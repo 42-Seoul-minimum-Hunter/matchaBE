@@ -8,6 +8,9 @@ const { postrgres } = require('../configs/database');
 const UserService = require('../services/user.service.js');
 const UserCreateDto = require('../dtos/user.create.dto.js');
 
+
+
+
 morgan('combined', {
     skip: function (request, response) { return response.statusCode < 400 }
 })
@@ -49,7 +52,7 @@ router.post('/create', function (req, res, next) {
             region: req.body.region,
             profileImages: req.body.profileImages
         }
-        const { error, user_id } = userSerivce.createUser(user);
+        let { error, user_id } = userSerivce.createUser(user);
         if (error) {
             return res.status(400).send(error);
         }
@@ -66,9 +69,8 @@ router.post('/create', function (req, res, next) {
 router.delete('/delete', async function (req, res, next) {
     try {
         //TODO : id magic number 제거
-        const error = await userSerivce.deleteUser(8);
+        let error = await userSerivce.deleteUser(22);
         if (error) {
-            console.log("controller");
             return res.status(400).send(error);
         }
         res.send();
@@ -83,10 +85,15 @@ router.delete('/delete', async function (req, res, next) {
 password : String 사용자 비밀번호
 */
 router.post('/change/password', function (req, res, next) {
-    //morgan.info('POST /user/change/password');
     try {
-        var user = userSerivce.changePassword();
-        res.send(user);
+
+        let password = req.body.password;
+        if (!password) {
+            return res.status(400).send('비밀번호를 입력해주세요.');
+        }
+        //TODO : id magic number 제거
+        userSerivce.changePassword(password, 22);
+        res.send();
     } catch (error) {
         res.send('비밀번호를 변경할 수 없습니다.');
     }
@@ -96,7 +103,7 @@ router.post('/change/password', function (req, res, next) {
 /* GET /user/find
 username : String 사용자 닉네임
 hashtag : String 사용자 해시태그
-age : Number 사용자 나이
+age : Object 사용자 나이
 rate : Number 사용자 평점
 */
 
@@ -112,7 +119,7 @@ router.get('/find', function (req, res, next) {
             age,
             rate
         }
-        var userInfos = userSerivce.findUserByUsername(filter);
+        let userInfos = userSerivce.findUserByUsername(filter);
         res.send(userInfos);
     } catch (error) {
         res.status(404).send('사용자를 찾을 수 없습니다.');

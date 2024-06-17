@@ -28,6 +28,17 @@ const createUser = async (UserCreateDto) => {
             gpsAllowedAt,
         } = UserCreateDto;
 
+        // username과 email 중복 확인
+        const existingUser = await client.query(
+            `SELECT * FROM users WHERE username = $1 OR email = $2`,
+            [username, email]
+        );
+        if (existingUser.rows.length > 0) {
+            const error = new Error('Username or email already exists');
+            error.statusCode = 409;
+            throw error;
+        }
+
         const result = await client.query(
             `INSERT INTO users (
                 email,
@@ -44,8 +55,9 @@ const createUser = async (UserCreateDto) => {
                 gps_allowed_at,
                 connected_at,
                 created_at,
-                deleted_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, now(), now(), null)
+                deleted_at,
+                updated_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, now(), now(), null, now())
             RETURNING *`,
             [
                 email,
@@ -65,7 +77,8 @@ const createUser = async (UserCreateDto) => {
 
         return result.rows[0].id;
     } catch (error) {
-        return { error: error.message };
+        console.log(error);
+        throw error;
     }
 }
 
@@ -84,7 +97,8 @@ const saveHashtag = async (hashtags, user_id) => {
             ]
         )
     } catch (error) {
-        return { error: error.message };
+        console.log(error);
+        throw error;
     }
 }
 
@@ -108,7 +122,8 @@ const saveRegion = async (region, user_id) => {
             ]
         )
     } catch (error) {
-        return { error: error.message };
+        console.log(error);
+        throw error;
     }
 }
 
@@ -128,7 +143,8 @@ const saveProfileImages = async (profileImages, user_id) => {
             ]
         )
     } catch (error) {
-        return { error: error.message };
+        console.log(error);
+        throw error;
     }
 }
 
@@ -141,25 +157,51 @@ const deleteUser = async (id) => {
         );
 
         if (existingUser.rows.length > 0) {
-            return { error: new Error('이미 삭제된 사용자입니다.') };
+            const error = new Error('이미 삭제된 사용자입니다.');
+            error.statusCode = 400;
+            throw error;
         }
 
         // 유저 삭제 처리
         const result = await client.query(
             `UPDATE users 
-             SET deleted_at = now()
+             SET deleted_at = now(), updated_at = now()
              WHERE id = $1
              RETURNING *`,
             [id]
         );
 
         if (result.rows.length === 0) {
-            return { error: new Error('사용자를 삭제할 수 없습니다.') };
+            const error = new Error('사용자를 삭제할 수 없습니다.')
+            error.statusCode = 400;
+            throw error;
         }
     }
     catch (error) {
-        console.log("repository");
-        return { error: error };
+        console.log(error);
+        throw error;
+    }
+}
+
+const changePassword = async (hashedPassword, id) => {
+    try {
+        console.log(hashedPassword)
+        const result = await client.query(
+            `UPDATE users
+             SET password = $1, updated_at = now()
+             WHERE id = $2 AND deleted_at IS NULL
+             RETURNING *`,
+            [hashedPassword, 22]
+        );
+
+        if (result.rows.length === 0) {
+            const error = new Error('비밀번호를 변경할 수 없습니다.');
+            error.statusCode = 400;
+            throw error;
+        }
+    } catch (error) {
+        console.log(error);
+        throw error;
     }
 }
 
@@ -171,5 +213,7 @@ module.exports = {
     saveRegion,
     saveProfileImages,
 
-    deleteUser
+    deleteUser,
+
+    changePassword
 };

@@ -42,8 +42,8 @@ app.use('/user/profile', userProfileRouter);
 app.use('/auth', authRouter);
 
 app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).send('서버에 문제가 발생했습니다.');
+    const status = err.status || 500;
+    res.status(status).json({ error: err.message });
 });
 
 // 서버 실행
@@ -51,3 +51,6 @@ app.listen(port, () => {
     console.log(`App running on port ${port}...`);
 });
 
+
+
+//TODO : jwt 확인, 삭제된 유저인지 확인 + 유저 존재 유무 확인

@@ -2,7 +2,11 @@ const bcrypt = require('bcrypt');
 
 const UserRepository = require('../repositories/user.repository');
 
+// TODO : username, password 정규표현식
+
+
 // https://goodmemory.tistory.com/137
+//https://jinyisland.kr/post/middleware/
 const createUser = async (UserCreateDto) => {
     try {
         const hashed = await bcrypt.hash(UserCreateDto.password, 10);
@@ -21,17 +25,28 @@ const createUser = async (UserCreateDto) => {
 const deleteUser = async (id) => {
     try {
 
-        const error = await UserRepository.deleteUser(id);
-        if (error) {
-            return { error: error.message };
-        }
+        await UserRepository.deleteUser(id);
     } catch (error) {
-        console.log("service");
         return { error: error.message };
     }
 }
 
+const changePassword = async (password, id) => {
+    try {
+        const hashed = await bcrypt.hash(password, 10);
+        await UserRepository.changePassword(hashed, id);
+        //console.log("service");
+    } catch (error) {
+        return { error: error.message };
+    }
+}
+
+
+
+
+
 module.exports = {
     createUser,
-    deleteUser
+    deleteUser,
+    changePassword
 };
