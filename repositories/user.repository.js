@@ -218,7 +218,17 @@ const changePassword = async (hashedPassword, id) => {
 //TODO: 쿼리 안나오는 문제 해결
 const findUserByFilter = async (filter) => {
     try {
-        console.log(filter)
+        //console.log(filter)
+
+        var {
+            hashtags,
+            username,
+            minAge,
+            maxAge,
+            minRate,
+            maxRate,
+        } = filter;
+
         let query = `
             SELECT u.*
             FROM users u
@@ -226,52 +236,64 @@ const findUserByFilter = async (filter) => {
 
         let params = [];
 
-        if (filter.minRate || filter.maxRate) {
-            query += `JOIN user_ratings ur ON u.id = ur.user_id`;
+        if (hashtags) {
+            query += `JOIN user_hashtags uh ON u.id = uh.user_id `;
+            query += ` AND $${params.length + 1} <@ uh.hashtags `;
+            params.push(hashtags);
         }
 
-        if (filter.hashtags) {
-            query += `JOIN user_hashtags uh ON u.id = uh.user_id`;
-        }
-
-        if (filter.minRate) {
-            query += ` AND ur.rate_score >= $${params.length + 1}`;
-            params.push(filter.minRate);
-        }
-
-        if (filter.maxRate) {
-            query += ` AND ur.rate_score <= $${params.length + 1}`;
-            params.push(filter.maxRate);
-        }
-
-        if (filter.hashtags) {
-            query += ` AND $${params.length + 1} <@ uh.hashtags`;
-            params.push(filter.hashtags);
-        }
-
-        if (filter.username) {
+        if (username) {
             query += `WHERE u.username = $${params.length + 1}`;
-            params.push(filter.username);
+            params.push(username);
         }
 
-
-        if (filter.minAge) {
+        if (minAge) {
             query += ` AND u.age >= $${params.length + 1}`;
-            params.push(filter.minAge);
+            params.push(minAge);
         }
 
-        if (filter.maxAge) {
+        if (maxAge) {
             query += ` AND u.age <= $${params.length + 1}`;
-            params.push(filter.maxAge);
+            params.push(maxAge);
+        }
+
+        if (!minRate) {
+            minRate = parseFloat(0);
+        }
+
+        if (!maxRate) {
+            maxRate = ParseFloat(5);
         }
 
 
-        console.log(query);
-        console.log(params);
+        //console.log(query);
+        //console.log(params);
 
         const userInfos = await client.query(query, params);
 
-        return userInfos.rows;
+
+        // 사용자 평균 평점 계산 및 필터링
+        const filteredUserInfos = [];
+        for (const userInfo of userInfos.rows) {
+            const ratingInfo = await client.query('SELECT rate_score FROM user_ratings WHERE rated_id = $1', [userInfo.id]);
+            let rate;
+            if (ratingInfo.rows.length === 0) {
+                rate = parseFloat(0);
+            } else {
+                const ratingScores = ratingInfo.rows.map(row => row.rate_score);
+                const totalScore = ratingScores.reduce((acc, score) => acc + score, 0);
+                rate = totalScore / ratingInfo.rows.length;
+            }
+
+            if (rate >= minRate && rate <= maxRate) {
+                userInfo.rate = rate;
+                filteredUserInfos.push(userInfo);
+            }
+        }
+
+        //console.log('infologs: ' + filteredUserInfos);
+
+        return filteredUserInfos;
     } catch (error) {
         console.log(error);
         throw error;

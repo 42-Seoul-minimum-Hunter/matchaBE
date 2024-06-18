@@ -26,7 +26,7 @@ preference : String 사용자 성적취향
 biography : String 사용자 자기소개
 age : Number 사용자 나이
 gpsAllowedAt : Boolean GPS 사용 허용 여부 => Date로 반환 예정
-hastag : Object 사용자 해시태그
+hashtags : Object 사용자 해시태그
 region : Object 사용자 위치
 profileImages : String 사용자 프로필 이미지 => BASE64로 반환 예정
 }
@@ -109,7 +109,7 @@ minRate : Number 사용자 평점
 maxRate : Number 사용자 평점
 */
 
-router.get('/find', function (req, res, next) {
+router.get('/find', async function (req, res, next) {
     try {
         let { username, hashtags, minAge, maxAge, minRate, maxRate } = req.query;
 
@@ -129,8 +129,8 @@ router.get('/find', function (req, res, next) {
             return res.status(400).send('최소 평점이 최대 평점보다 큽니다.');
         }
 
-        const userInfos = userSerivce.findUserByUsername(filter);
-        res.send(userInfos);
+        const UserInfos = await userSerivce.findUserByFilter(filter);
+        res.send(UserInfos);
     } catch (error) {
         next(error);
     }
@@ -175,7 +175,7 @@ router.put('/update', function (req, res, next) {
         }
         //TODO : id magic number 제거
         userSerivce.updateUser(user, 4);
-        res.send(user);
+        res.send();
     } catch (error) {
         next(error);
     }

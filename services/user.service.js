@@ -53,10 +53,10 @@ const findUserByFilter = async (filter) => {
 
 const updateUser = async (UserUpdateDto, user_id) => {
     try {
-        UserRepository.updateUser(UserUpdateDto, user_id);
-        UserRepository.updateHashtags(UserUpdateDto.hashtags, user_id);
-        UserRepository.updateRegion(UserUpdateDto.region, user_id);
-        UserRepository.updateProfileImages(UserUpdateDto.profileImages, user_id);
+        await UserRepository.updateUser(UserUpdateDto, user_id);
+        await UserRepository.updateHashtags(UserUpdateDto.hashtags, user_id);
+        await UserRepository.updateRegion(UserUpdateDto.region, user_id);
+        await UserRepository.updateProfileImages(UserUpdateDto.profileImages, user_id);
     } catch (error) {
         return { error: error.message };
     }
