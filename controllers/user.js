@@ -137,51 +137,6 @@ router.get('/find', async function (req, res, next) {
 });
 
 
-/* PUT /user/update
-id : Number 사용자 id
-email : String 사용자 이메일
-password : String 사용자 비밀번호 => hash로 변환 예정
-lastName : String 사용자 이름
-firstName : String 사용자 성
-gender : String 사용자 성별
-preference : String 사용자 성적취향
-biography : String 사용자 자기소개
-age : Number 사용자 나이
-gpsAllowedAt : Boolean GPS 사용 허용 여부 => Date로 반환 예정
-isOAuth : Boolean OAuth 사용 여부
-hastag : Object 사용자 해시태그
-region : Object 사용자 위치
-profileImages : String 사용자 프로필 이미지 => BASE64로 반환 예정
-}
-*/
-
-router.put('/update', function (req, res, next) {
-    try {
-        const user = {
-            id: req.body.id,
-            email: req.body.email,
-            password: req.body.password,
-            lastName: req.body.lastName,
-            firstName: req.body.firstName,
-            gender: req.body.gender,
-            preference: req.body.preference,
-            biography: req.body.biography,
-            age: req.body.age,
-            gpsAllowedAt: req.body.gpsAllowedAt,
-            isOAuth: req.body.isOAuth,
-            hashtags: req.body.hashtags,
-            region: req.body.region,
-            profileImages: req.body.profileImages
-        }
-        //TODO : id magic number 제거
-        userSerivce.updateUser(user, 4);
-        res.send();
-    } catch (error) {
-        next(error);
-    }
-});
-
-
 /* GET /user/search/region
 */
 

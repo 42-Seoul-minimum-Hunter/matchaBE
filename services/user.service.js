@@ -51,17 +51,6 @@ const findUserByFilter = async (filter) => {
     }
 }
 
-const updateUser = async (UserUpdateDto, user_id) => {
-    try {
-        await UserRepository.updateUser(UserUpdateDto, user_id);
-        await UserRepository.updateHashtags(UserUpdateDto.hashtags, user_id);
-        await UserRepository.updateRegion(UserUpdateDto.region, user_id);
-        await UserRepository.updateProfileImages(UserUpdateDto.profileImages, user_id);
-    } catch (error) {
-        return { error: error.message };
-    }
-}
-
 const getRegion = async (id) => {
     try {
         const region = await UserRepository.getRegion(id);
@@ -78,5 +67,4 @@ module.exports = {
     deleteUser,
     changePassword,
     findUserByFilter,
-    updateUser
 };

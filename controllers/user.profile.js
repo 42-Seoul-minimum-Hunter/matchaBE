@@ -12,6 +12,7 @@ router.get('/', async function (req, res, next) {
         if (username === undefined) {
             return res.status(400).send('사용자 닉네임을 입력하세요.');
         }
+        //TODO: id 매직넘버 제거
         let user = await userProfileService.findUserByUsername(username, 3);
         res.send(user);
     } catch (error) {
@@ -19,44 +20,61 @@ router.get('/', async function (req, res, next) {
     }
 });
 
-/* GET /user/me/
+/* GET /user/profile/me/
 */
-router.get('/me', function (req, res, next) {
+router.get('/me', async function (req, res, next) {
     try {
-        let user = userProfileService.getMe(3);
+        //TODO: id 매직넘버 제거
+        const user = await userProfileService.getMyInfo(4);
         res.send(user);
     } catch (error) {
         next(error);
     }
 });
 
-
-/* POST /user/update/photo
-id : String 사용자 식별자
-photoOne : String 사용자 사진
-photoTwo : String 사용자 사진
-photoThree : String 사용자 사진
-photoFour : String 사용자 사진
-photoFive : String 사용자 사진
+/* PUT /user/profile/update
+id : Number 사용자 id
+email : String 사용자 이메일
+password : String 사용자 비밀번호 => hash로 변환 예정
+lastName : String 사용자 이름
+firstName : String 사용자 성
+gender : String 사용자 성별
+preference : String 사용자 성적취향
+biography : String 사용자 자기소개
+age : Number 사용자 나이
+gpsAllowedAt : Boolean GPS 사용 허용 여부 => Date로 반환 예정
+isOAuth : Boolean OAuth 사용 여부
+hastags : Object 사용자 해시태그
+region : Object 사용자 위치
+profileImages : String 사용자 프로필 이미지 => BASE64로 반환 예정
+}
 */
 
-router.post('/update/photo', function (req, res, next) {
-    this.logger.info('POST /user/update/photo');
+router.put('/update', function (req, res, next) {
     try {
-        var id = req.body.id;
-        var photoOne = req.body.photoOne;
-        var photoTwo = req.body.photoTwo;
-        var photoThree = req.body.photoThree;
-        var photoFour = req.body.photoFour;
-        var photoFive = req.body.photoFive;
-        if (id === undefined) {
-            throw new Error('id를 입력하세요.');
+        const user = {
+            id: req.body.id,
+            email: req.body.email,
+            password: req.body.password,
+            lastName: req.body.lastName,
+            firstName: req.body.firstName,
+            gender: req.body.gender,
+            preference: req.body.preference,
+            biography: req.body.biography,
+            age: req.body.age,
+            gpsAllowedAt: req.body.gpsAllowedAt,
+            isOAuth: req.body.isOAuth,
+            hashtags: req.body.hashtags,
+            region: req.body.region,
+            profileImages: req.body.profileImages
         }
-        var user = userProfileService.updatePhoto(id, photoOne, photoTwo, photoThree, photoFour, photoFive);
-        res.send(user);
+        //TODO : id magic number 제거
+        userProfileService.updateUser(user, 4);
+        res.send();
     } catch (error) {
-        res.send('사용자 사진을 변경할 수 없습니다.');
+        next(error);
     }
 });
+
 
 module.exports = router;
