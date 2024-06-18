@@ -138,46 +138,59 @@ router.get('/find', function (req, res, next) {
 
 
 /* PUT /user/update
+id : Number 사용자 id
 email : String 사용자 이메일
-username : String 사용자 닉네임
-password : String 사용자 비밀번호
-last_name : String 사용자 이름
-first_name : String 사용자 성
+password : String 사용자 비밀번호 => hash로 변환 예정
+lastName : String 사용자 이름
+firstName : String 사용자 성
 gender : String 사용자 성별
 preference : String 사용자 성적취향
+biography : String 사용자 자기소개
 age : Number 사용자 나이
-gps_allowed_at : Boolean GPS 사용 허용 여부 => Date로 반환 예정
+gpsAllowedAt : Boolean GPS 사용 허용 여부 => Date로 반환 예정
+isOAuth : Boolean OAuth 사용 여부
+hastag : Object 사용자 해시태그
+region : Object 사용자 위치
+profileImages : String 사용자 프로필 이미지 => BASE64로 반환 예정
+}
 */
 
 router.put('/update', function (req, res, next) {
-    this.logger.info('PATCH /user/update');
     try {
-        var user = {
+        const user = {
             id: req.body.id,
             email: req.body.email,
-            username: req.body.username,
             password: req.body.password,
-            last_name: req.body.last_name,
-            first_name: req.body.first_name,
+            lastName: req.body.lastName,
+            firstName: req.body.firstName,
             gender: req.body.gender,
             preference: req.body.preference,
+            biography: req.body.biography,
             age: req.body.age,
-            gps_allowed_at: req.body.gps_allowed_at
-        };
-        userSerivce.updateUser(user);
+            gpsAllowedAt: req.body.gpsAllowedAt,
+            isOAuth: req.body.isOAuth,
+            hashtags: req.body.hashtags,
+            region: req.body.region,
+            profileImages: req.body.profileImages
+        }
+        //TODO : id magic number 제거
+        userSerivce.updateUser(user, 4);
         res.send(user);
     } catch (error) {
-        res.send('사용자 정보를 수정할 수 없습니다.');
+        next(error);
     }
 });
 
 
-router.get('/location/:id', function (req, res, next) {
-    this.logger.info('GET /user/location');
+/* GET /user/search/region
+*/
+
+
+router.get('/search/region', function (req, res, next) {
     try {
-        var id = req.params.id;
-        var location = userSerivce.getLocation(id);
-        res.send(location);
+
+        let region = userSerivce.getRegion(id);
+        res.send(region);
     } catch (error) {
         res.send('사용자 위치를 찾을 수 없습니다.');
     }

@@ -1,4 +1,7 @@
 const { Client } = require('pg');
+const fs = require('fs');
+const path = require('path');
+
 require('dotenv').config();
 
 const client = new Client({
@@ -82,7 +85,7 @@ const createUser = async (UserCreateDto) => {
     }
 }
 
-const saveHashtag = async (hashtags, user_id) => {
+const saveHashtags = async (hashtags, user_id) => {
     try {
         const result = await client.query(
             `INSERT INTO user_hashtags (
@@ -110,15 +113,13 @@ const saveRegion = async (region, user_id) => {
                 user_id,
                 si,
                 gu,
-                dong,
                 updated_at
-            ) VALUES ($1, $2, $3, $4, now())
+            ) VALUES ($1, $2, $3, now())
             RETURNING *`,
             [
                 user_id,
                 region.si,
                 region.gu,
-                region.dong,
             ]
         )
     } catch (error) {
@@ -129,6 +130,15 @@ const saveRegion = async (region, user_id) => {
 
 const saveProfileImages = async (profileImages, user_id) => {
     try {
+        if (profileImages.length > 5) {
+            const error = new Error('프로필 이미지는 최대 5개까지만 등록할 수 있습니다.');
+            error.statusCode = 400;
+            throw error;
+        }
+
+        const encodedProfileImages = profileImages.map((image) => {
+            return Buffer.from(image).toString('base64');
+        });
 
         const result = await client.query(
             `INSERT INTO user_profile_images (
@@ -139,14 +149,14 @@ const saveProfileImages = async (profileImages, user_id) => {
             RETURNING *`,
             [
                 user_id,
-                profileImages,
+                encodedProfileImages,
             ]
-        )
+        );
     } catch (error) {
         console.log(error);
         throw error;
     }
-}
+};
 
 const deleteUser = async (id) => {
     try {
@@ -268,13 +278,156 @@ const findUserByUsername = async (filter) => {
     }
 };
 
+const updateUser = async (UserUpdateDto, user_id) => {
+    try {
+        const {
+            email,
+            password,
+            lastName,
+            firstName,
+            gender,
+            preference,
+            biography,
+            age,
+            gpsAllowedAt,
+            isOauth,
+        } = UserUpdateDto;
 
+        if (isOauth && email) {
+            const error = new Error('Oauth 사용자는 이메일을 변경할 수 없습니다.');
+            error.statusCode = 400;
+            throw error;
+        }
+
+        const existingUser = await client.query(`
+            SELECT * FROM users WHERE id = $1 AND deleted_at IS NULL
+        `, [user_id]);
+
+        if (existingUser.rows.length === 0) {
+            const error = new Error('사용자를 찾을 수 없습니다.');
+            error.statusCode = 400;
+            throw error;
+        }
+
+
+        await client.query(`
+            UPDATE users
+            SET email = $1,
+                password = $2,
+                last_name = $3,
+                first_name = $4,
+                gender = $5,
+                preference = $6,
+                biography = $7,
+                age = $8,
+                gps_allowed_at = $9
+            WHERE id = $10
+            RETURNING *
+        `, [
+            email,
+            password,
+            lastName,
+            firstName,
+            gender,
+            preference,
+            biography,
+            age,
+            gpsAllowedAt,
+            user_id
+        ]);
+
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
+
+const updateHashtags = async (hashtags, user_id) => {
+    try {
+        const result = await client.query(
+            `UPDATE user_hashtags uh
+             SET hashtags = $1, updated_at = now()
+             WHERE uh.user_id = $2 AND EXISTS (
+                 SELECT 1 
+                 FROM users u
+                 WHERE u.id = uh.user_id 
+                   AND u.deleted_at IS NOT NULL
+             )
+             RETURNING *`,
+            [
+                hashtags,
+                user_id
+            ]
+        );
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
+const updateRegion = async (region, user_id) => {
+    try {
+        const result = await client.query(
+            `UPDATE user_regions ur
+             SET si = $1, gu = $2, updated_at = now()
+             WHERE ur.user_id = $3 AND EXISTS (
+                 SELECT 1
+                 FROM users u
+                 WHERE u.id = ur.user_id
+                   AND u.deleted_at IS NULL
+             )
+             RETURNING *`,
+            [
+                region.si,
+                region.gu,
+                user_id
+            ]
+        );
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
+const updateProfileImages = async (profileImages, user_id) => {
+    try {
+        if (profileImages.length > 5) {
+            const error = new Error('프로필 이미지는 최대 5개까지만 등록할 수 있습니다.');
+            error.statusCode = 400;
+            throw error;
+        }
+
+        const encodedProfileImages = profileImages.map((image) => {
+            return Buffer.from(image).toString('base64');
+        });
+
+        const result = await client.query(
+            `UPDATE user_profile_images upi
+             SET profile_images = $1, updated_at = now()
+             WHERE upi.user_id = $2 AND EXISTS (
+                 SELECT 1
+                 FROM users u
+                 WHERE u.id = upi.user_id
+                   AND u.deleted_at IS NULL
+             )
+             RETURNING *`,
+            [
+                encodedProfileImages,
+                user_id
+            ]
+        );
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+};
 
 
 
 module.exports = {
     createUser,
-    saveHashtag,
+    saveHashtags,
     saveRegion,
     saveProfileImages,
 
@@ -282,5 +435,10 @@ module.exports = {
 
     changePassword,
 
-    findUserByUsername
+    findUserByUsername,
+
+    updateUser,
+    updateHashtags,
+    updateRegion,
+    updateProfileImages
 };
