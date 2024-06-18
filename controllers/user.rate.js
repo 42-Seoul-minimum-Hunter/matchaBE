@@ -1,9 +1,9 @@
 var express = require('express');
 var router = express.Router();
 
-var userRateSerivce = require('../services/user.rating.service.js');
+var userRateSerivce = require('../services/user.rate.service.js');
 
-/* POST /user/rating
+/* POST /user/rate
 rated_username : String 평가 대상사용자 닉네임
 rate_score : Float 평가 점수
 */

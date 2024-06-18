@@ -24,7 +24,7 @@ const userSocketController = require('./controllers/user.socket.js')(io);
 const port = 3000;
 
 const userRouter = require('./controllers/user.js');
-const userRatingRouter = require('./controllers/user.rating.js');
+const userRateRouter = require('./controllers/user.rate.js');
 const userReportRouter = require('./controllers/user.report.js');
 const userProfileRouter = require('./controllers/user.profile.js');
 const authRouter = require('./controllers/auth.js');
@@ -35,7 +35,7 @@ app.use(morgan('combined'));
 app.set('socket.io', io);
 app.use('/user', userRouter);
 //app.use('/user/socket', userSocketController);
-app.use('/user/rating', userRatingRouter);
+app.use('/user/rating', userRateRouter);
 app.use('/user/report', userReportRouter);
 app.use('/user/profile', userProfileRouter);
 // app.user('/user/block', userBlockRouter);

@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
 
-const UserRateRepository = require('../repositories/user.rating.repository');
+const UserRateRepository = require('../repositories/user.rate.repository');
 
 const rateUser = async (UserRateDto, user_id) => {
     try {
