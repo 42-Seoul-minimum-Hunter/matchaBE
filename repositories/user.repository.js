@@ -13,6 +13,7 @@ const client = new Client({
 });
 
 const UserCreateDto = require('../dtos/user.create.dto');
+const { profile } = require('console');
 
 client.connect();
 
@@ -85,7 +86,7 @@ const createUser = async (UserCreateDto) => {
     }
 }
 
-const saveHashtags = async (hashtags, user_id) => {
+const saveHashtags = async (hashtags, userId) => {
     try {
         const result = await client.query(
             `INSERT INTO user_hashtags (
@@ -95,7 +96,7 @@ const saveHashtags = async (hashtags, user_id) => {
             ) VALUES ($1, $2, now())
             RETURNING *`,
             [
-                user_id,
+                userId,
                 hashtags,
             ]
         )
@@ -105,7 +106,7 @@ const saveHashtags = async (hashtags, user_id) => {
     }
 }
 
-const saveRegion = async (region, user_id) => {
+const saveRegion = async (region, userId) => {
     try {
 
         const result = await client.query(
@@ -117,7 +118,7 @@ const saveRegion = async (region, user_id) => {
             ) VALUES ($1, $2, $3, now())
             RETURNING *`,
             [
-                user_id,
+                userId,
                 region.si,
                 region.gu,
             ]
@@ -128,7 +129,7 @@ const saveRegion = async (region, user_id) => {
     }
 }
 
-const saveProfileImages = async (profileImages, user_id) => {
+const saveProfileImages = async (profileImages, userId) => {
     try {
         if (profileImages.length > 5) {
             const error = new Error('프로필 이미지는 최대 5개까지만 등록할 수 있습니다.');
@@ -148,7 +149,7 @@ const saveProfileImages = async (profileImages, user_id) => {
             ) VALUES ($1, $2, now())
             RETURNING *`,
             [
-                user_id,
+                userId,
                 encodedProfileImages,
             ]
         );
@@ -193,7 +194,7 @@ const deleteUser = async (id) => {
     }
 }
 
-const changePassword = async (hashedPassword, id) => {
+const changePassword = async (hashedPassword, userId) => {
     try {
         console.log(hashedPassword)
         const result = await client.query(
@@ -201,7 +202,7 @@ const changePassword = async (hashedPassword, id) => {
              SET password = $1, updated_at = now()
              WHERE id = $2 AND deleted_at IS NULL
              RETURNING *`,
-            [hashedPassword, 22]
+            [hashedPassword, userId]
         );
 
         if (result.rows.length === 0) {
@@ -237,23 +238,33 @@ const findUserByFilter = async (filter) => {
         let params = [];
 
         if (hashtags) {
-            query += `JOIN user_hashtags uh ON u.id = uh.user_id `;
-            query += ` AND $${params.length + 1} <@ uh.hashtags `;
+            query += `
+                JOIN user_hashtags uh ON u.id = uh.user_id
+                WHERE $${params.length + 1} <@ uh.hashtags
+            `;
             params.push(hashtags);
-        }
-
-        if (username) {
-            query += `WHERE u.username = $${params.length + 1}`;
+        } else if (username) {
+            query += `
+                WHERE u.username = $${params.length + 1}
+            `;
             params.push(username);
+        } else {
+            query += `
+                WHERE 1 = 1
+            `;
         }
 
         if (minAge) {
-            query += ` AND u.age >= $${params.length + 1}`;
+            query += `
+                AND u.age >= $${params.length + 1}
+            `;
             params.push(minAge);
         }
 
         if (maxAge) {
-            query += ` AND u.age <= $${params.length + 1}`;
+            query += `
+                AND u.age <= $${params.length + 1}
+            `;
             params.push(maxAge);
         }
 
@@ -262,7 +273,7 @@ const findUserByFilter = async (filter) => {
         }
 
         if (!maxRate) {
-            maxRate = ParseFloat(5);
+            maxRate = parseFloat(5);
         }
 
 
@@ -293,7 +304,24 @@ const findUserByFilter = async (filter) => {
 
         //console.log('infologs: ' + filteredUserInfos);
 
-        return filteredUserInfos;
+        const UserInfo = await Promise.all(filteredUserInfos.sort((a, b) => {
+            if (a.connected_at < b.connected_at) return -1;
+            if (a.connected_at > b.connected_at) return 1;
+            return 0;
+        }).map(async (userInfo) => {
+            const { rows } = await client.query('SELECT profile_images FROM user_profile_images WHERE user_id = $1', [userInfo.id]);
+            const profileImages = rows.length > 0 ? rows[0].profile_images : null;
+
+            return {
+                username: userInfo.username,
+                lastName: userInfo.last_name,
+                firstName: userInfo.first_name,
+                age: userInfo.age,
+                profileImages: profileImages[0],
+            }
+        }));
+
+        return UserInfo;
     } catch (error) {
         console.log(error);
         throw error;

@@ -14,7 +14,7 @@ const client = new Client({
 
 client.connect();
 
-const findUserByUsername = async (username, user_id) => {
+const findUserByUsername = async (username, userId) => {
     try {
         const userInfo = await client.query('SELECT * FROM users WHERE username = $1', [username]);
 
@@ -50,7 +50,7 @@ const findUserByUsername = async (username, user_id) => {
             rate = totalScore / ratingInfo.rows.length;
         }
 
-        const blockInfo = await client.query('SELECT * FROM user_block_histories WHERE user_id = $1 AND blocked_id = $2', [user_id, userInfo.rows[0].id]);
+        const blockInfo = await client.query('SELECT * FROM user_block_histories WHERE user_id = $1 AND blocked_id = $2', [userId, userInfo.rows[0].id]);
         const blocked = blockInfo.rows.length !== 0; // true or false
 
 
@@ -77,9 +77,9 @@ const findUserByUsername = async (username, user_id) => {
     }
 }
 
-const getMyInfo = async (user_id) => {
+const getMyInfo = async (userId) => {
     try {
-        const userInfo = await client.query('SELECT * FROM users WHERE id = $1', [user_id]);
+        const userInfo = await client.query('SELECT * FROM users WHERE id = $1', [userId]);
 
         if (userInfo.rows.length === 0) {
             const error = new Error('User not found');
@@ -91,18 +91,18 @@ const getMyInfo = async (user_id) => {
             throw error;
         }
 
-        const hashtagInfo = await client.query('SELECT hashtags FROM user_hashtags WHERE user_id = $1', [user_id]);
+        const hashtagInfo = await client.query('SELECT hashtags FROM user_hashtags WHERE user_id = $1', [userId]);
         const hashtags = hashtagInfo.rows.map(row => row.hashtags);
 
 
-        const profileImageInfo = await client.query('SELECT profile_images FROM user_profile_images WHERE user_id = $1', [user_id]);
+        const profileImageInfo = await client.query('SELECT profile_images FROM user_profile_images WHERE user_id = $1', [userId]);
         const profileImages = profileImageInfo.rows.map((row) => row.profile_images);
 
 
-        const regionInfo = await client.query('SELECT si, gu FROM user_regions WHERE user_id = $1', [user_id]);
+        const regionInfo = await client.query('SELECT si, gu FROM user_regions WHERE user_id = $1', [userId]);
 
 
-        const ratingInfo = await client.query('SELECT rate_score FROM user_ratings WHERE rated_id = $1', [user_id]);
+        const ratingInfo = await client.query('SELECT rate_score FROM user_ratings WHERE rated_id = $1', [userId]);
         let rate;
         if (ratingInfo.rows.length === 0) {
             rate = parseFloat(0);

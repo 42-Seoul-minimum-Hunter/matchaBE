@@ -15,58 +15,58 @@ const client = new Client({
 
 client.connect();
 
-const rateUser = async (rate, user_id) => {
+const rateUser = async (rate, userId) => {
     try {
         var {
-            rated_username,
-            rate_score,
+            ratedUsername,
+            rateScore,
         } = rate;
 
-        rate_score = parseFloat(rate_score);
+        rateScore = parseFloat(rateScore);
 
-        console.log(rate)
-        console.log(user_id)
+        //console.log(rate)
+        //console.log(userId)
 
         // 평가 대상 사용자 정보 확인
         const ratedInfo = await client.query(`
             SELECT id
             FROM users
             WHERE username = $1 AND deleted_at IS NULL
-        `, [rated_username]);
+        `, [ratedUsername]);
 
         if (ratedInfo.rows.length === 0) {
             throw new Error('평가 대상 사용자가 존재하지 않습니다.');
         }
 
-        const rated_id = ratedInfo.rows[0].id;
+        const ratedId = ratedInfo.rows[0].id;
 
         // 기존 데이터 확인
         const existingRatingResult = await client.query(`
             SELECT * 
             FROM user_ratings
             WHERE user_id = $1 AND rated_id = $2
-        `, [user_id, rated_id]);
+        `, [userId, ratedId]);
 
         if (existingRatingResult.rows.length === 0) {
 
-            console.log(user_id + " " + rated_id + " " + rate_score)
+            //console.log(userId + " " + ratedId + " " + rateScore)
             // 새로운 데이터 생성
             await client.query(`
                 INSERT INTO user_ratings (
                     user_id,
                     rated_id,
-                    rate_score,
+                    rateScore,
                     rated_at
                 ) VALUES ($1, $2, $3, now())
                  RETURNING *
-            `, [user_id, rated_id, rate_score]);
+            `, [userId, ratedId, rateScore]);
         } else {
             // 기존 데이터 업데이트
             await client.query(`
                 UPDATE user_ratings
-                SET rate_score = $1, rated_at = now()
+                SET rateScore = $1, rated_at = now()
                 WHERE user_id = $2 AND rated_id = $3
-            `, [rate_score, user_id, rated_id]);
+            `, [rateScore, userId, ratedId]);
         }
     } catch (error) {
         console.log(error);

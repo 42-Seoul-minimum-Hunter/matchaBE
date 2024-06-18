@@ -11,10 +11,7 @@ reason : String(ENUM) 신고 사유
 */
 
 router.post('/', function (req, res, next) {
-    this.logger.info('POST /user/report');
-
     try {
-        var userId = req.body.userId;
         var reported_username = req.body.reported_username;
         var reason = req.body.reason;
         if (userId === undefined || reported_username === undefined || reason === undefined) {
@@ -25,7 +22,7 @@ router.post('/', function (req, res, next) {
             reported_username: reported_username,
             reason: reason
         };
-        userSerivce.reportUser(report);
+        userSerivce.reportUser(report, userId);
         res.send(report);
     } catch (error) {
         res.send('사용자를 신고할 수 없습니다.');
