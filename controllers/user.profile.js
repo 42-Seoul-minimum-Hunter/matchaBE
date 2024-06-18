@@ -1,19 +1,20 @@
-var express = require('express');
-var router = express.Router();
+const express = require('express');
+const router = express.Router();
+const { verifyAllprocess } = require('../configs/middleware.js');
 
-var userProfileService = require('../services/user.profile.service.js');
+const userProfileService = require('../services/user.profile.service.js');
 
 /* GET /user/profile/
 username : String 사용자 닉네임
 */
-router.get('/', async function (req, res, next) {
+router.get('/', verifyAllprocess, async function (req, res, next) {
     try {
         const username = req.query.username;
         if (username === undefined) {
             return res.status(400).send('사용자 닉네임을 입력하세요.');
         }
         //TODO: id 매직넘버 제거
-        let user = await userProfileService.findUserByUsername(username, 3);
+        let user = await userProfileService.findUserByUsername(username, req.jwtInfo.id);
         res.send(user);
     } catch (error) {
         next(error);
@@ -22,10 +23,9 @@ router.get('/', async function (req, res, next) {
 
 /* GET /user/profile/me/
 */
-router.get('/me', async function (req, res, next) {
+router.get('/me', verifyAllprocess, async function (req, res, next) {
     try {
-        //TODO: id 매직넘버 제거
-        const user = await userProfileService.getMyInfo(4);
+        const user = await userProfileService.getMyInfo(req.jwtInfo.id);
         res.send(user);
     } catch (error) {
         next(error);
@@ -50,11 +50,11 @@ profileImages : String 사용자 프로필 이미지 => BASE64로 반환 예정
 }
 */
 
-router.put('/update', function (req, res, next) {
+router.put('/update', verifyAllprocess, function (req, res, next) {
     try {
         const user = {
-            id: req.body.id,
-            email: req.body.email,
+            id: req.jwtInfo.id,
+            email: req.jwtInfo.email,
             password: req.body.password,
             lastName: req.body.lastName,
             firstName: req.body.firstName,
@@ -69,7 +69,7 @@ router.put('/update', function (req, res, next) {
             profileImages: req.body.profileImages
         }
         //TODO : id magic number 제거
-        userProfileService.updateUser(user, 4);
+        userProfileService.updateUser(user);
         res.send();
     } catch (error) {
         next(error);

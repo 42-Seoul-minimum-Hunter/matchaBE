@@ -136,9 +136,10 @@ const getMyInfo = async (userId) => {
     }
 }
 
-const updateUser = async (UserUpdateDto, user_id) => {
+const updateUser = async (UserUpdateDto) => {
     try {
         const {
+            id,
             email,
             password,
             lastName,
@@ -159,7 +160,7 @@ const updateUser = async (UserUpdateDto, user_id) => {
 
         const existingUser = await client.query(`
             SELECT * FROM users WHERE id = $1 AND deleted_at IS NULL
-        `, [user_id]);
+        `, [id]);
 
         if (existingUser.rows.length === 0) {
             const error = new Error('사용자를 찾을 수 없습니다.');
@@ -191,7 +192,7 @@ const updateUser = async (UserUpdateDto, user_id) => {
             biography,
             age,
             gpsAllowedAt,
-            user_id
+            id
         ]);
 
     } catch (error) {

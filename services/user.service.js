@@ -51,14 +51,14 @@ const findUserByFilter = async (filter) => {
     }
 }
 
-const getRegion = async (id) => {
-    try {
-        const region = await UserRepository.getRegion(id);
-        return region;
-    } catch (error) {
-        return { error: error.message };
-    }
-}
+//const getRegion = async (id) => {
+//    try {
+//        const region = await UserRepository.getRegion(id);
+//        return region;
+//    } catch (error) {
+//        return { error: error.message };
+//    }
+//}
 
 
 

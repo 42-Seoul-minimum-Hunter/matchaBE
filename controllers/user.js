@@ -2,14 +2,9 @@ const express = require('express');
 const router = express.Router();
 const morgan = require('morgan');
 
+const { verifyAllprocess } = require('../configs/middleware.js');
+
 const userSerivce = require('../services/user.service.js');
-const { postrgres } = require('../configs/database');
-
-const UserService = require('../services/user.service.js');
-const UserCreateDto = require('../dtos/user.create.dto.js');
-
-
-
 
 morgan('combined', {
     skip: function (request, response) { return response.statusCode < 400 }
@@ -32,11 +27,9 @@ profileImages : String 사용자 프로필 이미지 => BASE64로 반환 예정
 }
 */
 
-router.post('/create', function (req, res, next) {
-    //this.logger.info('POST /user/create');
+router.post('/create', async function (req, res, next) {
     try {
         //var user = new UserCreateDto(req.body);
-
         const user = {
             email: req.body.email,
             username: req.body.username,
@@ -52,7 +45,7 @@ router.post('/create', function (req, res, next) {
             region: req.body.region,
             profileImages: req.body.profileImages
         }
-        let { error, user_id } = userSerivce.createUser(user);
+        const { error, user_id } = await userSerivce.createUser(user);
         if (error) {
             return res.status(400).send(error);
         }
@@ -66,10 +59,11 @@ router.post('/create', function (req, res, next) {
 /* DELETE /user/delete
 */
 
-router.delete('/delete', async function (req, res, next) {
+router.delete('/delete', verifyAllprocess, async function (req, res, next) {
     try {
-        //TODO : id magic number 제거
-        let error = await userSerivce.deleteUser(22);
+        let error = await userSerivce.deleteUser(req.jwtInfo.id);
+
+        res.clearCookie('jwt');
         if (error) {
             return res.status(400).send(error);
         }
@@ -84,15 +78,13 @@ router.delete('/delete', async function (req, res, next) {
 /* POST /user/change/password
 password : String 사용자 비밀번호
 */
-router.post('/change/password', function (req, res, next) {
+router.post('/change/password', verifyAllprocess, function (req, res, next) {
     try {
-
         let password = req.body.password;
         if (!password) {
             return res.status(400).send('비밀번호를 입력해주세요.');
         }
-        //TODO : id magic number 제거
-        userSerivce.changePassword(password, 22);
+        userSerivce.changePassword(password, req.jwtInfo.id);
         res.send();
     } catch (error) {
         next(error);
@@ -101,7 +93,6 @@ router.post('/change/password', function (req, res, next) {
 
 
 /* GET /user/find
-username : String 사용자 닉네임
 hashtags : String 사용자 해시태그
 minAge : Number 사용자 최소 나이
 maxAge : Number 사용자 최대 나이
@@ -109,12 +100,12 @@ minRate : Number 사용자 평점
 maxRate : Number 사용자 평점
 */
 
-router.get('/find', async function (req, res, next) {
+router.get('/find', verifyAllprocess, async function (req, res, next) {
     try {
-        let { username, hashtags, minAge, maxAge, minRate, maxRate } = req.query;
+        let { hashtags, minAge, maxAge, minRate, maxRate } = req.query;
 
         const filter = {
-            username,
+            username: req.jwtInfo.username,
             hashtags: hashtags || undefined,
             minAge: minAge ? Number(minAge) : undefined,
             maxAge: maxAge ? Number(maxAge) : undefined,
@@ -140,14 +131,12 @@ router.get('/find', async function (req, res, next) {
 /* GET /user/search/region
 */
 
-
-router.get('/search/region', function (req, res, next) {
+router.get('/search/region', verifyAllprocess, function (req, res, next) {
     try {
-
-        let region = userSerivce.getRegion(id);
+        let region = userSerivce.getRegion(req.jwtInfo.id);
         res.send(region);
     } catch (error) {
-        res.send('사용자 위치를 찾을 수 없습니다.');
+        next(error);
     }
 });
 

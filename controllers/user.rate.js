@@ -1,15 +1,16 @@
-var express = require('express');
-var router = express.Router();
+const express = require('express');
+const router = express.Router();
+const { verifyAllprocess } = require('../configs/middleware.js');
 
-var userRateSerivce = require('../services/user.rate.service.js');
+const userRateSerivce = require('../services/user.rate.service.js');
 
 /* POST /user/rate
 ratedUsername : String 평가 대상사용자 닉네임
 rateScore : Float 평가 점수
 */
-router.post('/', function (req, res, next) {
+router.post('/', verifyAllprocess, function (req, res, next) {
     try {
-        var ratedUsername = req.body.ratedUsername;
+        const ratedUsername = req.body.ratedUsername;
         var rateScore = req.body.rateScore;
         if (ratedUsername === undefined || rateScore === undefined) {
             return res.status(400).send('ratedUsername, rateScore를 입력하세요.');
@@ -21,7 +22,7 @@ router.post('/', function (req, res, next) {
                 rateScore: rateScore
             };
             //TODO: id 매직넘버 제거
-            userRateSerivce.rateUser(rate, 4);
+            userRateSerivce.rateUser(rate, req.jwtInfo.id);
             res.send(rate);
         }
     } catch (error) {

@@ -20,12 +20,12 @@ const getMyInfo = async (userId) => {
     }
 }
 
-const updateUser = async (UserUpdateDto, userId) => {
+const updateUser = async (UserUpdateDto) => {
     try {
-        await UserProfileRepository.updateUser(UserUpdateDto, userId);
-        await UserProfileRepository.updateHashtags(UserUpdateDto.hashtags, userId);
-        await UserProfileRepository.updateRegion(UserUpdateDto.region, userId);
-        await UserProfileRepository.updateProfileImages(UserUpdateDto.profileImages, userId);
+        await UserProfileRepository.updateUser(UserUpdateDto);
+        await UserProfileRepository.updateHashtags(UserUpdateDto.hashtags, UserUpdateDto.userId);
+        await UserProfileRepository.updateRegion(UserUpdateDto.region, UserUpdateDto.userId);
+        await UserProfileRepository.updateProfileImages(UserUpdateDto.profileImages, UserUpdateDto.userId);
     } catch (error) {
         return { error: error.message };
     }
