@@ -216,7 +216,7 @@ const changePassword = async (hashedPassword, id) => {
 }
 
 //TODO: 쿼리 안나오는 문제 해결
-const findUserByUsername = async (filter) => {
+const findUserByFilter = async (filter) => {
     try {
         console.log(filter)
         let query = `
@@ -435,7 +435,7 @@ module.exports = {
 
     changePassword,
 
-    findUserByUsername,
+    findUserByFilter,
 
     updateUser,
     updateHashtags,

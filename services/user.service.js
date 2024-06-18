@@ -42,9 +42,9 @@ const changePassword = async (password, id) => {
     }
 }
 
-const findUserByUsername = async (filter) => {
+const findUserByFilter = async (filter) => {
     try {
-        const userInfos = await UserRepository.findUserByUsername(filter);
+        const userInfos = await UserRepository.findUserByFilter(filter);
         return userInfos;
     } catch (error) {
         return { error: error.message };
@@ -77,6 +77,6 @@ module.exports = {
     createUser,
     deleteUser,
     changePassword,
-    findUserByUsername,
+    findUserByFilter,
     updateUser
 };
