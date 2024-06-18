@@ -2,30 +2,30 @@ const bcrypt = require('bcrypt');
 
 const UserProfileRepository = require('../repositories/user.profile.repository');
 
-const findUserByUsername = async (username, user_id) => {
+const findUserByUsername = async (username, userId) => {
     try {
-        const user = await UserProfileRepository.findUserByUsername(username, user_id);
+        const user = await UserProfileRepository.findUserByUsername(username, userId);
         return user;
     } catch (error) {
         return { error: error.message };
     }
 }
 
-const getMyInfo = async (user_id) => {
+const getMyInfo = async (userId) => {
     try {
-        const user = await UserProfileRepository.getMyInfo(user_id);
+        const user = await UserProfileRepository.getMyInfo(userId);
         return user;
     } catch (error) {
         return { error: error.message };
     }
 }
 
-const updateUser = async (UserUpdateDto, user_id) => {
+const updateUser = async (UserUpdateDto, userId) => {
     try {
-        await UserProfileRepository.updateUser(UserUpdateDto, user_id);
-        await UserProfileRepository.updateHashtags(UserUpdateDto.hashtags, user_id);
-        await UserProfileRepository.updateRegion(UserUpdateDto.region, user_id);
-        await UserProfileRepository.updateProfileImages(UserUpdateDto.profileImages, user_id);
+        await UserProfileRepository.updateUser(UserUpdateDto, userId);
+        await UserProfileRepository.updateHashtags(UserUpdateDto.hashtags, userId);
+        await UserProfileRepository.updateRegion(UserUpdateDto.region, userId);
+        await UserProfileRepository.updateProfileImages(UserUpdateDto.profileImages, userId);
     } catch (error) {
         return { error: error.message };
     }

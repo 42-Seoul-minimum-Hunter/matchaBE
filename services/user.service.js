@@ -11,13 +11,13 @@ const createUser = async (UserCreateDto) => {
     try {
         const hashed = await bcrypt.hash(UserCreateDto.password, 10);
         UserCreateDto.password = hashed;
-        const user_id = await UserRepository.createUser(UserCreateDto);
+        const userId = await UserRepository.createUser(UserCreateDto);
 
-        UserRepository.saveHashtags(UserCreateDto.hashtags, user_id);
-        UserRepository.saveRegion(UserCreateDto.region, user_id);
-        UserRepository.saveProfileImages(UserCreateDto.profileImages, user_id);
+        UserRepository.saveHashtags(UserCreateDto.hashtags, userId);
+        UserRepository.saveRegion(UserCreateDto.region, userId);
+        UserRepository.saveProfileImages(UserCreateDto.profileImages, userId);
 
-        return user_id;
+        return userId;
     } catch (error) {
         return { error: error.message };
     }
