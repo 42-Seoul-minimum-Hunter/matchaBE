@@ -3,9 +3,22 @@ const express = require('express');
 const session = require('express-session');
 const http = require('http');
 const socketIO = require('socket.io');
-const bcrypt = require('bcrypt');
 const morgan = require('morgan');
 require('dotenv').config();
+
+const { Client } = require('pg');
+const fs = require('fs');
+const path = require('path');
+
+require('dotenv').config();
+
+const client = new Client({
+    user: process.env.DB_USER,
+    host: process.env.DB_HOST,
+    database: process.env.DB_NAME,
+    password: process.env.DB_PASSWORD,
+    port: process.env.DB_PORT,
+});
 
 // express 인스턴스 생성
 const app = express();
@@ -47,8 +60,20 @@ app.use((err, req, res, next) => {
 });
 
 // 서버 실행
-app.listen(port, () => {
+app.listen(port, async () => {
     console.log(`App running on port ${port}...`);
+    client.connect();
+
+    try {
+        // schema.sql 파일 읽기
+        const schemaQuery = fs.readFileSync(path.join(__dirname, 'configs', 'schema.sql'), 'utf8');
+
+        // 쿼리 실행
+        await client.query(schemaQuery);
+        console.log('Tables created successfully!');
+    } catch (err) {
+        console.error('Error creating tables:', err);
+    }
 });
 
 

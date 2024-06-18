@@ -13,8 +13,6 @@ const client = new Client({
 });
 
 const UserCreateDto = require('../dtos/user.create.dto');
-const { profile } = require('console');
-
 client.connect();
 
 const createUser = async (UserCreateDto) => {
