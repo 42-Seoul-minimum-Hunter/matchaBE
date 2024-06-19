@@ -35,8 +35,7 @@ const generateJWT = (obj) => {
 
 const createTwofactorCode = async (req, email) => {
     try {
-        const secret = totp.generateSecret();
-        const code = totp.generate(secret);
+        const code = totp.generate(process.env.TWOFACTOR_SECRET);
 
         // 이메일 내용 구성
         const emailContent = `안녕하세요
@@ -47,13 +46,26 @@ const createTwofactorCode = async (req, email) => {
         이 코드는 5분 동안 유효합니다.
         감사합니다.`;
 
-        await sendEmail({
+        console.log('2차 인증 코드 전송을 위한 이메일:', email, emailContent);
+
+        const result = await sendEmail({
             to: email,
             subject: '[MATCHA] 2차 인증 코드',
             text: emailContent,
         });
 
-        req.session.twoFactorCode = secret;
+        //console.log('2차 인증 코드 전송 결과:', result);
+
+        //req.session.twoFactorCode = secret;
+
+        if (result.accepted && result.accepted.length > 0) {
+            console.log('이메일 전송 성공');
+            req.session.twoFactorCode = secret;
+        } else {
+            console.error('이메일 전송 실패:', result);
+            return { error: '이메일 전송에 실패했습니다.' };
+        }
+
 
     } catch (error) {
         return { error: error.message };
@@ -123,7 +135,7 @@ const verifyRegistURL = (req, code) => {
             throw new Error('유효하지 않은 회원 가입 링크입니다.');
         } else {
             const expirationDate = new Date(Date.now() + 60 * 60 * 1000); // 60분 후 만료
-            req.session.registrationVerify = expirationDate;
+            req.session.registrationVerify = { expirationDate, isOauth: false, accessToken: null };
             delete req.session.registrationToken;
             return true;
         }

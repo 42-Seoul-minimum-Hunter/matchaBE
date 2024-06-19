@@ -2,7 +2,7 @@ const bcrypt = require('bcrypt');
 
 const UserRepository = require('../repositories/user.repository');
 
-import { si, seoul, gyeonggi, incheon, daejeon, daegu, busan, ulsan, gwangju, gangwon, chungbuk, chungnam, gyeongbuk, gyeongnam, jeonbuk, jeonnam, jeju } from '/Users/min-yeongjae/matcha/enums/user.region.enum.js';
+const { si, seoul, gyeonggi, incheon, daejeon, daegu, busan, ulsan, gwangju, gangwon, chungbuk, chungnam, gyeongbuk, gyeongnam, jeonbuk, jeonnam, jeju } = require('/Users/min-yeongjae/matcha/enums/user.region.enum.js');
 
 
 

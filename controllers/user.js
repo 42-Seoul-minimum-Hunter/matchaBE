@@ -88,9 +88,6 @@ router.delete('/delete', async function (req, res, next) {
     try {
         await userSerivce.deleteUser(req.jwtInfo.id);
         res.clearCookie('jwt');
-        if (error) {
-            return res.status(400).send(error);
-        }
         res.send();
     } catch (error) {
         next(error);

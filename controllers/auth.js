@@ -107,7 +107,8 @@ router.get('/callback', async function (req, res, next) {
 
 router.post('/twofactor/create', function (req, res, next) {
     try {
-        const email = req.jwtInfo;
+        //const email = req.jwtInfo.email;
+        const email = req.body.email;
         if (!email) {
             res.status(400).send('이메일이 없습니다.');
         }
@@ -126,8 +127,8 @@ router.post('/twofactor/verify', async function (req, res, next) {
     try {
         const code = req.body.code;
 
-        if (!email || !code) {
-            res.status(400).send('이메일 또는 코드가 없습니다.');
+        if (!code) {
+            res.status(400).send('코드가 없습니다.');
         }
         const result = authService.verifyTwoFactorCode(req, code);
 
@@ -136,7 +137,7 @@ router.post('/twofactor/verify', async function (req, res, next) {
         } else {
             const jwtToken = authService.generateJWT({
                 id: req.jwtInfo.id,
-                email: email,
+                email: req.jwtInfo.email,
                 isValid: req.jwtInfo.isValid,
                 isOauth: req.jwtInfo.isOauth,
                 accessToken: req.jwtInfo.accessToken,
@@ -167,7 +168,8 @@ router.post('/twofactor/verify', async function (req, res, next) {
 
 router.post('/register/email/send', function (req, res, next) {
     try {
-        const email = req.jwtInfo;
+        const email = req.body.email;
+        //const email = req.jwtInfo;
         if (!email) {
             res.status(400).send('이메일이 없습니다.');
         }
@@ -184,7 +186,7 @@ code : String 인증 코드
 
 router.post('/register/email/verify', function (req, res, next) {
     try {
-        const code = req.query.code;
+        const code = req.body.code;
 
         if (!email || !code) {
             res.status(400).send('이메일 또는 코드가 없습니다.');
