@@ -48,24 +48,13 @@ const createTwofactorCode = async (req, email) => {
 
         console.log('2차 인증 코드 전송을 위한 이메일:', email, emailContent);
 
-        const result = await sendEmail({
+        await sendEmail({
             to: email,
             subject: '[MATCHA] 2차 인증 코드',
             text: emailContent,
         });
 
         //console.log('2차 인증 코드 전송 결과:', result);
-
-        //req.session.twoFactorCode = secret;
-
-        if (result.accepted && result.accepted.length > 0) {
-            console.log('이메일 전송 성공');
-            req.session.twoFactorCode = secret;
-        } else {
-            console.error('이메일 전송 실패:', result);
-            return { error: '이메일 전송에 실패했습니다.' };
-        }
-
 
     } catch (error) {
         return { error: error.message };
@@ -74,10 +63,7 @@ const createTwofactorCode = async (req, email) => {
 
 const verifyTwoFactorCode = (req, code) => {
     try {
-        const secret = req.session.twoFactorCode;
-        if (!secret) {
-            throw new Error('2차 인증 코드가 생성되지 않았습니다.');
-        }
+        const secret = process.env.TWOFACTOR_SECRET;
         if (totp.verify({ secret, code })) {
             delete req.session.twoFactorCode;
             return true;
@@ -91,14 +77,16 @@ const verifyTwoFactorCode = (req, code) => {
 
 const createRegistURL = async (req, email) => {
     try {
-        const token = crypto.randomBytes(20).toString('hex');
+        const code = crypto.randomBytes(20).toString('hex');
         const expirationDate = new Date(Date.now() + 60 * 60 * 1000); // 30분 후 만료
+
+        console.log('회원 가입 URL 생성:', code, expirationDate, email)
 
         // 이메일 내용 구성
         const emailContent = `안녕하세요
   
         귀하의 등록 URL는 다음과 같습니다:
-        ${REGISTER_VERIFY_URL}?token=${token}
+        ${process.env.REGISTER_VERIFY_URL}?code=${code}
     
         이 코드는 5분 동안 유효합니다.
         감사합니다.`;
@@ -111,7 +99,7 @@ const createRegistURL = async (req, email) => {
 
         // 세션에 토큰 정보 저장
         req.session.registrationToken = {
-            token,
+            code,
             expirationDate,
         };
 

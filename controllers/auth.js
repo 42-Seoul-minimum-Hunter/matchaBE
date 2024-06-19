@@ -180,15 +180,15 @@ router.post('/register/email/send', function (req, res, next) {
     }
 });
 
-/* POST /auth/register/email/verify
+/* GET /auth/register/email/verify
 code : String 인증 코드
 */
 
-router.post('/register/email/verify', function (req, res, next) {
+router.get('/register/email/verify', function (req, res, next) {
     try {
-        const code = req.body.code;
+        const code = req.query.code;
 
-        if (!email || !code) {
+        if (!code) {
             res.status(400).send('이메일 또는 코드가 없습니다.');
         }
         const result = authService.verifyRegistURL(req, code);

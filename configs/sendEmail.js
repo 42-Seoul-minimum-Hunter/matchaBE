@@ -4,10 +4,15 @@ const nodemailer = require('nodemailer'); // 이메일 전송을 위한 nodemail
 require('dotenv').config();
 
 async function sendEmail({ to, subject, text }) {
+
     try {
+
         if (!to || !subject || !text) {
             throw new Error('이메일 전송을 위한 정보가 충분하지 않습니다.');
         }
+
+        console.log('이메일 전송을 위한 메일 서버 연결:', to, subject
+            , text);
 
         // 이메일 전송을 위한 메일 서버 연결
         const transporter = nodemailer.createTransport({
@@ -20,6 +25,8 @@ async function sendEmail({ to, subject, text }) {
             },
         });
 
+        console.log('이메일 전송을 위한 메일 서버 연결:', transporter);
+
         // 메일 옵션 설정
         const mailOptions = {
             from: 'yeomin@student.42seoul.kr',
@@ -29,7 +36,10 @@ async function sendEmail({ to, subject, text }) {
         };
 
         // 이메일 전송
-        await transporter.sendMail(mailOptions);
+        const result = await transporter.sendMail(mailOptions);
+
+        //console.log('이메일 전송 결과:', result);
+
     }
     catch (error) {
         console.error('이메일 전송 중 오류 발생:', error);
