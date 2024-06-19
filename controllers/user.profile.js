@@ -13,7 +13,6 @@ router.get('/', async function (req, res, next) {
         if (username === undefined) {
             return res.status(400).send('사용자 닉네임을 입력하세요.');
         }
-        //TODO: id 매직넘버 제거
         let user = await userProfileService.findUserByUsername(username, req.jwtInfo.id);
         res.send(user);
     } catch (error) {
@@ -68,7 +67,6 @@ router.put('/update', function (req, res, next) {
             region: req.body.region,
             profileImages: req.body.profileImages
         }
-        //TODO : id magic number 제거
         userProfileService.updateUser(user);
         res.send();
     } catch (error) {

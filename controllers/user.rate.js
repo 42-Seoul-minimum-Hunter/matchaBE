@@ -21,7 +21,6 @@ router.post('/', function (req, res, next) {
                 ratedUsername: ratedUsername,
                 rateScore: rateScore
             };
-            //TODO: id 매직넘버 제거
             userRateSerivce.rateUser(rate, req.jwtInfo.id);
             res.send(rate);
         }
