@@ -45,11 +45,16 @@ router.post('/create', async function (req, res, next) {
             region: req.body.region,
             profileImages: req.body.profileImages
         }
+
+        const expirationDate = req.session.registrationVerify.expirationDate;
         const { error, user_id } = await userSerivce.createUser(user);
         if (error) {
             return res.status(400).send(error);
+        } else if (expirationDate < new Date()) {
+            return res.status(400).send('비밀번호 변경 기간이 만료되었습니다.');
         }
         user.id = user_id;
+        delete req.session.registrationVerify;
         res.send(user);
     } catch (error) {
         next(error);

@@ -80,7 +80,7 @@ const verifyTwoFactorCode = (req, code) => {
 const createRegistURL = async (req, email) => {
     try {
         const token = crypto.randomBytes(20).toString('hex');
-        const expirationDate = new Date(Date.now() + 5 * 60 * 1000); // 5분 후 만료
+        const expirationDate = new Date(Date.now() + 60 * 60 * 1000); // 30분 후 만료
 
         // 이메일 내용 구성
         const emailContent = `안녕하세요
@@ -121,12 +121,13 @@ const verifyRegistURL = (req, code) => {
         // 토큰 일치 확인
         if (sessionToken !== token) {
             throw new Error('유효하지 않은 회원 가입 링크입니다.');
+        } else {
+            const expirationDate = new Date(Date.now() + 60 * 60 * 1000); // 60분 후 만료
+            req.session.registrationVerify = expirationDate;
+            delete req.session.registrationToken;
+            return true;
         }
 
-        // 세션 정보 삭제
-        delete req.session.registrationToken;
-
-        return true;
     } catch (error) {
         return { error: error.message };
     }

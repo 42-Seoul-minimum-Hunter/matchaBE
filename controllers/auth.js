@@ -72,20 +72,9 @@ router.get('/callback', async function (req, res, next) {
         }
 
         if (!user) {
-            const jwtToken = authService.generateJWT(oauthInfo);
-
-            // JWT 토큰을 쿠키에 담기
-            res.cookie('jwt', jwtToken, {
-                httpOnly: true, // 클라이언트 측 JavaScript에서 접근할 수 없도록 함
-                secure: true, // HTTPS 환경에서만 전송되도록 함
-                maxAge: 24 * 60 * 60 * 1000 // 쿠키 유효기간 1일
-            });
-
-            // JWT 토큰을 응답 헤더에 담기
-            res.set('Authorization', `Bearer ${jwtToken}`);
-
-            //res.redirect(process.env.OAUTH_USER_REGISTRATION_URL);
-            res.send('redirect');
+            const expirationDate = expirationDate = new Date(Date.now() + 60 * 60 * 1000);
+            req.session.registrationVerify = expirationDate;
+            res.redirect(process.env.OAUTH_USER_REGISTRATION_URL);
         } else {
             const jwtToken = authService.generateJWT({
                 id: user.id,
@@ -205,25 +194,6 @@ router.post('/register/email/verify', function (req, res, next) {
         if (result === false) {
             res.status(400).send('인증번호가 틀렸습니다.');
         } else {
-            const jwtToken = authService.generateJWT({
-                id: req.jwtInfo.id,
-                email: email,
-                isValid: true,
-                isOauth: req.jwtInfo.isOauth,
-                accessToken: req.jwtInfo.accessToken,
-                twofaVerified: req.jwtInfo.twofaVerified
-            });
-
-            // JWT 토큰을 쿠키에 담기
-            res.cookie('jwt', jwtToken, {
-                httpOnly: true,
-                secure: true,
-                maxAge: 24 * 60 * 60 * 1000
-            });
-
-            // JWT 토큰을 응답 헤더에 담기
-            res.set('Authorization', `Bearer ${jwtToken}`);
-
             res.send();
         }
     } catch (error) {
