@@ -137,14 +137,14 @@ const createResetPasswordURL = async (req, username, email) => {
     try {
         await authRepository.findUserForResetPassword(username, email);
 
-        const token = crypto.randomBytes(20).toString('hex');
+        const code = crypto.randomBytes(20).toString('hex');
         const expirationDate = new Date(Date.now() + 5 * 60 * 1000); // 5분 후 만료
 
         // 이메일 내용 구성
         const emailContent = `안녕하세요
 
         귀하의 비밀번호 초기화 URL는 다음과 같습니다:
-        ${BE_RESET_PASSWORD_URL}?token=${token}
+        ${process.env.BE_RESET_PASSWORD_URL}?code=${code}
 
         이 코드는 5분 동안 유효합니다.
         감사합니다.`;
@@ -157,7 +157,7 @@ const createResetPasswordURL = async (req, username, email) => {
 
         // 세션에 토큰 정보 저장
         req.session.registrationToken = {
-            token,
+            code,
             expirationDate,
             email,
         };
