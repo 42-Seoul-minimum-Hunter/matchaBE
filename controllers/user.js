@@ -46,7 +46,7 @@ router.post('/create', async function (req, res, next) {
             profileImages: req.body.profileImages
         }
 
-        const expirationDate = req.session.registrationVerify.expirationDate;
+        const { expirationDate, isOauth, accessToken } = req.session.registrationVerify.expirationDate;
         const { error, user_id } = await userSerivce.createUser(user);
         if (error) {
             return res.status(400).send(error);
@@ -54,6 +54,26 @@ router.post('/create', async function (req, res, next) {
             return res.status(400).send('비밀번호 변경 기간이 만료되었습니다.');
         }
         user.id = user_id;
+
+        const jwtToken = authService.generateJWT({
+            id: user.id,
+            email: user.email,
+            isValid: true,
+            isOauth: isOauth,
+            accessToken: accessToken,
+            twofaVerified: false
+        });
+
+        // JWT 토큰을 쿠키에 담기
+        res.cookie('jwt', jwtToken, {
+            httpOnly: true,
+            secure: true,
+            maxAge: 24 * 60 * 60 * 1000
+        });
+
+        // JWT 토큰을 응답 헤더에 담기
+        res.set('Authorization', `Bearer ${jwtToken}`);
+
         delete req.session.registrationVerify;
         res.send(user);
     } catch (error) {

@@ -1,4 +1,4 @@
-const UserCity = {
+const si = {
     서울: '서울',
     경기: '경기',
     인천: '인천',
@@ -122,6 +122,10 @@ const busan = {
 const ulsan = {
     남구: "남구", 동구: "동구", 북구: "북구", 중구: "중구", 울주군: "울주군"
 };
+
+const gwangju = {
+    광산구: "광산구", 남구: "남구", 동구: "동구", 북구: "북구", 서구: "서구"
+}
 
 const gangwon = {
     강릉시: "강릉시",
@@ -275,4 +279,4 @@ const jeju = {
 }
 
 
-module.exports = { UserCity, UserGu };
+module.exports = { si, seoul, gyeonggi, incheon, daejeon, daegu, busan, ulsan, gwangju, gangwon, chungbuk, chungnam, gyeongbuk, gyeongnam, jeonbuk, jeonnam, jeju };

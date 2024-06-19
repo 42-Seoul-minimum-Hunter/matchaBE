@@ -73,13 +73,13 @@ router.get('/callback', async function (req, res, next) {
 
         if (!user) {
             const expirationDate = expirationDate = new Date(Date.now() + 60 * 60 * 1000);
-            req.session.registrationVerify = expirationDate;
+            req.session.registrationVerify = { expirationDate, isOauth: true, accessToken: oauthInfo.accessToken };
             res.redirect(process.env.OAUTH_USER_REGISTRATION_URL);
         } else {
             const jwtToken = authService.generateJWT({
                 id: user.id,
                 email: user.email,
-                isValid: user.isValid,
+                isValid: true,
                 isOauth: true,
                 accessToken: oauthInfo.accessToken,
                 twofaVerified: false

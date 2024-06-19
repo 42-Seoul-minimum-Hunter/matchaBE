@@ -2,6 +2,10 @@ const bcrypt = require('bcrypt');
 
 const UserRepository = require('../repositories/user.repository');
 
+import { si, seoul, gyeonggi, incheon, daejeon, daegu, busan, ulsan, gwangju, gangwon, chungbuk, chungnam, gyeongbuk, gyeongnam, jeonbuk, jeonnam, jeju } from '/Users/min-yeongjae/matcha/enums/user.region.enum.js';
+
+
+
 // TODO : username, password 정규표현식
 
 
@@ -51,14 +55,15 @@ const findUserByFilter = async (filter) => {
     }
 }
 
-//const getRegion = async (id) => {
-//    try {
-//        const region = await UserRepository.getRegion(id);
-//        return region;
-//    } catch (error) {
-//        return { error: error.message };
-//    }
-//}
+const checkRightRegion = async (si, gu) => {
+    try {
+
+        switch (si) { }
+
+    } catch (error) {
+        return { error: error.message };
+    }
+}
 
 
 

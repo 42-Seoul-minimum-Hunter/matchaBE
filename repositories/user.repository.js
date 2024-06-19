@@ -290,15 +290,7 @@ const findUserByFilter = async (filter) => {
             maxRate = parseFloat(5);
         }
 
-
-        //console.log(query);
-        //console.log(params);
-
-        console.log(query)
-        console.log(params)
         const userInfos = await client.query(query, params);
-
-        console.log('userInfos: ' + userInfos.rows)
 
 
         // 사용자 평균 평점 계산 및 필터링
