@@ -127,15 +127,15 @@ const saveRegion = async (region, userId) => {
     }
 }
 
-const saveProfileImages = async (profileImages, userId) => {
+const saveProfileImages = async (UserCreateDto, userId) => {
     try {
-        if (profileImages.length > 5) {
+        if (UserCreateDto.profileImages.length > 5) {
             const error = new Error('프로필 이미지는 최대 5개까지만 등록할 수 있습니다.');
             error.statusCode = 400;
             throw error;
         }
 
-        const encodedProfileImages = profileImages.map((image) => {
+        const encodedProfileImages = UserCreateDto.profileImages.map((image) => {
             return Buffer.from(image).toString('base64');
         });
 
@@ -151,6 +151,10 @@ const saveProfileImages = async (profileImages, userId) => {
                 encodedProfileImages,
             ]
         );
+        UserCreateDto.profileImages = encodedProfileImages;
+        UserCreateDto.id = userId;
+        return UserCreateDto;
+
     } catch (error) {
         console.log(error);
         throw error;
@@ -192,15 +196,15 @@ const deleteUser = async (id) => {
     }
 }
 
-const changePassword = async (hashedPassword, userId) => {
+const changePassword = async (hashedPassword, email) => {
     try {
-        console.log(hashedPassword)
+        //console.log(hashedPassword)
         const result = await client.query(
             `UPDATE users
              SET password = $1, updated_at = now()
-             WHERE id = $2 AND deleted_at IS NULL
+             WHERE email = $2 AND deleted_at IS NULL
              RETURNING *`,
-            [hashedPassword, userId]
+            [hashedPassword, email]
         );
 
         if (result.rows.length === 0) {
@@ -214,7 +218,6 @@ const changePassword = async (hashedPassword, userId) => {
     }
 }
 
-//TODO: 쿼리 안나오는 문제 해결
 const findUserByFilter = async (filter) => {
     try {
         //console.log(filter)
@@ -226,43 +229,56 @@ const findUserByFilter = async (filter) => {
             maxAge,
             minRate,
             maxRate,
+            si,
+            gu
         } = filter;
 
-        let query = `
-            SELECT u.*
-            FROM users u
-            `
+        let query = 'SELECT u.* FROM users u';
+        const params = [];
 
-        let params = [];
+        // hashtags 조건 추가
+        if (hashtags) {
+            query += ' JOIN user_hashtags uh ON u.id = uh.user_id';
+
+        }
+
+        if (si) {
+            query += ' JOIN user_regions ur ON u.id = ur.user_id'
+        }
 
         if (hashtags) {
-            query += `
-                JOIN user_hashtags uh ON u.id = uh.user_id
-                WHERE $${params.length + 1} <@ uh.hashtags
-            `;
+            query += ' WHERE $1 <@ uh.hashtags';
             params.push(hashtags);
-        } else if (username) {
-            query += `
-                WHERE u.username = $${params.length + 1}
-            `;
-            params.push(username);
-        } else {
-            query += `
-                WHERE 1 = 1
-            `;
         }
 
+        // si, gu 조건 추가
+        if (si) {
+            query += ' AND ur.si = $' + (params.length + 1);
+            params.push(si);
+
+            if (gu) {
+                query += ' AND ur.gu = $' + (params.length + 1);
+                params.push(gu);
+            }
+        }
+
+        // username 조건 추가
+        if (username) {
+            if (hashtags || si) {
+                query += ' AND u.username = $' + (params.length + 1);
+            } else {
+                query += ' WHERE u.username = $' + (params.length + 1);
+            }
+            params.push(username);
+        }
+
+        // minAge, maxAge 조건 추가
         if (minAge) {
-            query += `
-                AND u.age >= $${params.length + 1}
-            `;
+            query += ' AND u.age >= $' + (params.length + 1);
             params.push(minAge);
         }
-
         if (maxAge) {
-            query += `
-                AND u.age <= $${params.length + 1}
-            `;
+            query += ' AND u.age <= $' + (params.length + 1);
             params.push(maxAge);
         }
 
@@ -278,7 +294,11 @@ const findUserByFilter = async (filter) => {
         //console.log(query);
         //console.log(params);
 
+        console.log(query)
+        console.log(params)
         const userInfos = await client.query(query, params);
+
+        console.log('userInfos: ' + userInfos.rows)
 
 
         // 사용자 평균 평점 계산 및 필터링
@@ -288,6 +308,7 @@ const findUserByFilter = async (filter) => {
             let rate;
             if (ratingInfo.rows.length === 0) {
                 rate = parseFloat(0);
+                console.log('rate: ' + rate)
             } else {
                 const ratingScores = ratingInfo.rows.map(row => row.rate_score);
                 const totalScore = ratingScores.reduce((acc, score) => acc + score, 0);
@@ -312,10 +333,9 @@ const findUserByFilter = async (filter) => {
 
             return {
                 username: userInfo.username,
-                lastName: userInfo.last_name,
-                firstName: userInfo.first_name,
                 age: userInfo.age,
                 profileImages: profileImages[0],
+                rate: userInfo.rate,
             }
         }));
 

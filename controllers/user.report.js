@@ -10,7 +10,7 @@ reportedUsername : String 신고 대상 사용자 닉네임
 reason : String(ENUM) 신고 사유
 */
 
-router.post('/', verifyAllprocess, async function (req, res, next) {
+router.post('/', async function (req, res, next) {
     try {
         const reportedUsername = req.body.reportedUsername;
         const reason = req.body.reason;

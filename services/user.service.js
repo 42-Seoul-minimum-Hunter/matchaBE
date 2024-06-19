@@ -13,11 +13,11 @@ const createUser = async (UserCreateDto) => {
         UserCreateDto.password = hashed;
         const userId = await UserRepository.createUser(UserCreateDto);
 
-        UserRepository.saveHashtags(UserCreateDto.hashtags, userId);
-        UserRepository.saveRegion(UserCreateDto.region, userId);
-        UserRepository.saveProfileImages(UserCreateDto.profileImages, userId);
+        await UserRepository.saveHashtags(UserCreateDto.hashtags, userId);
+        await UserRepository.saveRegion(UserCreateDto.region, userId);
+        const resultUserInfo = await UserRepository.saveProfileImages(UserCreateDto, userId);
 
-        return userId;
+        return resultUserInfo;
     } catch (error) {
         return { error: error.message };
     }
@@ -32,10 +32,10 @@ const deleteUser = async (id) => {
     }
 }
 
-const changePassword = async (password, id) => {
+const changePassword = async (password, email) => {
     try {
         const hashed = await bcrypt.hash(password, 10);
-        await UserRepository.changePassword(hashed, id);
+        await UserRepository.changePassword(hashed, email);
         //console.log("service");
     } catch (error) {
         return { error: error.message };

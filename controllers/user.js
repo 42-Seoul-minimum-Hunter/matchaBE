@@ -59,10 +59,9 @@ router.post('/create', async function (req, res, next) {
 /* DELETE /user/delete
 */
 
-router.delete('/delete', verifyAllprocess, async function (req, res, next) {
+router.delete('/delete', async function (req, res, next) {
     try {
-        let error = await userSerivce.deleteUser(req.jwtInfo.id);
-
+        await userSerivce.deleteUser(req.jwtInfo.id);
         res.clearCookie('jwt');
         if (error) {
             return res.status(400).send(error);
@@ -78,14 +77,21 @@ router.delete('/delete', verifyAllprocess, async function (req, res, next) {
 /* POST /user/change/password
 password : String 사용자 비밀번호
 */
-router.post('/change/password', verifyAllprocess, function (req, res, next) {
+router.post('/change/password', async function (req, res, next) {
     try {
         let password = req.body.password;
+
         if (!password) {
             return res.status(400).send('비밀번호를 입력해주세요.');
         }
-        userSerivce.changePassword(password, req.jwtInfo.id);
-        res.send();
+
+        const { email, expirationDate } = req.session.resetPassword;
+        if (expirationDate < new Date()) {
+            return res.status(400).send('비밀번호 변경 기간이 만료되었습니다.');
+        }
+
+        const resultUserInfo = await userSerivce.changePassword(password, email);
+        res.send(resultUserInfo);
     } catch (error) {
         next(error);
     }
@@ -93,24 +99,29 @@ router.post('/change/password', verifyAllprocess, function (req, res, next) {
 
 
 /* GET /user/find
+username : String 사용자 닉네임
 hashtags : String 사용자 해시태그
 minAge : Number 사용자 최소 나이
 maxAge : Number 사용자 최대 나이
 minRate : Number 사용자 평점
 maxRate : Number 사용자 평점
+si : String 사용자 시
+gu : String 사용자 구
 */
 
-router.get('/find', verifyAllprocess, async function (req, res, next) {
+router.get('/find', async function (req, res, next) {
     try {
-        let { hashtags, minAge, maxAge, minRate, maxRate } = req.query;
+        let { username, hashtags, minAge, maxAge, minRate, maxRate, si, gu } = req.query;
 
         const filter = {
-            username: req.jwtInfo.username,
+            username: username || undefined,
             hashtags: hashtags || undefined,
             minAge: minAge ? Number(minAge) : undefined,
             maxAge: maxAge ? Number(maxAge) : undefined,
             minRate: minRate ? Number(minRate) : undefined,
-            maxRate: maxRate ? Number(maxRate) : undefined
+            maxRate: maxRate ? Number(maxRate) : undefined,
+            si: si || undefined,
+            gu: gu || undefined
         };
         if (minAge && maxAge && minAge > maxAge) {
             return res.status(400).send('최소 나이가 최대 나이보다 큽니다.');
@@ -118,6 +129,8 @@ router.get('/find', verifyAllprocess, async function (req, res, next) {
             return res.status(400).send('최소 나이가 0보다 작습니다.');
         } else if (minRate && maxRate && minRate > maxRate) {
             return res.status(400).send('최소 평점이 최대 평점보다 큽니다.');
+        } else if (si === undefined && gu !== undefined) {
+            return res.status(400).send('시를 입력해주세요.');
         }
 
         const UserInfos = await userSerivce.findUserByFilter(filter);
@@ -131,7 +144,7 @@ router.get('/find', verifyAllprocess, async function (req, res, next) {
 /* GET /user/search/region
 */
 
-router.get('/search/region', verifyAllprocess, function (req, res, next) {
+router.get('/search/region', function (req, res, next) {
     try {
         let region = userSerivce.getRegion(req.jwtInfo.id);
         res.send(region);

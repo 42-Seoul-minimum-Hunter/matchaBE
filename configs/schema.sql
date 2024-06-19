@@ -10,9 +10,10 @@ CREATE TABLE IF NOT EXISTS users (
     biography VARCHAR(255),
     age INT NOT NULL,
     is_oauth BOOLEAN NOT NULL,
-    is_active BOOLEAN NOT NULL,
+    is_valid BOOLEAN NOT NULL,
     gps_allowed_at TIMESTAMP,
     connected_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     deleted_at TIMESTAMP
 );

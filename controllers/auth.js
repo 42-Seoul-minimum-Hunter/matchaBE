@@ -116,7 +116,7 @@ router.get('/callback', async function (req, res, next) {
 /* POST /auth/twoFactor/create
 */
 
-router.post('/twofactor/create', verifyTwoFA, function (req, res, next) {
+router.post('/twofactor/create', function (req, res, next) {
     try {
         const email = req.jwtInfo;
         if (!email) {
@@ -133,7 +133,7 @@ router.post('/twofactor/create', verifyTwoFA, function (req, res, next) {
 code : String 2FA 인증 코드
 */
 
-router.post('/twofactor/verify', verifyTwoFA, async function (req, res, next) {
+router.post('/twofactor/verify', async function (req, res, next) {
     try {
         const code = req.body.code;
 
@@ -176,7 +176,7 @@ router.post('/twofactor/verify', verifyTwoFA, async function (req, res, next) {
 /* POST /auth/register/email/send
 */
 
-router.post('/register/email/send', verifyValid, function (req, res, next) {
+router.post('/register/email/send', function (req, res, next) {
     try {
         const email = req.jwtInfo;
         if (!email) {
@@ -193,7 +193,7 @@ router.post('/register/email/send', verifyValid, function (req, res, next) {
 code : String 인증 코드
 */
 
-router.post('/register/email/verify', verifyValid, function (req, res, next) {
+router.post('/register/email/verify', function (req, res, next) {
     try {
         const code = req.query.code;
 

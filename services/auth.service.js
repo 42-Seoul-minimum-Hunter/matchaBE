@@ -158,6 +158,7 @@ const createResetPasswordURL = async (req, username, email) => {
         req.session.registrationToken = {
             token,
             expirationDate,
+            email,
         };
 
     } catch (error) {
@@ -168,8 +169,7 @@ const createResetPasswordURL = async (req, username, email) => {
 const verifyResetPasswordURL = (req, code) => {
     try {
         // 세션에서 토큰 정보 조회
-        const { token: sessionToken, expirationDate } = req.session.registrationToken;
-
+        const { token: sessionToken, expirationDate, email } = req.session.registrationToken;
         // 유효 기간 확인
         if (expirationDate < new Date()) {
             throw new Error('비밀번호 초기화 링크가 만료되었습니다.');
@@ -178,10 +178,14 @@ const verifyResetPasswordURL = (req, code) => {
         // 토큰 일치 확인
         if (sessionToken !== token) {
             throw new Error('유효하지 않은 비밀번호 초기화 링크입니다.');
+        } else {
+            const expirationDate = new Date(Date.now() + 5 * 60 * 1000); // 5분 후 만료
+            req.session.resetPasswordEmail = { email, expirationDate };
+            delete req.session.registrationToken;
+            return true;
         }
 
         // 세션 정보 삭제
-        delete req.session.registrationToken;
     } catch (error) {
         return { error: error.message };
     }

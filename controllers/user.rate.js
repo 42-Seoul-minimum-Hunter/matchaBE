@@ -8,7 +8,7 @@ const userRateSerivce = require('../services/user.rate.service.js');
 ratedUsername : String 평가 대상사용자 닉네임
 rateScore : Float 평가 점수
 */
-router.post('/', verifyAllprocess, function (req, res, next) {
+router.post('/', function (req, res, next) {
     try {
         const ratedUsername = req.body.ratedUsername;
         var rateScore = req.body.rateScore;

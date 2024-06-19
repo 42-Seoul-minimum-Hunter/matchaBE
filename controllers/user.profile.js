@@ -7,7 +7,7 @@ const userProfileService = require('../services/user.profile.service.js');
 /* GET /user/profile/
 username : String 사용자 닉네임
 */
-router.get('/', verifyAllprocess, async function (req, res, next) {
+router.get('/', async function (req, res, next) {
     try {
         const username = req.query.username;
         if (username === undefined) {
@@ -23,7 +23,7 @@ router.get('/', verifyAllprocess, async function (req, res, next) {
 
 /* GET /user/profile/me/
 */
-router.get('/me', verifyAllprocess, async function (req, res, next) {
+router.get('/me', async function (req, res, next) {
     try {
         const user = await userProfileService.getMyInfo(req.jwtInfo.id);
         res.send(user);
@@ -50,7 +50,7 @@ profileImages : String 사용자 프로필 이미지 => BASE64로 반환 예정
 }
 */
 
-router.put('/update', verifyAllprocess, function (req, res, next) {
+router.put('/update', function (req, res, next) {
     try {
         const user = {
             id: req.jwtInfo.id,
