@@ -8,6 +8,8 @@ const userRateSerivce = require('../services/user.rate.service.js');
 ratedUsername : String 평가 대상사용자 닉네임
 rateScore : Float 평가 점수
 */
+
+//TODO: jwt 토큰 확인 추가
 router.post('/', async function (req, res, next) {
     try {
         const ratedUsername = req.body.ratedUsername;
@@ -17,12 +19,8 @@ router.post('/', async function (req, res, next) {
         } else if (rateScore < 0.0 || rateScore > 5.0) {
             return res.status(400).send('rateScore는 0에서 5 사이의 값을 입력하세요.');
         } else {
-            var rate = {
-                ratedUsername: ratedUsername,
-                rateScore: rateScore
-            };
-            await userRateSerivce.rateUser(rate, req.jwtInfo.id);
-            res.send(rate);
+            await userRateSerivce.rateUser(ratedUsername, parseFloat(rateScore), req.jwtInfo.id);
+            res.send();
         }
     } catch (error) {
         next(error);

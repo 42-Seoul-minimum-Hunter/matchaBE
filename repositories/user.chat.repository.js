@@ -58,21 +58,14 @@ const getChatInfo = async (userId) => {
 단, 유저가 이미 채팅방을 가지고 있다면
 삭제된 채팅방을 복구한다.
 */
-const generateChatRoom = async (chatedUsername, userId) => {
+const generateChatRoom = async (chatUserId, userId) => {
     try {
         const existingChatRoom = await client.query(`
             SELECT * 
             FROM user_chat_rooms
-            WHERE user_id = $1 AND chated_id = (
-                SELECT id
-                FROM users
-                WHERE username = $2
-            ) OR WHERE chated_id = $1 AND user_id = (
-                SELECT id
-                FROM users
-                WHERE username = $2
-            )
-        `, [userId, chatedUsername]);
+            WHERE user_id = $1 AND chated_id = $2
+            OR WHERE chated_id = $1 AND user_id = $2
+        `, [userId, chatUserId]);
 
         if (existingChatRoom.rows.length > 0) {
             await client.query(`
@@ -90,14 +83,10 @@ const generateChatRoom = async (chatedUsername, userId) => {
                 created_at
             ) VALUES (
                 $1,
-                (
-                    SELECT id
-                    FROM users
-                    WHERE username = $2
-                ),
+                $2,
                 now()
             )
-        `, [userId, chatedUsername]);
+        `, [userId, chatUserId]);
 
     } catch (error) {
         console.log(error);
@@ -105,21 +94,14 @@ const generateChatRoom = async (chatedUsername, userId) => {
     }
 }
 
-const deleteChatRoom = async (chatedUsername, userId) => {
+const deleteChatRoom = async (chatUserId, userId) => {
     try {
         const existingChatRoom = await client.query(`
             SELECT * 
             FROM user_chat_rooms
-            WHERE user_id = $1 AND chated_id = (
-                SELECT id
-                FROM users
-                WHERE username = $2
-            ) OR WHERE chated_id = $1 AND user_id = (
-                SELECT id
-                FROM users
-                WHERE username = $2
-            )
-        `, [userId, chatedUsername]);
+            WHERE user_id = $1 AND chated_id = $2
+            OR WHERE chated_id = $1 AND user_id = $2
+        `, [userId, chatUserId]);
 
         if (existingChatRoom.rows.length === 0) {
             throw new Error('채팅 기록이 존재하지 않습니다.');

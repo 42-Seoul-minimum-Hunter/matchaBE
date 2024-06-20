@@ -10,6 +10,8 @@ reportedUsername : String 신고 대상 사용자 닉네임
 reason : String(ENUM) 신고 사유
 */
 
+//TODO: jwt 토큰 확인 추가
+//TODO: reason ENUM 확인
 router.post('/', async function (req, res, next) {
     try {
         const { reportedUsername, reason } = req.body;

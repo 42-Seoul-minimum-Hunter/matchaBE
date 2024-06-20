@@ -27,6 +27,12 @@ profileImages : String 사용자 프로필 이미지 => BASE64로 반환 예정
 }
 */
 
+
+//TODO: jwt 토큰 확인 추가
+//TODO: username, password 정규표현식, email 형식 확인, biography 정규표현식
+//TODO: region si, gu 존재 확인, 올바른 시, 구인지 확인
+//TODO: 이미지 형식 확인
+//TODO: 해시태그 형식 확인
 router.post('/create', checkOauthLogin, async function (req, res, next) {
     try {
         const user = {
@@ -55,21 +61,26 @@ router.post('/create', checkOauthLogin, async function (req, res, next) {
         } else if (user.gpsAllowedAt === undefined) {
             return res.status(400).send('GPS 사용 허용 여부를 입력해주세요.');
         }
-        else if (user.profileImages.length > 5) {
+        else if (user.profileImages.length > 5 && user.profileImages.length < 1) {
             return res.status(400).send('프로필 이미지는 최대 5개까지만 등록할 수 있습니다.');
-        } else if (user.hashtags.length > 5) {
+        } else if (user.hashtags.length > 5 && user.hashtags.length < 1) {
             return res.status(400).send('해시태그는 최대 5개까지만 등록할 수 있습니다.');
+        } else if (user.biography.length > 100) {
+            return res.status(400).send('자기소개는 100자 이내로 입력해주세요.');
+        } else if (user.password.length < 8 && user.password.length > 15) {
+            return res.status(400).send('비밀번호는 8자 이상 15자 이하로 입력해주세요.');
+        }
+
+        if (req.jwtInfo && req.jwtInfo.isOauth && req.jwtInfo.accessToken) {
+            user.isOauth = true;
+        } else {
+            user.isOauth = false;
         }
 
         const user_id = await userSerivce.createUser(user);
-
-        if (error) {
-            return res.status(400).send(error);
-        }
         user.id = user_id;
 
         let jwtToken;
-
         if (req.jwtInfo && req.jwtInfo.isOauth && req.jwtInfo.accessToken) {
             jwtToken = authService.generateJWT({
                 id: user.id,
@@ -92,15 +103,7 @@ router.post('/create', checkOauthLogin, async function (req, res, next) {
             user.isOauth = false;
         }
 
-        // JWT 토큰을 쿠키에 담기
-        res.cookie('jwt', jwtToken, {
-            httpOnly: true,
-            secure: true,
-            maxAge: 24 * 60 * 60 * 1000
-        });
-
-        // JWT 토큰을 응답 헤더에 담기
-        res.set('Authorization', `Bearer ${jwtToken}`);
+        res = res.authService.setToken(jwtToken);
 
         res.send(user);
     } catch (error) {

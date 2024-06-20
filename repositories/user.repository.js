@@ -28,24 +28,8 @@ const createUser = async (req, UserCreateDto) => {
             biography,
             age,
             gpsAllowedAt,
+            isOauth,
         } = UserCreateDto;
-
-        // username과 email 중복 확인
-        const existingUser = await client.query(
-            `SELECT * FROM users WHERE username = $1 OR email = $2`,
-            [username, email]
-        );
-        if (existingUser.rows.length > 0) {
-            const error = new Error('Username or email already exists');
-            error.statusCode = 409;
-            throw error;
-        }
-
-        let isOauth = false;
-
-        if (req.jwtInfo && req.jwtInfo.isOauth && req.jwtInfo.accessToken) {
-            isOauth = true;
-        }
 
         const result = await client.query(
             `INSERT INTO users (
@@ -90,85 +74,15 @@ const createUser = async (req, UserCreateDto) => {
     }
 }
 
-const saveHashtags = async (hashtags, userId) => {
-    try {
-        const result = await client.query(
-            `INSERT INTO user_hashtags (
-                user_id,
-                hashtags,
-                updated_at
-            ) VALUES ($1, $2, now())
-            RETURNING *`,
-            [
-                userId,
-                hashtags,
-            ]
-        )
-    } catch (error) {
-        console.log(error);
-        throw error;
-    }
-}
-
-const saveRegion = async (region, userId) => {
-    try {
-
-        const result = await client.query(
-            `INSERT INTO user_regions (
-                user_id,
-                si,
-                gu,
-                updated_at
-            ) VALUES ($1, $2, $3, now())
-            RETURNING *`,
-            [
-                userId,
-                region.si,
-                region.gu,
-            ]
-        )
-    } catch (error) {
-        console.log(error);
-        throw error;
-    }
-}
-
-const saveProfileImages = async (UserCreateDto, userId) => {
-    try {
-        const encodedProfileImages = UserCreateDto.profileImages.map((image) => {
-            return Buffer.from(image).toString('base64');
-        });
-
-        const result = await client.query(
-            `INSERT INTO user_profile_images (
-                user_id,
-                profile_images,
-                updated_at
-            ) VALUES ($1, $2, now())
-            RETURNING *`,
-            [
-                userId,
-                encodedProfileImages,
-            ]
-        );
-
-        return userId;
-
-    } catch (error) {
-        console.log(error);
-        throw error;
-    }
-};
-
 const deleteUser = async (id) => {
     try {
         // 해당 유저가 이미 삭제되었는지 확인
-        const existingUser = await client.query(
+        const deletedUser = await client.query(
             `SELECT * FROM users WHERE id = $1 AND deleted_at IS NOT NULL`,
             [id]
         );
 
-        if (existingUser.rows.length > 0) {
+        if (deletedUser.rows.length > 0) {
             const error = new Error('이미 삭제된 사용자입니다.');
             error.statusCode = 400;
             throw error;
@@ -354,9 +268,7 @@ const findUserByEmail = async (email) => {
     try {
         const { rows } = await client.query('SELECT * FROM users WHERE email = $1 AND deleted_at IS NULL', [email]);
         if (rows.length === 0) {
-            const error = new Error('사용자를 찾을 수 없습니다.');
-            error.statusCode = 404;
-            throw error;
+            return null;
         }
 
         return rows[0];
@@ -366,13 +278,69 @@ const findUserByEmail = async (email) => {
     }
 }
 
+const findUserById = async (id) => {
+    try {
+        const { rows } = await client.query('SELECT * FROM users WHERE id = $1 AND deleted_at IS NULL', [id]);
+        if (rows.length === 0) {
+            return null;
+        }
+
+        return rows[0];
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
+const updateUserById = async (UserUpdateDto, id) => {
+    try {
+        const {
+            email,
+            password,
+            lastName,
+            firstName,
+            gender,
+            preference,
+            biography,
+            age,
+            gpsAllowedAt,
+        } = UserUpdateDto;
+
+        await client.query(`
+            UPDATE users
+            SET email = $1,
+                password = $2,
+                last_name = $3,
+                first_name = $4,
+                gender = $5,
+                preference = $6,
+                biography = $7,
+                age = $8,
+                gps_allowed_at = $9
+            WHERE id = $10
+            RETURNING *
+        `, [
+            email,
+            password,
+            lastName,
+            firstName,
+            gender,
+            preference,
+            biography,
+            age,
+            gpsAllowedAt,
+            id
+        ]);
+    }
+    catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
 
 module.exports = {
     createUser,
-    saveHashtags,
-    saveRegion,
-    saveProfileImages,
-
     deleteUser,
 
     changePassword,
@@ -380,5 +348,8 @@ module.exports = {
     findUserByFilter,
 
     findUserByUsername,
-    findUserByEmail
+    findUserByEmail,
+    findUserById,
+
+    updateUserById
 };

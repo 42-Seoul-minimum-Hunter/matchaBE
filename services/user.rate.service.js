@@ -1,8 +1,12 @@
 const userRateRepository = require('../repositories/user.rate.repository');
 
-const rateUser = async (UserRateDto, userId) => {
+const rateUser = async (ratedUsername, rateScore, userId) => {
     try {
-        await userRateRepository.rateUser(UserRateDto, userId);
+        const ratedUserInfo = await userRateRepository.findUserByUsername(ratedUsername);
+        if (!ratedUserInfo) {
+            throw new Error('User not found');
+        }
+        await userRateRepository.rateUser(ratedUserInfo.id, rateScore, userId);
     } catch (error) {
         return { error: error.message };
     }

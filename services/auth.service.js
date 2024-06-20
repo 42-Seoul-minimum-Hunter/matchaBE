@@ -1,14 +1,13 @@
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const authRepository = require('../repositories/auth.repository');
-const userProfileRepository = require('../repositories/user.profile.repository');
+const userProfileImageRepository = require('../repositories/user.profileImage.repository.js');
 const userRepository = require('../repositories/user.repository');
 const sendEmail = require('../configs/sendEmail.js');
 const { totp } = require('otplib');
 
 const loginByUsernameAndPassword = async (username, password) => {
     try {
-        const userInfo = await authRepository.findUserByUsername(username);
+        const userInfo = await userRepository.findUserByUsername(username);
 
         if (!userInfo) {
             throw new Error('User not found');
@@ -18,7 +17,7 @@ const loginByUsernameAndPassword = async (username, password) => {
             throw new Error('Password not match');
         }
 
-        const profileImageInfo = await userProfileRepository.findProfileImagesById(userInfo.id);
+        const profileImageInfo = await userProfileImageRepository.findProfileImagesById(userInfo.id);
 
         const user = {
             id: userInfo.id,
@@ -38,14 +37,17 @@ const loginByUsernameAndPassword = async (username, password) => {
 
 const getOauthInfo = async (code) => {
     try {
-        const accessToken = await authRepository.getAccessTokens(code);
-        const oauthInfo = await authRepository.getOAuthInfo(accessToken);
+        const accessToken = await getAccessTokens(code);
+        const oauthInfo = await getOAuthInfo(accessToken);
         var user = await userRepository.findUserByEmail(oauthInfo.email);
-        const profileImageInfo = await userProfileRepository.findProfileImagesById(user.id);
 
-        user.profileImage = profileImageInfo.profile_images[0];
-
-        return { user, oauthInfo };
+        if (!user) {
+            return { user: null, oauthInfo };
+        } else {
+            const profileImageInfo = await userProfileImageRepository.findProfileImagesById(user.id);
+            user.profileImage = profileImageInfo.profile_images[0];
+            return { user, oauthInfo };
+        }
     } catch (error) {
         return { error: error.message };
     }
@@ -70,27 +72,22 @@ const createTwofactorCode = async (req, email) => {
             text: emailContent,
         });
 
-        req.session.twoFactorCode = { expirationDate: new Date(Date.now() + 5 * 60 * 1000) };
+        req.session.twoFactorExpirationDate = new Date(Date.now() + 5 * 60 * 1000);
 
     } catch (error) {
         return { error: error.message };
     }
 }
 
-const verifyTwoFactorCode = (req, code) => {
+const verifyTwoFactorCode = (expirationDate, code) => {
     try {
         const secret = process.env.TWOFACTOR_SECRET;
-        const expirationDate = req.session.twoFactorCode.expirationDate;
-
-        if (expirationDate < new Date()) {
-            throw new Error('2차 인증 코드가 만료되었습니다.');
-        }
 
         if (totp.verify({ secret, code })) {
             delete req.session.twoFactorCode;
             return true;
         } else {
-            throw new Error('2차 인증 코드가 일치하지 않습니다.');
+            return false;
         }
     } catch (error) {
         return { error: error.message };
@@ -118,7 +115,7 @@ const createRegistURL = async (req, email) => {
         });
 
         // 세션에 토큰 정보 저장
-        req.session.registrationToken = {
+        req.session.registrationCode = {
             code,
             expirationDate,
         };
@@ -128,27 +125,14 @@ const createRegistURL = async (req, email) => {
     }
 };
 
-const verifyRegistURL = (req) => {
-    try {
-        // 세션에서 토큰 정보 조회
-        const { token: sessionToken } = req.session.registrationToken;
 
-        // 토큰 일치 확인
-        if (sessionToken !== token) {
-            throw new Error('유효하지 않은 회원 가입 링크입니다.');
-        } else {
-            delete req.session.registrationToken;
-            return true;
+const createResetPasswordURL = async (req, email) => {
+    try {
+        const userInfo = await userRepository.findUserByEmail(email);
+
+        if (!userInfo) {
+            throw new Error('User not found');
         }
-
-    } catch (error) {
-        return { error: error.message };
-    }
-}
-
-const createResetPasswordURL = async (req, username, email) => {
-    try {
-        await authRepository.findUserForResetPassword(username, email);
 
         const code = crypto.randomBytes(20).toString('hex');
         const expirationDate = new Date(Date.now() + 5 * 60 * 1000); // 5분 후 만료
@@ -224,17 +208,79 @@ const setJwtOnCookie = (res, token) => {
     return res;
 }
 
+const getAccessTokens = async (code) => {
+    try {
+        const data = {
+            'grant_type': 'authorization_code',
+            'client_id': process.env.OAUTH_CLIENT_ID,
+            'client_secret': process.env.OAUTH_CLIENT_SECRET,
+            'code': code,
+            'redirect_uri': process.env.OAUTH_CALLBACK_URI,
+        };
+
+        const response = await axios.post(process.env.OAUTH_TOKEN_URI, data, {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        });
+
+        console.log(response);
+
+        if (response.status !== 200) {
+            const error = new Error('Failed to get tokens');
+            error.statusCode = response.status;
+            throw error;
+        }
+        return response.data.access_token;
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
+const getOAuthInfo = async (accessToken) => {
+    try {
+        const response = await axios.get(process.env.OAUTH_USER_URI, {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
+            }
+        });
+
+        if (response.status !== 200) {
+            const error = new Error('Failed to get OAuth info');
+            error.statusCode = response.status;
+            throw error;
+        }
+
+        const oauthInfo = {
+            id: null,
+            email: response.data.email,
+            isValid: null,
+            isOauth: true,
+            accessToken: accessToken,
+            twofaVerified: false
+        };
+
+        return oauthInfo;
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
 
 module.exports = {
     loginByUsernameAndPassword,
     getOauthInfo,
     generateJWT,
 
+    getAccessTokens,
+    getOAuthInfo,
+
     createTwofactorCode,
     verifyTwoFactorCode,
 
     createRegistURL,
-    verifyRegistURL,
 
     createResetPasswordURL,
     verifyResetPasswordURL,

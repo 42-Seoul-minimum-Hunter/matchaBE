@@ -77,11 +77,10 @@ password : String 사용자 비밀번호
 
 router.post('/login', async function (req, res, next) {
     try {
-
         const { username, password } = req.body;
 
-        if (!username || password) {
-            throw new Error('username 또는 password가 없습니다.');
+        if (!username || !password) {
+            return res.status(400).send('username or password not found.');
         }
 
         const user = await authService.loginByUsernameAndPassword(username, password);
@@ -123,13 +122,13 @@ router.get('/callback', async function (req, res, next) {
     try {
         const code = req.query.code;
         if (!code) {
-            return res.status(401).send('code가 없습니다.');
+            return res.status(401).send('Code not found.');
         }
 
         const { user, oauthInfo } = await authService.getOauthInfo(code);
 
         if (!oauthInfo) {
-            return res.status(401).send('oauth 정보가 없습니다.');
+            return res.status(401).send('oauthInfo not found.');
         }
 
         let jwtToken = null;
@@ -165,13 +164,13 @@ router.get('/callback', async function (req, res, next) {
 
 /* POST /auth/twoFactor/create
 */
-
+//TODO : verifyTwoFA 추가
 router.post('/twofactor/create', function (req, res, next) {
     try {
         //const email = req.jwtInfo.email;
         const email = req.body.email;
         if (!email) {
-            res.status(400).send('이메일이 없습니다.');
+            res.status(400).send('Email not found.');
         }
         authService.createTwofactorCode(req, email);
         res.send();
@@ -183,18 +182,26 @@ router.post('/twofactor/create', function (req, res, next) {
 /* POST /auth/twoFactor/verify
 code : String 2FA 인증 코드
 */
-
-router.post('/twofactor/verify', async function (req, res, next) {
+//TODO : verifyTwoFA 추가
+router.post('/twofactor/verify', function (req, res, next) {
     try {
+        //const email = req.jwtInfo.email;
         const code = req.body.code;
 
+        const expirationDate = req.session.twoFactorExpirationDate;
+
         if (!code) {
-            res.status(400).send('코드가 없습니다.');
+            return res.status(400).send('Code not found.');
+        } else if (!expirationDate) {
+            return res.status(401).send('Bad Access.');
+        } else if (expirationDate < new Date()) {
+            return res.status(400).send('Code expired.');
         }
-        const result = authService.verifyTwoFactorCode(req, code);
+
+        const result = authService.verifyTwoFactorCode(expirationDate, code);
 
         if (result === false) {
-            res.status(400).send('인증번호가 틀렸습니다.');
+            return res.status(400).send('Invalid code.');
         } else {
             const jwtToken = authService.generateJWT({
                 id: req.jwtInfo.id,
@@ -205,15 +212,7 @@ router.post('/twofactor/verify', async function (req, res, next) {
                 twofaVerified: true
             });
 
-            // JWT 토큰을 쿠키에 담기
-            res.cookie('jwt', jwtToken, {
-                httpOnly: true,
-                secure: true,
-                maxAge: 24 * 60 * 60 * 1000
-            });
-
-            // JWT 토큰을 응답 헤더에 담기
-            res.set('Authorization', `Bearer ${jwtToken}`);
+            res = authService.setJwtOnCookie(res, jwtToken);
 
             res.send();
         }
@@ -225,17 +224,16 @@ router.post('/twofactor/verify', async function (req, res, next) {
 //https://typo.tistory.com/entry/Nodejs-JQuery-%ED%9A%8C%EC%9B%90%EA%B0%80%EC%9E%85-%EB%A7%8C%EB%93%A4%EA%B8%B0-%EC%9D%B8%EC%A6%9D%EB%B2%88%ED%98%B8-%EC%9D%B4%EB%A9%94%EC%9D%BC-%EC%A0%84%EC%86%A12
 
 /* POST /auth/register/email/send
-email : String 사용자 이메일
 */
-
+//TODO : verifyValid 추가
 router.post('/register/email/send', function (req, res, next) {
     try {
         const email = req.body.email;
-        //const email = req.jwtInfo;
+        //const email = req.jwtInfo.email;
         if (!email) {
-            res.status(400).send('이메일이 없습니다.');
+            return res.status(400).send('Email not found.');
         }
-        authService.createRegistURL(req, email);
+        authService.createRegistURL(email);
         res.send();
     } catch (error) {
         next(error);
@@ -247,42 +245,37 @@ code : String 인증 코드
 */
 
 //TODO : verifyValid 추가
-
 router.get('/register/email/verify', function (req, res, next) {
     try {
-        const { code, expirationDate } = req.query.code;
+        const code = req.query.code;
+        const { sessionCode, expirationDate } = req.session.registrationCode;
 
-        if (!code || !expirationDate) {
-            res.status(400).send('코드가 없습니다.');
+        if (!code) {
+            delete req.session.registrationCode;
+            return res.status(400).send('Code not found.');
+        } else if (!sessionCode || expirationDate) {
+            delete req.session.registrationCode;
+            return res.status(401).send('Bad Access.');
         } else if (expirationDate < new Date()) {
-            res.status(400).send('인증 시간이 초과되었습니다.');
+            delete req.session.registrationCode;
+            return res.status(400).send('Code expired.');
+        } else if (sessionCode !== code) { // 위치 다시 생각해보기
+            delete req.session.registrationCode;
+            return res.status(400).send('Invalid code.');
         }
 
-        const result = authService.verifyRegistURL(req);
-        if (result === false) {
-            res.status(400).send('인증번호가 틀렸습니다.');
-        } else {
-            jwtToken = authService.generateJWT({
-                id: req.jwtInfo.id,
-                email: req.jwtInfo.email,
-                isValid: true,
-                isOauth: req.jwtInfo.isOauth,
-                accessToken: req.jwtInfo.accessToken,
-                twofaVerified: false
-            });
+        jwtToken = authService.generateJWT({
+            id: req.jwtInfo.id,
+            email: req.jwtInfo.email,
+            isValid: true,
+            isOauth: req.jwtInfo.isOauth,
+            accessToken: req.jwtInfo.accessToken,
+            twofaVerified: false
+        });
 
-            // JWT 토큰을 쿠키에 담기
-            res.cookie('jwt', jwtToken, {
-                httpOnly: true,
-                secure: true,
-                maxAge: 24 * 60 * 60 * 1000
-            });
+        res = authService.setJwtOnCookie(res, jwtToken);
 
-            // JWT 토큰을 응답 헤더에 담기
-            res.set('Authorization', `Bearer ${jwtToken}`);
-
-            res.send();
-        }
+        res.send();
     } catch (error) {
         next(error);
     }
@@ -293,18 +286,16 @@ router.get('/register/email/verify', function (req, res, next) {
 //https://well-made-codestory.tistory.com/37
 
 /* POST /auth/reset/email/create
-username : String 사용자 닉네임
 email : String 사용자 이메일
 */
 
 router.post('/reset/email/create', async function (req, res, next) {
     try {
-        const username = req.body.username;
         const email = req.body.email;
-        if (!username || !email) {
-            res.status(400).send('이메일 또는 코드가 없습니다.');
+        if (!email) {
+            res.status(400).send('이메일이 없습니다.');
         }
-        await authService.createResetPasswordURL(req, username, email);
+        await authService.createResetPasswordURL(req, email);
         res.send();
     } catch (error) {
         next(error);

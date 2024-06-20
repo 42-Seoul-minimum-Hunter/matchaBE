@@ -82,9 +82,25 @@ const filterBlockedUser = async (userId, userInfos) => {
     }
 }
 
+const getBlockRelationByid = async (userId, blockedUserId) => {
+    try {
+        const blockRelation = await client.query(`
+            SELECT * 
+            FROM user_block_histories
+            WHERE user_id = $1 AND block_id = $2
+        `, [userId, blockedUserId]);
+
+        return blockRelation.rows[0];
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
 
 module.exports = {
     addBlockUser,
     deleteBlockUser,
-    filterBlockedUser
+    filterBlockedUser,
+    getBlockRelationByid
 }

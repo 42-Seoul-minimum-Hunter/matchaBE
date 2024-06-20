@@ -14,35 +14,37 @@ const client = new Client({
 
 client.connect();
 
-const findHashtagById = async (id) => {
+const findRegionById = async (id) => {
     try {
-        const hashtagInfo = await client.query('SELECT hashtags FROM user_hashtags WHERE user_id = $1', [userInfo.rows[0].id]);
-        return hashtagInfo.rows.map(row => row.hashtags);
+        const regionInfo = await client.query('SELECT si, gu FROM user_regions WHERE user_id = $1', [userInfo.rows[0].id]);
+        return regionInfo.rows;
     } catch (error) {
         return { error: error.message };
     }
 }
 
-const updateHashtagById = async (hashtags, userId) => {
+const updateRegionById = async (si, gu, userId) => {
     try {
-        await client.query('UPDATE user_hashtags SET hashtags = $1 WHERE user_id = $2', [hashtags, userId]);
+        await client.query('UPDATE user_regions SET si = $1, gu = $2 WHERE user_id = $3', [si, gu, userId]);
     } catch (error) {
         return { error: error.message };
     }
 }
 
-const saveHashtagById = async (hashtags, id) => {
+const saveRegionById = async (si, gu, id) => {
     try {
         await client.query(
-            `INSERT INTO user_hashtags (
+            `INSERT INTO user_regions (
                 user_id,
-                hashtags,
+                si,
+                gu,
                 updated_at
-            ) VALUES ($1, $2, now())
+            ) VALUES ($1, $2, $3, now())
             `,
             [
                 id,
-                hashtags,
+                si,
+                gu,
             ]
         )
     } catch (error) {
@@ -53,7 +55,7 @@ const saveHashtagById = async (hashtags, id) => {
 
 
 module.exports = {
-    findHashtagById,
-    updateHashtagById,
-    saveHashtagById
+    findRegionById,
+    updateRegionById,
+    saveRegionById
 };
