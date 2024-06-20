@@ -116,22 +116,15 @@ const createRegistURL = async (req, email) => {
     }
 };
 
-const verifyRegistURL = (req, code) => {
+const verifyRegistURL = (req) => {
     try {
         // 세션에서 토큰 정보 조회
-        const { token: sessionToken, expirationDate } = req.session.registrationToken;
-
-        // 유효 기간 확인
-        if (expirationDate < new Date()) {
-            throw new Error('회원 가입 링크가 만료되었습니다.');
-        }
+        const { token: sessionToken } = req.session.registrationToken;
 
         // 토큰 일치 확인
         if (sessionToken !== token) {
             throw new Error('유효하지 않은 회원 가입 링크입니다.');
         } else {
-            const expirationDate = new Date(Date.now() + 60 * 60 * 1000); // 60분 후 만료
-            req.session.registrationVerify = { expirationDate, isOauth: false, accessToken: null };
             delete req.session.registrationToken;
             return true;
         }
