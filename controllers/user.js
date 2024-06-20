@@ -190,8 +190,8 @@ router.get('/find', async function (req, res, next) {
             return res.status(400).send('시를 입력해주세요.');
         }
 
-        const { userInfos, totalCount } = await userSerivce.findUserByFilter(filter, page, pageSize);
-        res.send({ userInfos, totalCount, currentPage: page });
+        const { users, totalCount } = await userSerivce.findUserByFilter(filter, page, pageSize);
+        res.send({ users, totalCount, currentPage: page });
     } catch (error) {
         next(error);
     }

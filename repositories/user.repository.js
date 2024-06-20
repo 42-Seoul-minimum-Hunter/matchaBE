@@ -228,7 +228,7 @@ const findUserByFilter = async (filter, page, pageSize) => {
             return {
                 username: userInfo.username,
                 age: userInfo.age,
-                profileImages: profileImages[0],
+                profileImages: profileImages ? profileImages[0] : null,
                 rate: userInfo.rate,
             }
         }));
