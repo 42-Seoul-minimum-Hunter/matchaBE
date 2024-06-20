@@ -1,20 +1,24 @@
-const socket = require('socket.io');
-
 const express = require('express');
 const router = express.Router();
+const socket = require('socket.io');
 
-const UserService = require('../services/user.service.js');
 
-const userActivate = new Map();
+/* 필요한 기능
+1:1 채팅
+
+
+*/
+
+const userActivate = {};
 
 module.exports = (server, app) => {
+
     const io = socket(server, {
         cors: {
             origin: '*',
             credentials: true,
         },
     });
-
     // 소캣 연결
     io.on('connection', (socket) => {
         this.logger.info('Websocket connected!');

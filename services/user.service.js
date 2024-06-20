@@ -50,7 +50,8 @@ const changePassword = async (password, email) => {
 const findUserByFilter = async (filter) => {
     try {
         const userInfos = await UserRepository.findUserByFilter(filter);
-        return userInfos;
+        const filteredByBlock = await UserRepository.filterBlockedUser(filter.userId, userInfos);
+        return filteredByBlock;
     } catch (error) {
         return { error: error.message };
     }

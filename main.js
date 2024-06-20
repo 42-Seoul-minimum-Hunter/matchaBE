@@ -30,8 +30,6 @@ app.use(session({
 const server = http.createServer(app);
 const io = socketIO(server);
 
-const userSocketController = require('./controllers/user.socket.js')(io);
-
 
 // 포트 정보
 const port = 3000;
@@ -42,18 +40,23 @@ const userReportRouter = require('./controllers/user.report.js');
 const userProfileRouter = require('./controllers/user.profile.js');
 const userAlarmRouter = require('./controllers/user.alarm.js');
 const authRouter = require('./controllers/auth.js');
+const userChatRouter = require('./controllers/user.chat.js');
+
+const socketRouter = require('./controllers/user.socket.js');
+
+socketRouter(server, app);
 
 app.use(express.json());
 app.use(morgan('combined'));
 
 app.set('socket.io', io);
 app.use('/user', userRouter);
-//app.use('/user/socket', userSocketController);
 app.use('/user/rating', userRateRouter);
 app.use('/user/report', userReportRouter);
 app.use('/user/profile', userProfileRouter);
 app.use('/user/alarm', userAlarmRouter);
 // app.user('/user/block', userBlockRouter);
+app.use('/user/chat', userChatRouter);
 app.use('/auth', authRouter);
 
 app.use((err, req, res, next) => {

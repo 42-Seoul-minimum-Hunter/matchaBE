@@ -238,7 +238,6 @@ const findUserByFilter = async (filter) => {
         // hashtags 조건 추가
         if (hashtags) {
             query += ' JOIN user_hashtags uh ON u.id = uh.user_id';
-
         }
 
         if (si) {
@@ -264,11 +263,11 @@ const findUserByFilter = async (filter) => {
         // username 조건 추가
         if (username) {
             if (hashtags || si) {
-                query += ' AND u.username = $' + (params.length + 1);
+                query += ' AND u.username LIKE $' + (params.length + 1);
             } else {
-                query += ' WHERE u.username = $' + (params.length + 1);
+                query += ' WHERE u.username LIKE $' + (params.length + 1);
             }
-            params.push(username);
+            params.push(`%${username}%`);
         }
 
         // minAge, maxAge 조건 추가
@@ -337,6 +336,18 @@ const findUserByFilter = async (filter) => {
     }
 };
 
+const filterBlockedUser = async (userId, userInfos) => {
+    try {
+        const blockedUserInfos = await client.query('SELECT blocked_id FROM user_block_histories WHERE user_id = $1', [userId]);
+        const blockedIds = blockedUserInfos.rows.map(row => row.blocked_id);
+
+        return userInfos.filter(userInfo => !blockedIds.includes(userInfo.id));
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
 
 module.exports = {
     createUser,
@@ -349,4 +360,5 @@ module.exports = {
     changePassword,
 
     findUserByFilter,
+    filterBlockedUser
 };
