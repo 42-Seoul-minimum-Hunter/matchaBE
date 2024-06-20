@@ -23,7 +23,7 @@ const loginByUsernameAndPassword = async (username, password) => {
             error.statusCode = 404;
             throw error;
         } else if (userInfo.rows[0].deleted_at !== null) {
-            const error = new Error('User not found');
+            const error = new Error('User had been deleted');
             error.statusCode = 404;
             throw error;
         } else if (userInfo.rows[0].is_OAuth === true) {

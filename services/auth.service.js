@@ -54,6 +54,8 @@ const createTwofactorCode = async (req, email) => {
             text: emailContent,
         });
 
+        req.session.twoFactorCode = { expirationDate: new Date(Date.now() + 5 * 60 * 1000) };
+
         //console.log('2차 인증 코드 전송 결과:', result);
 
     } catch (error) {
@@ -64,6 +66,12 @@ const createTwofactorCode = async (req, email) => {
 const verifyTwoFactorCode = (req, code) => {
     try {
         const secret = process.env.TWOFACTOR_SECRET;
+        const expirationDate = req.session.twoFactorCode.expirationDate;
+
+        if (expirationDate < new Date()) {
+            throw new Error('2차 인증 코드가 만료되었습니다.');
+        }
+
         if (totp.verify({ secret, code })) {
             delete req.session.twoFactorCode;
             return true;
@@ -78,7 +86,7 @@ const verifyTwoFactorCode = (req, code) => {
 const createRegistURL = async (req, email) => {
     try {
         const code = crypto.randomBytes(20).toString('hex');
-        const expirationDate = new Date(Date.now() + 60 * 60 * 1000); // 30분 후 만료
+        const expirationDate = new Date(Date.now() + 5 * 60 * 1000); // 5분 후 만료
 
         console.log('회원 가입 URL 생성:', code, expirationDate, email)
 
@@ -146,7 +154,7 @@ const createResetPasswordURL = async (req, username, email) => {
         귀하의 비밀번호 초기화 URL는 다음과 같습니다:
         ${process.env.BE_RESET_PASSWORD_URL}?code=${code}
 
-        이 코드는 5분 동안 유효합니다.
+        이 코드는 30분 동안 유효합니다.
         감사합니다.`;
 
         await sendEmail({
@@ -180,7 +188,7 @@ const verifyResetPasswordURL = (req, code) => {
         if (sessionToken !== token) {
             throw new Error('유효하지 않은 비밀번호 초기화 링크입니다.');
         } else {
-            const expirationDate = new Date(Date.now() + 5 * 60 * 1000); // 5분 후 만료
+            const expirationDate = new Date(Date.now() + 5 * 60 * 1000); // 30분 후 만료
             req.session.resetPasswordEmail = { email, expirationDate };
             delete req.session.registrationToken;
             return true;

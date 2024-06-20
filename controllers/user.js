@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const morgan = require('morgan');
 
-const { verifyAllprocess } = require('../configs/middleware.js');
+const { checkOauthLogin, verifyAllprocess } = require('../configs/middleware.js');
 
 const userSerivce = require('../services/user.service.js');
 
@@ -27,9 +27,8 @@ profileImages : String 사용자 프로필 이미지 => BASE64로 반환 예정
 }
 */
 
-router.post('/create', async function (req, res, next) {
+router.post('/create', checkOauthLogin, async function (req, res, next) {
     try {
-        //var user = new UserCreateDto(req.body);
         const user = {
             email: req.body.email,
             username: req.body.username,
@@ -46,23 +45,42 @@ router.post('/create', async function (req, res, next) {
             profileImages: req.body.profileImages
         }
 
-        const { expirationDate, isOauth, accessToken } = req.session.registrationVerify.expirationDate;
-        const { error, user_id } = await userSerivce.createUser(user);
+        if (user.profileImages.length > 5) {
+            return res.status(400).send('프로필 이미지는 최대 5개까지만 등록할 수 있습니다.');
+        } else if (user.hashtags.length > 5) {
+            return res.status(400).send('해시태그는 최대 5개까지만 등록할 수 있습니다.');
+        }
+
+        const user_id = await userSerivce.createUser(user);
+
         if (error) {
             return res.status(400).send(error);
-        } else if (expirationDate < new Date()) {
-            return res.status(400).send('비밀번호 변경 기간이 만료되었습니다.');
         }
         user.id = user_id;
 
-        const jwtToken = authService.generateJWT({
-            id: user.id,
-            email: user.email,
-            isValid: true,
-            isOauth: isOauth,
-            accessToken: accessToken,
-            twofaVerified: false
-        });
+        let jwtToken;
+
+        if (req.jwtInfo && req.jwtInfo.isOauth && req.jwtInfo.accessToken) {
+            jwtToken = authService.generateJWT({
+                id: user.id,
+                email: user.email,
+                isValid: true,
+                isOauth: true,
+                accessToken: req.jwtInfo.accessToken,
+                twofaVerified: false
+            });
+            user.isOauth = true;
+        } else {
+            jwtToken = authService.generateJWT({
+                id: user.id,
+                email: user.email,
+                isValid: false,
+                isOauth: false,
+                accessToken: null,
+                twofaVerified: false
+            });
+            user.isOauth = false;
+        }
 
         // JWT 토큰을 쿠키에 담기
         res.cookie('jwt', jwtToken, {
@@ -74,7 +92,6 @@ router.post('/create', async function (req, res, next) {
         // JWT 토큰을 응답 헤더에 담기
         res.set('Authorization', `Bearer ${jwtToken}`);
 
-        delete req.session.registrationVerify;
         res.send(user);
     } catch (error) {
         next(error);

@@ -6,15 +6,16 @@ const { si, seoul, gyeonggi, incheon, daejeon, daegu, busan, ulsan, gwangju, gan
 
 
 
-// TODO : username, password 정규표현식
+// TODO : username, password 정규표현식, email 형식 확인
 
 
 // https://goodmemory.tistory.com/137
 //https://jinyisland.kr/post/middleware/
-const createUser = async (UserCreateDto) => {
+const createUser = async (req, UserCreateDto) => {
     try {
         const hashed = await bcrypt.hash(UserCreateDto.password, 10);
         UserCreateDto.password = hashed;
+
         const userId = await UserRepository.createUser(UserCreateDto);
 
         await UserRepository.saveHashtags(UserCreateDto.hashtags, userId);

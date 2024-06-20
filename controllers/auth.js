@@ -3,6 +3,73 @@ const router = express.Router();
 const { verifyTwoFA, verifyValid } = require('../configs/middleware.js');
 const authService = require('../services/auth.service.js');
 
+/* 일반 회원가입 
+1. 회원가입 후 JWT 발급, 쿠키에 담기
+        id: user.id,
+        email: user.email,
+        isValid: false,
+        isOauth: false,
+        accessToken: null,
+        twofaVerified: false
+
+        return user
+
+2. 이메일 인증 후 (세션으로 확인)
+        id: user.id,
+        email: user.email,
+        isValid: true,
+        isOauth: false,
+        accessToken: null,
+        twofaVerified: false
+
+        return 200
+
+3. 2FA 인증 후 (세션으로 확인)
+        id: user.id,
+        email: user.email,
+        isValid: true,
+        isOauth: false,
+        accessToken: null,
+        twofaVerified: true       
+        
+        return 200
+*/
+
+/*OAUTH 회원가입
+1. OAUTH 로그인 후 JWT 발급, 쿠키에 담기, 회원가입 페이지로 리다이렉트
+    id: null
+    email: <oauth email>,
+    isValid: true,
+    isOauth: true,
+    accessToken: <accessToken>,
+    twofaVerified: false
+
+    return email
+
+2. 회원가입 후 JWT 발급, 쿠키에 담기
+    id: user.id,
+    email: user.email,
+    isValid: true,
+    isOauth: true,
+    accessToken: <accessToken>,
+    twofaVerified: false
+
+    return user
+
+3. 2FA 인증 후 (세션으로 확인)
+    id: user.id,
+    email: user.email,
+    isValid: true,
+    isOauth: true,
+    accessToken: <accessToken>,
+    twofaVerified: true
+
+    return 200
+*/
+
+
+
+
 /* POST /auth/login
 username : String 사용자 닉네임
 password : String 사용자 비밀번호
@@ -61,22 +128,40 @@ code : String OAuth 인증 코드
 router.get('/callback', async function (req, res, next) {
     try {
         const code = req.query.code;
-        if (code === undefined) {
+        if (!code) {
             return res.status(401).send('code가 없습니다.');
         }
 
         const { user, oauthInfo } = await authService.findOAuthUser(code);
 
-        if (oauthInfo === undefined) {
+        if (!oauthInfo) {
             return res.status(401).send('oauth 정보가 없습니다.');
         }
 
+        let jwtToken = null;
         if (!user) {
-            const expirationDate = expirationDate = new Date(Date.now() + 60 * 60 * 1000);
-            req.session.registrationVerify = { expirationDate, isOauth: true, accessToken: oauthInfo.accessToken };
+            jwtToken = authService.generateJWT({
+                id: null,
+                email: oauthInfo.email,
+                isValid: true,
+                isOauth: true,
+                accessToken: oauthInfo.accessToken,
+                twofaVerified: false
+            });
+
+            // JWT 토큰을 쿠키에 담기
+            res.cookie('jwt', jwtToken, {
+                httpOnly: true,
+                secure: true,
+                maxAge: 24 * 60 * 60 * 1000
+            });
+
+            // JWT 토큰을 응답 헤더에 담기
+            res.set('Authorization', `Bearer ${jwtToken}`);
+
             res.redirect(process.env.OAUTH_USER_REGISTRATION_URL);
         } else {
-            const jwtToken = authService.generateJWT({
+            jwtToken = authService.generateJWT({
                 id: user.id,
                 email: user.email,
                 isValid: true,
@@ -185,17 +270,41 @@ router.post('/register/email/send', function (req, res, next) {
 code : String 인증 코드
 */
 
+//TODO : verifyValid 추가
+
 router.get('/register/email/verify', function (req, res, next) {
     try {
-        const code = req.query.code;
+        const { code, expirationDate } = req.query.code;
 
-        if (!code) {
+        if (!code || !expirationDate) {
             res.status(400).send('코드가 없습니다.');
+        } else if (expirationDate < new Date()) {
+            res.status(400).send('인증 시간이 초과되었습니다.');
         }
-        const result = authService.verifyRegistURL(req, code);
+
+        const result = authService.verifyRegistURL(req);
         if (result === false) {
             res.status(400).send('인증번호가 틀렸습니다.');
         } else {
+            jwtToken = authService.generateJWT({
+                id: req.jwtInfo.id,
+                email: req.jwtInfo.email,
+                isValid: true,
+                isOauth: req.jwtInfo.isOauth,
+                accessToken: req.jwtInfo.accessToken,
+                twofaVerified: false
+            });
+
+            // JWT 토큰을 쿠키에 담기
+            res.cookie('jwt', jwtToken, {
+                httpOnly: true,
+                secure: true,
+                maxAge: 24 * 60 * 60 * 1000
+            });
+
+            // JWT 토큰을 응답 헤더에 담기
+            res.set('Authorization', `Bearer ${jwtToken}`);
+
             res.send();
         }
     } catch (error) {

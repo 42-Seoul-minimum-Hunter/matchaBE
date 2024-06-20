@@ -15,7 +15,7 @@ const client = new Client({
 const UserCreateDto = require('../dtos/user.create.dto');
 client.connect();
 
-const createUser = async (UserCreateDto) => {
+const createUser = async (req, UserCreateDto) => {
     try {
         const {
             email,
@@ -39,6 +39,12 @@ const createUser = async (UserCreateDto) => {
             const error = new Error('Username or email already exists');
             error.statusCode = 409;
             throw error;
+        }
+
+        let isOauth = false;
+
+        if (req.jwtInfo && req.jwtInfo.isOauth && req.jwtInfo.accessToken) {
+            isOauth = true;
         }
 
         const result = await client.query(
@@ -71,7 +77,7 @@ const createUser = async (UserCreateDto) => {
                 preference,
                 biography,
                 age,
-                false,
+                isOauth,
                 false,
                 gpsAllowedAt,
             ]
@@ -129,12 +135,6 @@ const saveRegion = async (region, userId) => {
 
 const saveProfileImages = async (UserCreateDto, userId) => {
     try {
-        if (UserCreateDto.profileImages.length > 5) {
-            const error = new Error('프로필 이미지는 최대 5개까지만 등록할 수 있습니다.');
-            error.statusCode = 400;
-            throw error;
-        }
-
         const encodedProfileImages = UserCreateDto.profileImages.map((image) => {
             return Buffer.from(image).toString('base64');
         });
@@ -151,9 +151,8 @@ const saveProfileImages = async (UserCreateDto, userId) => {
                 encodedProfileImages,
             ]
         );
-        UserCreateDto.profileImages = encodedProfileImages;
-        UserCreateDto.id = userId;
-        return UserCreateDto;
+
+        return userId;
 
     } catch (error) {
         console.log(error);

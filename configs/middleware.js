@@ -107,9 +107,34 @@ function verifyAllprocess(req, res, next) {
     }
 }
 
+function checkOauthLogin(req, res, next) {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+
+        if (!token) {
+            req.jwtInfo = undefined;
+            next();
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        if (decoded.isOauth === false || decoded.accessToken === null) {
+            return res.status(400).send('Bad Access');
+        }
+
+        req.jwtInfo = decoded;
+        next();
+    } catch (error) {
+
+    }
+}
+
+
 module.exports = {
     verifyJWTToken,
     verifyTwoFA,
     verifyValid,
-    verifyAllprocess
+    verifyAllprocess,
+
+    checkOauthLogin
 };
