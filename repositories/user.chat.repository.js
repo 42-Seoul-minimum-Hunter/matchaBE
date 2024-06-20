@@ -17,23 +17,27 @@ client.connect();
 const getChatInfo = async (userId) => {
     try {
 
-        const chatInfo = await client.query(`
-            SELECT 
-                uc.id,
-                uc.user_id,
-                uc.chat_id,
-                uc.created_at,
-                uc.updated_at,
-                c.id as chat_id,
-                c.name as chat_name,
-                c.description as chat_description,
-                c.created_at as chat_created_at,
-                c.updated_at as chat_updated_at
-            FROM user_chats uc
-            LEFT JOIN chats c
-            ON uc.chat_id = c.id
-            WHERE uc.user_id = $1
+        const chatRoomInfo = await client.query(`
+            SELECT * FROM user_chat_histories uch
+            FROM user_chat_rooms ucr
+            WHERE uch.chat_room_id = ucr.id
+            AND (uch.user_id = $1 OR uch.chated_id = $1)
+            ORDER BY uch.created_at DESC
+            
         `, [userId]);
+
+        const recentChat = await client.query(`
+            SELECT * FROM user_chat_rooms 
+            WHERE user_id = $1 OR chated_id = $1
+            ORDER BY created_at DESC
+            LIMIT 1
+        `, [chatRoomInfo.rows[0].id]);
+
+
+
+        const chatInfo = await client.query(`
+            SELECT username FROM users 
+        `, [chatRoomInfo.rows[0].id]);
 
         return chatInfo.rows;
 

@@ -36,7 +36,7 @@ const addBlockUser = async (blockUsername, userId) => {
             INSERT INTO user_block_histories (
                 user_id,
                 block_id,
-                blocked_at
+                created_at
             ) VALUES (
                 $1,
                 (
@@ -86,8 +86,21 @@ const deleteBlockUser = async (blockUsername, userId) => {
     }
 }
 
+const filterBlockedUser = async (userId, userInfos) => {
+    try {
+        const blockedUserInfos = await client.query('SELECT blocked_id FROM user_block_histories WHERE user_id = $1', [userId]);
+        const blockedIds = blockedUserInfos.rows.map(row => row.blocked_id);
+
+        return userInfos.filter(userInfo => !blockedIds.includes(userInfo.id));
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
 
 module.exports = {
     addBlockUser,
-    deleteBlockUser
+    deleteBlockUser,
+    filterBlockedUser
 }

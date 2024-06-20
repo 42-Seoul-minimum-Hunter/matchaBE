@@ -1,6 +1,7 @@
 const bcrypt = require('bcrypt');
 
-const UserRepository = require('../repositories/user.repository');
+const userRepository = require('../repositories/user.repository');
+const userBlockRepository = require('../repositories/user.block.repository');
 
 const { si, seoul, gyeonggi, incheon, daejeon, daegu, busan, ulsan, gwangju, gangwon, chungbuk, chungnam, gyeongbuk, gyeongnam, jeonbuk, jeonnam, jeju } = require('/Users/min-yeongjae/matcha/enums/user.region.enum.js');
 
@@ -16,11 +17,11 @@ const createUser = async (req, UserCreateDto) => {
         const hashed = await bcrypt.hash(UserCreateDto.password, 10);
         UserCreateDto.password = hashed;
 
-        const userId = await UserRepository.createUser(UserCreateDto);
+        const userId = await userRepository.createUser(UserCreateDto);
 
-        await UserRepository.saveHashtags(UserCreateDto.hashtags, userId);
-        await UserRepository.saveRegion(UserCreateDto.region, userId);
-        const resultUserInfo = await UserRepository.saveProfileImages(UserCreateDto, userId);
+        await userRepository.saveHashtags(UserCreateDto.hashtags, userId);
+        await userRepository.saveRegion(UserCreateDto.region, userId);
+        const resultUserInfo = await userRepository.saveProfileImages(UserCreateDto, userId);
 
         return resultUserInfo;
     } catch (error) {
@@ -31,7 +32,7 @@ const createUser = async (req, UserCreateDto) => {
 const deleteUser = async (id) => {
     try {
 
-        await UserRepository.deleteUser(id);
+        await userRepository.deleteUser(id);
     } catch (error) {
         return { error: error.message };
     }
@@ -40,7 +41,7 @@ const deleteUser = async (id) => {
 const changePassword = async (password, email) => {
     try {
         const hashed = await bcrypt.hash(password, 10);
-        await UserRepository.changePassword(hashed, email);
+        await userRepository.changePassword(hashed, email);
         //console.log("service");
     } catch (error) {
         return { error: error.message };
@@ -49,8 +50,8 @@ const changePassword = async (password, email) => {
 
 const findUserByFilter = async (filter) => {
     try {
-        const userInfos = await UserRepository.findUserByFilter(filter);
-        const filteredByBlock = await UserRepository.filterBlockedUser(filter.userId, userInfos);
+        const userInfos = await userRepository.findUserByFilter(filter);
+        const filteredByBlock = await userBlockRepository.filterBlockedUser(filter.userId, userInfos);
         return filteredByBlock;
     } catch (error) {
         return { error: error.message };

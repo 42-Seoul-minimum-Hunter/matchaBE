@@ -336,18 +336,6 @@ const findUserByFilter = async (filter) => {
     }
 };
 
-const filterBlockedUser = async (userId, userInfos) => {
-    try {
-        const blockedUserInfos = await client.query('SELECT blocked_id FROM user_block_histories WHERE user_id = $1', [userId]);
-        const blockedIds = blockedUserInfos.rows.map(row => row.blocked_id);
-
-        return userInfos.filter(userInfo => !blockedIds.includes(userInfo.id));
-    } catch (error) {
-        console.log(error);
-        throw error;
-    }
-}
-
 
 module.exports = {
     createUser,
@@ -360,5 +348,4 @@ module.exports = {
     changePassword,
 
     findUserByFilter,
-    filterBlockedUser
 };

@@ -32,7 +32,7 @@ const getAlarmsById = async (id) => {
         const chatInfo = await client.query(`
             SELECT *
             FROM user_chat_histories
-            WHERE chat_id = $1 AND viewed_at NOT NULL
+            WHERE chated_id = $1 AND viewed_at NOT NULL
             `, [id]);
 
         const alarmInfo = [...viewInfo.rows, ...likeInfo.rows, ...chatInfo.rows].sort((a, b) => {
