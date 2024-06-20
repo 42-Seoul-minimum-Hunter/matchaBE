@@ -52,7 +52,7 @@ app.use('/user', userRouter);
 app.use('/user/rating', userRateRouter);
 app.use('/user/report', userReportRouter);
 app.use('/user/profile', userProfileRouter);
-app.user('/user/alarm', userAlarmRouter);
+app.use('/user/alarm', userAlarmRouter);
 // app.user('/user/block', userBlockRouter);
 app.use('/auth', authRouter);
 
