@@ -1,10 +1,12 @@
 const bcrypt = require('bcrypt');
 
 const UserReportRepository = require('../repositories/user.report.repository');
+const UserRepository = require('../repositories/user.repository');
 
-const reportUser = async (report, userId) => {
+const reportUser = async (reportedUsername, reason, userId) => {
     try {
-        await UserReportRepository.reportUser(report, userId);
+        const reportedUserInfo = await UserRepository.findUserById(reportedUsername);
+        await UserReportRepository.reportUser(reportedUserInfo.id, reason, userId);
     } catch (error) {
         return { error: error.message };
     }

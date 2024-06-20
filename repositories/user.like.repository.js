@@ -15,17 +15,13 @@ const client = new Client({
 
 client.connect();
 
-const addLikeUserByUsername = async (likeUsername, userId) => {
+const addLikeUserByUsername = async (likeUserId, userId) => {
     try {
         const existingLikeHistory = await client.query(`
             SELECT * 
             FROM user_like_histories
-            WHERE user_id = $1 AND liked_id = (
-                SELECT id
-                FROM users
-                WHERE username = $2
-            ) AND deleted_at IS NULL
-        `, [userId, likeUsername]);
+            WHERE user_id = $1 AND liked_id = $2 AND deleted_at IS NULL
+        `, [userId, likeUserId]);
 
         if (existingLikeHistory.rows.length > 0) {
             throw new Error('이미 좋아요한 사용자입니다.');
@@ -38,32 +34,25 @@ const addLikeUserByUsername = async (likeUsername, userId) => {
                 created_at
             ) VALUES (
                 $1,
-                (
-                    SELECT id
-                    FROM users
-                    WHERE username = $2
-                ),
+                $2,
                 now()
             )
-        `, [userId, likeUsername]);
+        `, [userId, likeUserId]);
 
 
     } catch (error) {
-
+        console.log(error.message);
+        throw error;
     }
 };
 
-const deleteLikeUserByUsername = async (likeUsername, userId) => {
+const deleteLikeUserByUsername = async (likeUserId, userId) => {
     try {
         const existingLikeHistory = await client.query(`
             SELECT * 
             FROM user_like_histories
-            WHERE user_id = $1 AND liked_id = (
-                SELECT id
-                FROM users
-                WHERE username = $2
-            ) AND deleted_at NOT NULL
-        `, [userId, likeUsername]);
+            WHERE user_id = $1 AND liked_id = $2 AND deleted_at NOT NULL
+        `, [userId, likeUserId]);
 
         if (existingLikeHistory.rows.length === 0) {
             throw new Error('차단 기록이 존재하지 않습니다.');
@@ -72,20 +61,48 @@ const deleteLikeUserByUsername = async (likeUsername, userId) => {
         await client.query(`
             UPDATE user_like_histories
             SET deleted_at = NULL
-            WHERE user_id = $1 AND liked_id = (
-                SELECT id
-                FROM users
-                WHERE username = $2
-            )
-        `, [userId, likeUsername]);
+            WHERE user_id = $1 AND liked_id = $2
+        `, [userId, likeUserId]);
 
     } catch (error) {
-
+        console.log(error.message);
+        throw error;
     }
 
 };
 
+const getLikeUserHistoriesById = async (id) => {
+    try {
+        const likeUserHistories = await client.query(`
+            SELECT * 
+            FROM user_like_histories
+            WHERE user_id = $1 AND deleted_at IS NULL
+        `, [id]);
+
+        return likeUserHistories.rows;
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
+const updateLikeUserHistoriesById = async (id) => {
+    try {
+        await client.query(`
+            UPDATE user_like_histories
+            SET viewed_at = now()
+            WHERE liked_id = $1 AND viewed_at IS NULL
+        `, [id]);
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
 module.exports = {
     addLikeUserByUsername,
-    deleteLikeUserByUsername
+    deleteLikeUserByUsername,
+
+    getLikeUserHistoriesById,
+    updateLikeUserHistoriesById
 }

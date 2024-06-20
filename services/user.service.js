@@ -3,10 +3,6 @@ const bcrypt = require('bcrypt');
 const userRepository = require('../repositories/user.repository');
 const userBlockRepository = require('../repositories/user.block.repository');
 
-const { si, seoul, gyeonggi, incheon, daejeon, daegu, busan, ulsan, gwangju, gangwon, chungbuk, chungnam, gyeongbuk, gyeongnam, jeonbuk, jeonnam, jeju } = require('/Users/min-yeongjae/matcha/enums/user.region.enum.js');
-
-
-
 // TODO : username, password 정규표현식, email 형식 확인
 
 

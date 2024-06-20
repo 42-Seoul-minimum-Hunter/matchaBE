@@ -1,16 +1,27 @@
 const userBlockRepository = require('../repositories/user.block.repository');
+const userRepository = require('../repositories/user.repository');
 
-const addBlockUser = async (blockUsername, userId) => {
+const addBlockUser = async (blockedUsername, userId) => {
     try {
-        await userBlockRepository.addBlockUser(blockUsername, userId);
+        const blockedUserInfo = await userRepository.findUserByUsername(blockedUsername);
+
+        if (!blockedUserInfo) {
+            throw new Error('차단할 사용자가 존재하지 않습니다.');
+        }
+        await userBlockRepository.addBlockUser(blockedUserInfo.id, userId);
     } catch (error) {
         return { error: error.message };
     }
 }
 
-const deleteBlockUser = async (blockUsername, userId) => {
+const deleteBlockUser = async (blockedUsername, userId) => {
     try {
-        await userBlockRepository.deleteBlockUser(blockUsername, userId);
+        const blockedUserInfo = await userRepository.findUserByUsername(blockedUsername);
+
+        if (!blockedUserInfo) {
+            throw new Error('차단할 사용자가 존재하지 않습니다.');
+        }
+        await userBlockRepository.deleteBlockUser(blockedUserInfo.id, userId);
     } catch (error) {
         return { error: error.message };
     }

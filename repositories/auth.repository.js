@@ -16,29 +16,29 @@ client.connect();
 
 const loginByUsernameAndPassword = async (username, password) => {
     try {
-        const userInfo = await client.query('SELECT * FROM users WHERE username = $1', [username]);
+        //const userInfo = await client.query('SELECT * FROM users WHERE username = $1', [username]);
 
-        if (userInfo.rows.length === 0) {
-            const error = new Error('User not found');
-            error.statusCode = 404;
-            throw error;
-        } else if (userInfo.rows[0].deleted_at !== null) {
-            const error = new Error('User had been deleted');
-            error.statusCode = 404;
-            throw error;
-        } else if (userInfo.rows[0].is_OAuth === true) {
-            const error = new Error('OAuth user cannot login with username and password');
-            error.statusCode = 401;
-            throw error;
-        }
+        //if (userInfo.rows.length === 0) {
+        //    const error = new Error('User not found');
+        //    error.statusCode = 404;
+        //    throw error;
+        //} else if (userInfo.rows[0].deleted_at !== null) {
+        //    const error = new Error('User had been deleted');
+        //    error.statusCode = 404;
+        //    throw error;
+        //} else if (userInfo.rows[0].is_oauth === true) {
+        //    const error = new Error('OAuth user cannot login with username and password');
+        //    error.statusCode = 401;
+        //    throw error;
+        //}
 
-        const isPasswordMatch = await bcrypt.compare(password, userInfo.rows[0].password);
+        //const isPasswordMatch = await bcrypt.compare(password, userInfo.rows[0].password);
 
-        if (!isPasswordMatch) {
-            const error = new Error('Password not match');
-            error.statusCode = 401;
-            throw error;
-        }
+        //if (!isPasswordMatch) {
+        //    const error = new Error('Password not match');
+        //    error.statusCode = 401;
+        //    throw error;
+        //}
 
         const profileImageInfo = await client.query('SELECT profile_images FROM user_profile_images WHERE user_id = $1', [userInfo.rows[0].id]);
 
@@ -49,7 +49,7 @@ const loginByUsernameAndPassword = async (username, password) => {
             firstName: userInfo.rows[0].first_name,
             profileImage: profileImageInfo.rows[0].profile_images[0],
             isValid: userInfo.rows[0].is_valid,
-
+            isOauth: userInfo.rows[0].is_oauth,
         };
 
         return user;
@@ -69,7 +69,7 @@ const getAccessTokens = async (code) => {
             'redirect_uri': process.env.OAUTH_CALLBACK_URI,
         };
 
-        const response = await axios.post('https://api.intra.42.fr/oauth/token', data, {
+        const response = await axios.post(process.env.OAUTH_TOKEN_URI, data, {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
             }
@@ -91,7 +91,7 @@ const getAccessTokens = async (code) => {
 
 const getOAuthInfo = async (accessToken) => {
     try {
-        const response = await axios.get('https://api.intra.42.fr/v2/me', {
+        const response = await axios.get(process.env.OAUTH_USER_URI, {
             headers: {
                 'Authorization': `Bearer ${accessToken}`
             }
@@ -113,38 +113,6 @@ const getOAuthInfo = async (accessToken) => {
         };
 
         return oauthInfo;
-    } catch (error) {
-        console.log(error);
-        throw error;
-    }
-}
-
-const findUserByEmail = async (email) => {
-    try {
-        const userInfo = await client.query('SELECT * FROM users WHERE email = $1', [email]);
-
-        if (userInfo.rows.length === 0) {
-            return null;
-        } else if (userInfo.rows[0].deleted_at !== null) {
-            const error = new Error('User had been deleted');
-            error.statusCode = 404;
-            throw error;
-        }
-
-        const profileImageInfo = await client.query('SELECT profile_images FROM user_profile_images WHERE user_id = $1', [userInfo.rows[0].id]);
-
-        const user = {
-            id: userInfo.rows[0].id,
-            username: userInfo.rows[0].username,
-            lastName: userInfo.rows[0].last_name,
-            firstName: userInfo.rows[0].first_name,
-            profileImage: profileImageInfo.rows[0].profile_images[0],
-            isValid: userInfo.rows[0].is_valid,
-        };
-
-        return user;
-
-
     } catch (error) {
         console.log(error);
         throw error;
@@ -175,6 +143,5 @@ module.exports = {
     loginByUsernameAndPassword,
     getAccessTokens,
     getOAuthInfo,
-    findUserByEmail,
     findUserForResetPassword
 };

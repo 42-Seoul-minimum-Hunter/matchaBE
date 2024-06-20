@@ -282,6 +282,24 @@ const updateProfileImages = async (profileImages, user_id) => {
     }
 };
 
+const findProfileImagesById = async (id) => {
+    try {
+        const profileImageInfo = await client.query('SELECT profile_images FROM user_profile_images WHERE user_id = $1', [id]);
+
+        if (profileImageInfo.rows.length === 0) {
+            const error = new Error('프로필 이미지를 찾을 수 없습니다.');
+            error.statusCode = 404;
+            throw error;
+        }
+
+        return profileImageInfo.rows.map((row) => row.profile_images);
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
+
 
 module.exports = {
     findUserByUsername,
@@ -289,5 +307,7 @@ module.exports = {
     updateUser,
     updateHashtags,
     updateRegion,
-    updateProfileImages
+    updateProfileImages,
+
+    findProfileImagesById
 };

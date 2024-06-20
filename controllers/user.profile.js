@@ -10,10 +10,10 @@ username : String 사용자 닉네임
 router.get('/', async function (req, res, next) {
     try {
         const username = req.query.username;
-        if (username === undefined) {
+        if (!username) {
             return res.status(400).send('사용자 닉네임을 입력하세요.');
         }
-        let user = await userProfileService.findUserByUsername(username, req.jwtInfo.id);
+        const user = await userProfileService.findUserByUsername(username, req.jwtInfo.id);
         res.send(user);
     } catch (error) {
         next(error);

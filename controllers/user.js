@@ -45,7 +45,17 @@ router.post('/create', checkOauthLogin, async function (req, res, next) {
             profileImages: req.body.profileImages
         }
 
-        if (user.profileImages.length > 5) {
+        if (!user.email || !user.username ||
+            !user.password || !user.lastName ||
+            !user.firstName || !user.gender ||
+            !user.preference || !user.biography ||
+            !user.age || !user.hashtags ||
+            !user.region || !user.profileImages) {
+            return res.status(400).send('모든 항목을 입력해주세요.');
+        } else if (user.gpsAllowedAt === undefined) {
+            return res.status(400).send('GPS 사용 허용 여부를 입력해주세요.');
+        }
+        else if (user.profileImages.length > 5) {
             return res.status(400).send('프로필 이미지는 최대 5개까지만 등록할 수 있습니다.');
         } else if (user.hashtags.length > 5) {
             return res.status(400).send('해시태그는 최대 5개까지만 등록할 수 있습니다.');

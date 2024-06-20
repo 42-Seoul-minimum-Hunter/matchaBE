@@ -336,6 +336,36 @@ const findUserByFilter = async (filter) => {
     }
 };
 
+const findUserByUsername = async (username) => {
+    try {
+        const { rows } = await client.query('SELECT * FROM users WHERE username = $1 AND deleted_at IS NULL', [username]);
+        if (rows.length === 0) {
+            return null;
+        }
+
+        return rows[0];
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
+const findUserByEmail = async (email) => {
+    try {
+        const { rows } = await client.query('SELECT * FROM users WHERE email = $1 AND deleted_at IS NULL', [email]);
+        if (rows.length === 0) {
+            const error = new Error('사용자를 찾을 수 없습니다.');
+            error.statusCode = 404;
+            throw error;
+        }
+
+        return rows[0];
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
 
 module.exports = {
     createUser,
@@ -348,4 +378,7 @@ module.exports = {
     changePassword,
 
     findUserByFilter,
+
+    findUserByUsername,
+    findUserByEmail
 };

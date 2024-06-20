@@ -4,6 +4,7 @@ const session = require('express-session');
 const http = require('http');
 const socketIO = require('socket.io');
 const morgan = require('morgan');
+const cors = require('cors');
 require('dotenv').config();
 
 const { Client } = require('pg');
@@ -29,6 +30,12 @@ app.use(session({
 }));
 const server = http.createServer(app);
 const io = socketIO(server);
+
+//cors 허용
+app.use(cors({
+    origin: "*",
+    credentials: true,
+}));
 
 
 // 포트 정보

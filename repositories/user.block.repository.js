@@ -15,18 +15,14 @@ const client = new Client({
 
 client.connect();
 
-const addBlockUser = async (blockUsername, userId) => {
+const addBlockUser = async (blockedUserId, userId) => {
     try {
 
         const existingBlockHistory = await client.query(`
             SELECT * 
             FROM user_block_histories
-            WHERE user_id = $1 AND block_id = (
-                SELECT id
-                FROM users
-                WHERE username = $2
-            ) AND deleted_at IS NULL
-        `, [userId, blockUsername]);
+            WHERE user_id = $1 AND block_id = $2 AND deleted_at NOT NULL
+        `, [userId, blockedUserId]);
 
         if (existingBlockHistory.rows.length > 0) {
             throw new Error('이미 차단한 사용자입니다.');
@@ -39,14 +35,10 @@ const addBlockUser = async (blockUsername, userId) => {
                 created_at
             ) VALUES (
                 $1,
-                (
-                    SELECT id
-                    FROM users
-                    WHERE username = $2
-                ),
+                $2,
                 now()
             )
-        `, [userId, blockUsername]);
+        `, [userId, blockedUserId]);
 
     } catch (error) {
         console.log(error);
@@ -54,18 +46,14 @@ const addBlockUser = async (blockUsername, userId) => {
     }
 };
 
-const deleteBlockUser = async (blockUsername, userId) => {
+const deleteBlockUser = async (blockedUserId, userId) => {
     try {
 
         const existingBlockHistory = await client.query(`
             SELECT * 
             FROM user_block_histories
-            WHERE user_id = $1 AND block_id = (
-                SELECT id
-                FROM users
-                WHERE username = $2
-            ) AND deleted_at NOT NULL
-        `, [userId, blockUsername]);
+            WHERE user_id = $1 AND block_id = $2 AND deleted_at IS NULL
+        `, [userId, blockedUserId]);
 
         if (existingBlockHistory.rows.length === 0) {
             throw new Error('차단 기록이 존재하지 않습니다.');
@@ -74,12 +62,8 @@ const deleteBlockUser = async (blockUsername, userId) => {
         await client.query(`
             UPDATE user_block_histories
             SET deleted_at = NULL
-            WHERE user_id = $1 AND block_id = (
-                SELECT id
-                FROM users
-                WHERE username = $2
-            )
-        `, [userId, blockUsername]);
+            WHERE user_id = $1 AND block_id = $2
+        `, [userId, blockedUserId]);
     } catch (error) {
         console.log(error);
         throw error;

@@ -12,17 +12,12 @@ reason : String(ENUM) 신고 사유
 
 router.post('/', async function (req, res, next) {
     try {
-        const reportedUsername = req.body.reportedUsername;
-        const reason = req.body.reason;
+        const { reportedUsername, reason } = req.body;
         if (!reportedUsername || !reason) {
             return res.status(400).send('reportedUsername, reason를 입력하세요.');
         }
-        const report = {
-            reportedUsername: reportedUsername,
-            reason: reason
-        };
 
-        await userReportSerivce.reportUser(report, req.user.id);
+        await userReportSerivce.reportUser(reportedUsername, reason, req.jwtInfo.id);
         res.send();
     } catch (error) {
         next(error);

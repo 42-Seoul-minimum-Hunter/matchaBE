@@ -1,33 +1,51 @@
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const authRepository = require('../repositories/auth.repository');
+const userProfileRepository = require('../repositories/user.profile.repository');
+const userRepository = require('../repositories/user.repository');
 const sendEmail = require('../configs/sendEmail.js');
 const { totp } = require('otplib');
 
 const loginByUsernameAndPassword = async (username, password) => {
     try {
-        const user = await authRepository.loginByUsernameAndPassword(username, password);
+        const userInfo = await authRepository.findUserByUsername(username);
+
+        if (!userInfo) {
+            throw new Error('User not found');
+        } else if (userInfo.is_oauth === true) {
+            throw new Error('OAuth user cannot login with username and password');
+        } else if (await bcypt.compare(password, userInfo.password)) {
+            throw new Error('Password not match');
+        }
+
+        const profileImageInfo = await userProfileRepository.findProfileImagesById(userInfo.id);
+
+        const user = {
+            id: userInfo.id,
+            username: userInfo.username,
+            lastName: userInfo.last_name,
+            firstName: userInfo.first_name,
+            profileImage: profileImageInfo.profile_images[0],
+            isValid: userInfo.is_valid,
+            isOauth: userInfo.is_oauth,
+        }
+
         return user;
     } catch (error) {
         return { error: error.message };
     }
 }
 
-const findOAuthUser = async (code) => {
+const getOauthInfo = async (code) => {
     try {
         const accessToken = await authRepository.getAccessTokens(code);
         const oauthInfo = await authRepository.getOAuthInfo(accessToken);
-        const user = await authRepository.findUserByEmail(oauthInfo.email);
-        return { user, oauthInfo };
-    } catch (error) {
-        return { error: error.message };
-    }
-}
+        var user = await userRepository.findUserByEmail(oauthInfo.email);
+        const profileImageInfo = await userProfileRepository.findProfileImagesById(user.id);
 
-const generateJWT = (obj) => {
-    try {
-        const jwtToken = jwt.sign(obj, process.env.JWT_SECRET, { expiresIn: '24h' });
-        return jwtToken;
+        user.profileImage = profileImageInfo.profile_images[0];
+
+        return { user, oauthInfo };
     } catch (error) {
         return { error: error.message };
     }
@@ -46,8 +64,6 @@ const createTwofactorCode = async (req, email) => {
         이 코드는 5분 동안 유효합니다.
         감사합니다.`;
 
-        console.log('2차 인증 코드 전송을 위한 이메일:', email, emailContent);
-
         await sendEmail({
             to: email,
             subject: '[MATCHA] 2차 인증 코드',
@@ -55,8 +71,6 @@ const createTwofactorCode = async (req, email) => {
         });
 
         req.session.twoFactorCode = { expirationDate: new Date(Date.now() + 5 * 60 * 1000) };
-
-        //console.log('2차 인증 코드 전송 결과:', result);
 
     } catch (error) {
         return { error: error.message };
@@ -87,8 +101,6 @@ const createRegistURL = async (req, email) => {
     try {
         const code = crypto.randomBytes(20).toString('hex');
         const expirationDate = new Date(Date.now() + 5 * 60 * 1000); // 5분 후 만료
-
-        console.log('회원 가입 URL 생성:', code, expirationDate, email)
 
         // 이메일 내용 구성
         const emailContent = `안녕하세요
@@ -193,10 +205,29 @@ const verifyResetPasswordURL = (req, code) => {
     }
 }
 
+const generateJWT = (obj) => {
+    try {
+        const jwtToken = jwt.sign(obj, process.env.JWT_SECRET, { expiresIn: '24h' });
+        return jwtToken;
+    } catch (error) {
+        return { error: error.message };
+    }
+}
+
+const setJwtOnCookie = (res, token) => {
+    res.cookie('jwt', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+    });
+
+    res.set('Authorization', `Bearer ${token}`);
+    return res;
+}
+
 
 module.exports = {
     loginByUsernameAndPassword,
-    findOAuthUser,
+    getOauthInfo,
     generateJWT,
 
     createTwofactorCode,
@@ -206,6 +237,8 @@ module.exports = {
     verifyRegistURL,
 
     createResetPasswordURL,
-    verifyResetPasswordURL
+    verifyResetPasswordURL,
+
+    setJwtOnCookie
 
 };

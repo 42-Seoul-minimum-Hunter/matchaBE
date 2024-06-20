@@ -77,11 +77,13 @@ password : String 사용자 비밀번호
 
 router.post('/login', async function (req, res, next) {
     try {
-        if (req.body.username === undefined || req.body.password === undefined) {
+
+        const { username, password } = req.body;
+
+        if (!username || password) {
             throw new Error('username 또는 password가 없습니다.');
         }
-        const username = req.body.username;
-        const password = req.body.password;
+
         const user = await authService.loginByUsernameAndPassword(username, password);
 
         const jwtToken = authService.generateJWT({
@@ -93,15 +95,7 @@ router.post('/login', async function (req, res, next) {
             twofaVerified: false
         });
 
-        // JWT 토큰을 쿠키에 담기
-        res.cookie('jwt', jwtToken, {
-            httpOnly: true, // 클라이언트 측 JavaScript에서 접근할 수 없도록 함
-            secure: true, // HTTPS 환경에서만 전송되도록 함
-            maxAge: 24 * 60 * 60 * 1000 // 쿠키 유효기간 1일
-        });
-
-        // JWT 토큰을 응답 헤더에 담기
-        res.set('Authorization', `Bearer ${jwtToken}`);
+        res = authService.setJwtOnCookie(res, jwtToken);
 
         res.send(user);
     } catch (error) {
@@ -132,7 +126,7 @@ router.get('/callback', async function (req, res, next) {
             return res.status(401).send('code가 없습니다.');
         }
 
-        const { user, oauthInfo } = await authService.findOAuthUser(code);
+        const { user, oauthInfo } = await authService.getOauthInfo(code);
 
         if (!oauthInfo) {
             return res.status(401).send('oauth 정보가 없습니다.');
@@ -149,16 +143,7 @@ router.get('/callback', async function (req, res, next) {
                 twofaVerified: false
             });
 
-            // JWT 토큰을 쿠키에 담기
-            res.cookie('jwt', jwtToken, {
-                httpOnly: true,
-                secure: true,
-                maxAge: 24 * 60 * 60 * 1000
-            });
-
-            // JWT 토큰을 응답 헤더에 담기
-            res.set('Authorization', `Bearer ${jwtToken}`);
-
+            res = authService.setJwtOnCookie(res, jwtToken);
             res.redirect(process.env.OAUTH_USER_REGISTRATION_URL);
         } else {
             jwtToken = authService.generateJWT({
@@ -170,16 +155,7 @@ router.get('/callback', async function (req, res, next) {
                 twofaVerified: false
             });
 
-            // JWT 토큰을 쿠키에 담기
-            res.cookie('jwt', jwtToken, {
-                httpOnly: true,
-                secure: true,
-                maxAge: 24 * 60 * 60 * 1000
-            });
-
-            // JWT 토큰을 응답 헤더에 담기
-            res.set('Authorization', `Bearer ${jwtToken}`);
-
+            res = authService.setJwtOnCookie(res, jwtToken);
             res.send(user);
         }
     } catch (error) {
