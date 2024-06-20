@@ -7,6 +7,8 @@ const userBlockSerivce = require('../services/user.block.service.js');
 /* POST /user/block
 blockUsername : String 차단 대상사용자 닉네임
 */
+
+//TODO: verifyAllprocess 미들웨어 추가
 router.post('/', async function (req, res, next) {
     try {
         const blockUsername = req.body.blockUsername;
@@ -24,6 +26,8 @@ router.post('/', async function (req, res, next) {
 /* DELETE /user/block
 blockUsername : String 차단 대상사용자 닉네임
 */
+
+//TODO: verifyAllprocess 미들웨어 추가
 router.delete('/', async function (req, res, next) {
     try {
         const blockUsername = req.body.blockUsername;
