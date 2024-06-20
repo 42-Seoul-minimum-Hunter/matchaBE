@@ -6,7 +6,9 @@ const addLikeUserByUsername = async (likedUsername, userId) => {
     try {
         const likedUserInfo = await userRepository.findUserByUsername(likedUsername);
         if (!likedUserInfo) {
-            throw new Error('좋아요할 사용자가 존재하지 않습니다.');
+            const error = new Error('Like user not found.');
+            error.status = 404;
+            throw error;
         }
         await userLikeRepository.addLikeUserByUsername(likedUserInfo.id, userId);
         await userChatRepository.generateChatRoom(likedUserInfo.id, userId);
@@ -19,7 +21,9 @@ const deleteLikeUserByUsername = async (likedUsername, userId) => {
     try {
         const likedUserInfo = await userRepository.findUserByUsername(likedUsername);
         if (!likedUserInfo) {
-            throw new Error('좋아요할 사용자가 존재하지 않습니다.');
+            const error = new Error('Like user not found.');
+            error.status = 404;
+            throw error;
         }
         await userLikeRepository.deleteLikeUserByUsername(likedUserInfo.id, userId);
         await userChatRepository.deleteChatRoom(likedUserInfo.id, userId);

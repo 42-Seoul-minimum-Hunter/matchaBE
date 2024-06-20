@@ -104,7 +104,9 @@ const deleteChatRoom = async (chatUserId, userId) => {
         `, [userId, chatUserId]);
 
         if (existingChatRoom.rows.length === 0) {
-            throw new Error('채팅 기록이 존재하지 않습니다.');
+            const error = new Error('Chat room not found');
+            error.status = 404;
+            throw error;
         }
 
         await client.query(`

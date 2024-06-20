@@ -6,7 +6,9 @@ const addBlockUser = async (blockedUsername, userId) => {
         const blockedUserInfo = await userRepository.findUserByUsername(blockedUsername);
 
         if (!blockedUserInfo) {
-            throw new Error('차단할 사용자가 존재하지 않습니다.');
+            const error = new Error('Block user not found.');
+            error.status = 404;
+            throw error;
         }
         await userBlockRepository.addBlockUser(blockedUserInfo.id, userId);
     } catch (error) {
@@ -19,7 +21,9 @@ const deleteBlockUser = async (blockedUsername, userId) => {
         const blockedUserInfo = await userRepository.findUserByUsername(blockedUsername);
 
         if (!blockedUserInfo) {
-            throw new Error('차단할 사용자가 존재하지 않습니다.');
+            const error = new Error('Block user not found.');
+            error.status = 404;
+            throw error;
         }
         await userBlockRepository.deleteBlockUser(blockedUserInfo.id, userId);
     } catch (error) {

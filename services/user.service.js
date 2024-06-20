@@ -18,10 +18,18 @@ const createUser = async (UserCreateDto) => {
 
         if (await userRepository.findUserByEmail(UserCreateDto.email) ||
             await userRepository.findUserByUsername(UserCreateDto.username)) {
-            throw new Error('이미 존재하는 사용자입니다.');
+            const error = new Error('User already exists');
+            error.status = 409;
+            throw error;
         }
 
         const userId = await userRepository.createUser(UserCreateDto);
+
+        if (!userId) {
+            const error = new Error('User creation failed');
+            error.status = 400;
+            throw error;
+        }
 
         await userHashtagRepository.saveHashtagById(UserCreateDto.hashtags, userId);
         await userRegionRepository.saveRegionById(UserCreateDto.region.si, UserCreateDto.region.gu, userId);
@@ -29,7 +37,8 @@ const createUser = async (UserCreateDto) => {
 
         return userId;
     } catch (error) {
-        return { error: error.message };
+        console.log(error);
+        throw error;
     }
 }
 
@@ -51,11 +60,15 @@ const changePassword = async (password, email) => {
     }
 }
 
-const findUserByFilter = async (filter) => {
+const findUserByFilter = async (filter, page, pageSize) => {
     try {
-        const userInfos = await userRepository.findUserByFilter(filter);
-        const filteredByBlock = await userBlockRepository.filterBlockedUser(filter.userId, userInfos);
-        return filteredByBlock;
+
+        const { users, totalCount } = await userRepository.findUserByFilter(filter, page, pageSize);
+        const filteredByBlock = await userBlockRepository.filterBlockedUser(filter.userId, users);
+        return {
+            users: filteredByBlock,
+            totalCount: totalCount
+        };
     } catch (error) {
         return { error: error.message };
     }

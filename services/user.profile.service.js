@@ -11,7 +11,9 @@ const getUserProfile = async (username, userId) => {
 
         const userInfo = await userRepository.findUserByUsername(username);
         if (!userInfo) {
-            throw new Error('존재하지 않는 사용자입니다.');
+            const error = new Error('User not found');
+            error.status = 404;
+            throw error;
         }
 
         const hashtagInfo = await userHashtagRepository.findHashtagById(userInfo.id);
@@ -58,7 +60,9 @@ const getMyInfo = async (userId) => {
 
         const userInfo = await userRepository.findUserById(userId);
         if (!userInfo) {
-            throw new Error('User not found');
+            const error = new Error('User not found');
+            error.status = 404;
+            throw error;
         }
 
         const hashtagInfo = await userHashtagRepository.findHashtagById(userInfo.id);
@@ -102,7 +106,10 @@ const updateUser = async (UserUpdateDto, userId) => {
         const userInfo = await userRepository.findUserByEmail(UserUpdateDto.email);
 
         if (userInfo) {
-            throw new Error('Duplicate email address');
+            const error = new Error('User already exists');
+            error.status = 409;
+            throw error;
+
         }
 
         await userRepository.updateUserById(UserUpdateDto, userId);

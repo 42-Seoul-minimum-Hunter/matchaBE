@@ -5,6 +5,7 @@ const morgan = require('morgan');
 const { checkOauthLogin, verifyAllprocess } = require('../configs/middleware.js');
 
 const userSerivce = require('../services/user.service.js');
+const authService = require('../services/auth.service.js');
 
 morgan('combined', {
     skip: function (request, response) { return response.statusCode < 400 }
@@ -36,19 +37,19 @@ profileImages : String 사용자 프로필 이미지 => BASE64로 반환 예정
 router.post('/create', checkOauthLogin, async function (req, res, next) {
     try {
         const user = {
-            email: req.body.email,
-            username: req.body.username,
-            password: req.body.password,
-            lastName: req.body.lastName,
-            firstName: req.body.firstName,
-            gender: req.body.gender,
-            preference: req.body.preference,
-            biography: req.body.biography,
-            age: req.body.age,
-            gpsAllowedAt: req.body.gpsAllowedAt,
-            hashtags: req.body.hashtags,
-            region: req.body.region,
-            profileImages: req.body.profileImages
+            email: req.body.email || undefined,
+            username: req.body.username || undefined,
+            password: req.body.password || undefined,
+            lastName: req.body.lastName || undefined,
+            firstName: req.body.firstName || undefined,
+            gender: req.body.gender || undefined,
+            preference: req.body.preference || undefined,
+            biography: req.body.biography || undefined,
+            age: req.body.age || undefined,
+            gpsAllowedAt: req.body.gpsAllowedAt || undefined,
+            hashtags: req.body.hashtags || undefined,
+            region: req.body.region || undefined,
+            profileImages: req.body.profileImages || undefined
         }
 
         if (!user.email || !user.username ||
@@ -58,10 +59,7 @@ router.post('/create', checkOauthLogin, async function (req, res, next) {
             !user.age || !user.hashtags ||
             !user.region || !user.profileImages) {
             return res.status(400).send('모든 항목을 입력해주세요.');
-        } else if (user.gpsAllowedAt === undefined) {
-            return res.status(400).send('GPS 사용 허용 여부를 입력해주세요.');
-        }
-        else if (user.profileImages.length > 5 && user.profileImages.length < 1) {
+        } else if (user.profileImages.length > 5 && user.profileImages.length < 1) {
             return res.status(400).send('프로필 이미지는 최대 5개까지만 등록할 수 있습니다.');
         } else if (user.hashtags.length > 5 && user.hashtags.length < 1) {
             return res.status(400).send('해시태그는 최대 5개까지만 등록할 수 있습니다.');
@@ -103,7 +101,12 @@ router.post('/create', checkOauthLogin, async function (req, res, next) {
             user.isOauth = false;
         }
 
-        res = res.authService.setToken(jwtToken);
+        res.cookie('jwt', jwtToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+        });
+
+        res.set('Authorization', `Bearer ${jwtToken}`);
 
         res.send(user);
     } catch (error) {
@@ -165,7 +168,7 @@ gu : String 사용자 구
 //TODO: si, gu 올바른 형식인지 확인
 router.get('/find', async function (req, res, next) {
     try {
-        let { username, hashtags, minAge, maxAge, minRate, maxRate, si, gu } = req.query;
+        let { username, hashtags, minAge, maxAge, minRate, maxRate, si, gu, page = 1, pageSize = 20 } = req.query;
 
         const filter = {
             username: username || undefined,
@@ -187,8 +190,8 @@ router.get('/find', async function (req, res, next) {
             return res.status(400).send('시를 입력해주세요.');
         }
 
-        const UserInfos = await userSerivce.findUserByFilter(filter);
-        res.send(UserInfos);
+        const { userInfos, totalCount } = await userSerivce.findUserByFilter(filter, page, pageSize);
+        res.send({ userInfos, totalCount, currentPage: page });
     } catch (error) {
         next(error);
     }

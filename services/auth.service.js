@@ -10,11 +10,17 @@ const loginByUsernameAndPassword = async (username, password) => {
         const userInfo = await userRepository.findUserByUsername(username);
 
         if (!userInfo) {
-            throw new Error('User not found');
+            const error = new Error('User not found');
+            error.statusCode = 404;
+            throw error;
         } else if (userInfo.is_oauth === true) {
-            throw new Error('OAuth user cannot login with username and password');
+            const error = new Error('OAuth user cannot login with username and password');
+            error.statusCode = 400;
+            throw error;
         } else if (await bcypt.compare(password, userInfo.password)) {
-            throw new Error('Password not match');
+            const error = new Error('Password not match');
+            error.statusCode = 400;
+            throw error;
         }
 
         const profileImageInfo = await userProfileImageRepository.findProfileImagesById(userInfo.id);
@@ -131,7 +137,9 @@ const createResetPasswordURL = async (req, email) => {
         const userInfo = await userRepository.findUserByEmail(email);
 
         if (!userInfo) {
-            throw new Error('User not found');
+            const error = new Error('User not found');
+            error.statusCode = 404;
+            throw error;
         }
 
         const code = crypto.randomBytes(20).toString('hex');
@@ -170,12 +178,16 @@ const verifyResetPasswordURL = (req, code) => {
         const { token: sessionToken, expirationDate, email } = req.session.registrationToken;
         // 유효 기간 확인
         if (expirationDate < new Date()) {
-            throw new Error('비밀번호 초기화 링크가 만료되었습니다.');
+            const error = new Error('Password reset link has expired.');
+            error.statusCode = 400;
+            throw error;
         }
 
         // 토큰 일치 확인
         if (sessionToken !== token) {
-            throw new Error('유효하지 않은 비밀번호 초기화 링크입니다.');
+            const error = new Error('Invalid password reset link.');
+            error.statusCode = 400;
+            throw error;
         } else {
             const expirationDate = new Date(Date.now() + 5 * 60 * 1000); // 30분 후 만료
             req.session.resetPasswordEmail = { email, expirationDate };
@@ -198,16 +210,6 @@ const generateJWT = (obj) => {
     }
 }
 
-const setJwtOnCookie = (res, token) => {
-    res.cookie('jwt', token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-    });
-
-    res.set('Authorization', `Bearer ${token}`);
-    return res;
-}
-
 const getAccessTokens = async (code) => {
     try {
         const data = {
@@ -223,8 +225,6 @@ const getAccessTokens = async (code) => {
                 'Content-Type': 'application/x-www-form-urlencoded'
             }
         });
-
-        console.log(response);
 
         if (response.status !== 200) {
             const error = new Error('Failed to get tokens');
@@ -284,7 +284,5 @@ module.exports = {
 
     createResetPasswordURL,
     verifyResetPasswordURL,
-
-    setJwtOnCookie
 
 };

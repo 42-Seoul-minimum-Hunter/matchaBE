@@ -24,7 +24,9 @@ const addLikeUserByUsername = async (likeUserId, userId) => {
         `, [userId, likeUserId]);
 
         if (existingLikeHistory.rows.length > 0) {
-            throw new Error('이미 좋아요한 사용자입니다.');
+            const error = new Error('User already liked.');
+            error.statusCode = 400;
+            throw error;
         }
 
         await client.query(`
@@ -55,7 +57,9 @@ const deleteLikeUserByUsername = async (likeUserId, userId) => {
         `, [userId, likeUserId]);
 
         if (existingLikeHistory.rows.length === 0) {
-            throw new Error('차단 기록이 존재하지 않습니다.');
+            const error = new Error('User not liked.');
+            error.statusCode = 400;
+            throw error;
         }
 
         await client.query(`

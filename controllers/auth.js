@@ -94,7 +94,12 @@ router.post('/login', async function (req, res, next) {
             twofaVerified: false
         });
 
-        res = authService.setJwtOnCookie(res, jwtToken);
+        res.cookie('jwt', jwtToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+        });
+
+        res.set('Authorization', `Bearer ${jwtToken}`);
 
         res.send(user);
     } catch (error) {
@@ -142,7 +147,12 @@ router.get('/callback', async function (req, res, next) {
                 twofaVerified: false
             });
 
-            res = authService.setJwtOnCookie(res, jwtToken);
+            res.cookie('jwt', jwtToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+            });
+
+            res.set('Authorization', `Bearer ${jwtToken}`);
             res.redirect(process.env.OAUTH_USER_REGISTRATION_URL);
         } else {
             jwtToken = authService.generateJWT({
@@ -154,7 +164,12 @@ router.get('/callback', async function (req, res, next) {
                 twofaVerified: false
             });
 
-            res = authService.setJwtOnCookie(res, jwtToken);
+            res.cookie('jwt', jwtToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+            });
+
+            res.set('Authorization', `Bearer ${jwtToken}`);
             res.send(user);
         }
     } catch (error) {
@@ -212,7 +227,12 @@ router.post('/twofactor/verify', function (req, res, next) {
                 twofaVerified: true
             });
 
-            res = authService.setJwtOnCookie(res, jwtToken);
+            res.cookie('jwt', jwtToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+            });
+
+            res.set('Authorization', `Bearer ${jwtToken}`);
 
             res.send();
         }
@@ -273,7 +293,12 @@ router.get('/register/email/verify', function (req, res, next) {
             twofaVerified: false
         });
 
-        res = authService.setJwtOnCookie(res, jwtToken);
+        res.cookie('jwt', jwtToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+        });
+
+        res.set('Authorization', `Bearer ${jwtToken}`);
 
         res.send();
     } catch (error) {

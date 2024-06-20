@@ -93,7 +93,12 @@ router.put('/update', async function (req, res, next) {
                 twofaVerified: req.jwtInfo.twofaVerified
             });
 
-            res = authService.setJwtOnCookie(res, jwtToken);
+            res.cookie('jwt', jwtToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+            });
+
+            res.set('Authorization', `Bearer ${jwtToken}`);
         }
         res.send();
     } catch (error) {

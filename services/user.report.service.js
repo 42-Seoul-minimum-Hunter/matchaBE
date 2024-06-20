@@ -7,7 +7,9 @@ const reportUser = async (reportedUsername, reason, userId) => {
     try {
         const reportedUserInfo = await userRepository.findUserByUsername(reportedUsername);
         if (!reportedUserInfo) {
-            throw new Error('User not found');
+            const error = new Error('Report user not found.');
+            error.status = 404;
+            throw error;
         }
         await userReportRepository.reportUser(reportedUserInfo.id, reason, userId);
         //TODO: 유저 신고 시 차단 기능 추가 논의

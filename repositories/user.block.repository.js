@@ -25,7 +25,9 @@ const addBlockUser = async (blockedUserId, userId) => {
         `, [userId, blockedUserId]);
 
         if (existingBlockHistory.rows.length > 0) {
-            throw new Error('이미 차단한 사용자입니다.');
+            const Error = new Error('User already blocked.');
+            Error.statusCode = 400;
+            throw Error;
         }
 
         await client.query(`
@@ -56,7 +58,9 @@ const deleteBlockUser = async (blockedUserId, userId) => {
         `, [userId, blockedUserId]);
 
         if (existingBlockHistory.rows.length === 0) {
-            throw new Error('차단 기록이 존재하지 않습니다.');
+            const Error = new Error('User not blocked.');
+            Error.statusCode = 400;
+            throw Error;
         }
 
         await client.query(`

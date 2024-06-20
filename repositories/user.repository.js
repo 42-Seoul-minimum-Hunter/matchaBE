@@ -12,10 +12,9 @@ const client = new Client({
     port: process.env.DB_PORT,
 });
 
-const UserCreateDto = require('../dtos/user.create.dto');
 client.connect();
 
-const createUser = async (req, UserCreateDto) => {
+const createUser = async (UserCreateDto) => {
     try {
         const {
             email,
@@ -102,7 +101,7 @@ const changePassword = async (hashedPassword, email) => {
         );
 
         if (result.rows.length === 0) {
-            const error = new Error('비밀번호를 변경할 수 없습니다.');
+            const error = new Error('Password change failed.');
             error.statusCode = 400;
             throw error;
         }
@@ -112,7 +111,7 @@ const changePassword = async (hashedPassword, email) => {
     }
 }
 
-const findUserByFilter = async (filter) => {
+const findUserByFilter = async (filter, page, pageSize) => {
     try {
         //console.log(filter)
 
@@ -183,7 +182,17 @@ const findUserByFilter = async (filter) => {
             maxRate = parseFloat(5);
         }
 
+        // LIMIT와 OFFSET을 추가하여 페이지네이션 구현
+        query += ' LIMIT $' + (params.length + 1) + ' OFFSET $' + (params.length + 2);
+        params.push(pageSize);
+        params.push((page - 1) * pageSize);
+
         const userInfos = await client.query(query, params);
+
+        // 전체 사용자 수 계산
+        const totalCountQuery = 'SELECT COUNT(*) AS total_count FROM (' + query + ') AS subquery';
+        const totalCountResult = await client.query(totalCountQuery, params);
+        const totalCount = totalCountResult.rows[0].total_count;
 
 
         // 사용자 평균 평점 계산 및 필터링
@@ -224,7 +233,12 @@ const findUserByFilter = async (filter) => {
             }
         }));
 
-        return UserInfo;
+        return {
+            users: UserInfo,
+            totalCount: totalCount
+        };
+
+        //return UserInfo;
     } catch (error) {
         console.log(error);
         throw error;

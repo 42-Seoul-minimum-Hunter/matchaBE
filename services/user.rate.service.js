@@ -4,7 +4,9 @@ const rateUser = async (ratedUsername, rateScore, userId) => {
     try {
         const ratedUserInfo = await userRateRepository.findUserByUsername(ratedUsername);
         if (!ratedUserInfo) {
-            throw new Error('User not found');
+            const error = new Error('Rate user not found.');
+            error.status = 404;
+            throw error;
         }
         await userRateRepository.rateUser(ratedUserInfo.id, rateScore, userId);
     } catch (error) {
