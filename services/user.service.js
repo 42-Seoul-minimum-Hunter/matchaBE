@@ -33,10 +33,9 @@ const createUser = async (UserCreateDto) => {
     }
 }
 
-const deleteUser = async (id) => {
+const unregister = async (id) => {
     try {
-
-        await userRepository.deleteUser(id);
+        await userRepository.deleteUserById(id);
     } catch (error) {
         return { error: error.message };
     }
@@ -76,7 +75,7 @@ const checkRightRegion = async (si, gu) => {
 
 module.exports = {
     createUser,
-    deleteUser,
+    unregister,
     changePassword,
     findUserByFilter,
 };

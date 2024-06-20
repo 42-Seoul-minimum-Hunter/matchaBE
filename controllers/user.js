@@ -111,12 +111,13 @@ router.post('/create', checkOauthLogin, async function (req, res, next) {
     }
 });
 
-/* DELETE /user/delete
+/* DELETE /user/unregister
 */
 
-router.delete('/delete', async function (req, res, next) {
+//TODO: jwt 토큰 확인 추가
+router.delete('/unregister', async function (req, res, next) {
     try {
-        await userSerivce.deleteUser(req.jwtInfo.id);
+        await userSerivce.unregister(req.jwtInfo.id);
         res.clearCookie('jwt');
         res.send();
     } catch (error) {
@@ -132,13 +133,13 @@ password : String 사용자 비밀번호
 router.post('/change/password', async function (req, res, next) {
     try {
         let password = req.body.password;
+        const { email, expirationDate } = req.session.resetPassword;
 
         if (!password) {
             return res.status(400).send('비밀번호를 입력해주세요.');
-        }
-
-        const { email, expirationDate } = req.session.resetPassword;
-        if (expirationDate < new Date()) {
+        } else if (!email || !expirationDate) {
+            return res.status(400).send('비밀번호 변경 요청을 먼저 해주세요.');
+        } else if (expirationDate < new Date()) {
             return res.status(400).send('비밀번호 변경 기간이 만료되었습니다.');
         }
 
@@ -161,6 +162,7 @@ si : String 사용자 시
 gu : String 사용자 구
 */
 
+//TODO: si, gu 올바른 형식인지 확인
 router.get('/find', async function (req, res, next) {
     try {
         let { username, hashtags, minAge, maxAge, minRate, maxRate, si, gu } = req.query;

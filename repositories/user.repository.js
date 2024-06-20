@@ -74,34 +74,15 @@ const createUser = async (req, UserCreateDto) => {
     }
 }
 
-const deleteUser = async (id) => {
+const deleteUserById = async (id) => {
     try {
-        // 해당 유저가 이미 삭제되었는지 확인
-        const deletedUser = await client.query(
-            `SELECT * FROM users WHERE id = $1 AND deleted_at IS NOT NULL`,
-            [id]
-        );
-
-        if (deletedUser.rows.length > 0) {
-            const error = new Error('이미 삭제된 사용자입니다.');
-            error.statusCode = 400;
-            throw error;
-        }
-
         // 유저 삭제 처리
-        const result = await client.query(
+        await client.query(
             `UPDATE users 
              SET deleted_at = now(), updated_at = now()
-             WHERE id = $1
-             RETURNING *`,
+             WHERE id = $1`,
             [id]
         );
-
-        if (result.rows.length === 0) {
-            const error = new Error('사용자를 삭제할 수 없습니다.')
-            error.statusCode = 400;
-            throw error;
-        }
     }
     catch (error) {
         console.log(error);
@@ -341,7 +322,7 @@ const updateUserById = async (UserUpdateDto, id) => {
 
 module.exports = {
     createUser,
-    deleteUser,
+    deleteUserById,
 
     changePassword,
 
