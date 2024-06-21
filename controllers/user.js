@@ -166,6 +166,8 @@ gu : String 사용자 구
 */
 
 //TODO: si, gu 올바른 형식인지 확인
+//TODO: user preference 필터 추가
+//TODO: gu 기준으로 정렬, si 기준으로 정렬 추가
 router.get('/find', async function (req, res, next) {
     try {
         let { username, hashtags, minAge, maxAge, minRate, maxRate, si, gu, page = 1, pageSize = 20 } = req.query;
@@ -200,7 +202,8 @@ router.get('/find', async function (req, res, next) {
 
 /* GET /user/search/region
 */
-
+//TODO: jwt 토큰 확인 추가
+//TODO: gpsAllowedAt 확인 상관없이 위치 확인
 router.get('/search/region', function (req, res, next) {
     try {
         let region = userSerivce.getRegion(req.jwtInfo.id);

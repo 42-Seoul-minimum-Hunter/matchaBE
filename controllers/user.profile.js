@@ -7,6 +7,10 @@ const userProfileService = require('../services/user.profile.service.js');
 /* GET /user/profile/
 username : String 사용자 닉네임
 */
+
+//TODO: verifyAllprocess 미들웨어 추가
+//TODO: 조회 기록 저장 추가
+//TODO: 온라인 상태 확인 추가
 router.get('/', async function (req, res, next) {
     try {
         const username = req.query.username;
