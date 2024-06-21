@@ -264,10 +264,7 @@ router.post("/register/email/send", async function (req, res, next) {
     if (!email) {
       return res.status(400).send("Email not found.");
     }
-    const { code, expirationDate } = await authService.createRegistURL(email);
-    req.session.registrationCode = code;
-    req.session.registrationDate = expirationDate;
-    console.log(req.session);
+    await authService.createRegistURL(email);
     return res.send();
   } catch (error) {
     next(error);
@@ -283,47 +280,34 @@ router.get("/register/email/verify", function (req, res, next) {
   try {
     const code = req.query.code;
 
-    if (!req.session.registrationCode || !req.session.registrationDate) {
-      return res.status(401).send("Bad Access.");
-    }
-
-    const sessionCode = req.session.registrationCode;
-    const expirationDate = req.session.registrationDate;
-
-    console.log(sessionCode, expirationDate, code);
-
     if (!code) {
-      delete req.session.registrationCode;
       return res.status(400).send("Code not found.");
-    } else if (!sessionCode || expirationDate) {
-      delete req.session.registrationCode;
-      return res.status(401).send("Bad Access.");
-    } else if (expirationDate < new Date()) {
-      delete req.session.registrationCode;
-      return res.status(400).send("Code expired.");
-    } else if (sessionCode !== code) {
-      // 위치 다시 생각해보기
-      delete req.session.registrationCode;
-      return res.status(400).send("Invalid code.");
     }
 
-    jwtToken = authService.generateJWT({
-      id: req.jwtInfo.id,
-      email: req.jwtInfo.email,
-      isValid: true,
-      isOauth: req.jwtInfo.isOauth,
-      accessToken: req.jwtInfo.accessToken,
-      twofaVerified: false,
-    });
+    const result = authService.verifyRegistURL(code);
 
-    res.cookie("jwt", jwtToken, {
-      httpOnly: true,
-      secure: false,
-    });
+    if (!result) {
+      return res.status(400).send("Invalid code OR Code expired.");
+    }
 
-    res.set("Authorization", `Bearer ${jwtToken}`);
+    //jwtToken = authService.generateJWT({
+    //  id: req.jwtInfo.id,
+    //  email: req.jwtInfo.email,
+    //  isValid: true,
+    //  isOauth: req.jwtInfo.isOauth,
+    //  accessToken: req.jwtInfo.accessToken,
+    //  twofaVerified: false,
+    //});
 
-    return res.redirect(process.env.FE_TWOFACTOR_URL);
+    //res.cookie("jwt", jwtToken, {
+    //  httpOnly: true,
+    //  secure: false,
+    //});
+
+    //res.set("Authorization", `Bearer ${jwtToken}`);
+
+    //return res.redirect(process.env.FE_TWOFACTOR_URL);
+    return res.send("redirect");
   } catch (error) {
     next(error);
   }

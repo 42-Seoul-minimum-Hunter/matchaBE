@@ -4,6 +4,9 @@ const userProfileImageRepository = require("../repositories/user.profileImage.re
 const userRepository = require("../repositories/user.repository");
 const sendEmail = require("../configs/sendEmail.js");
 const { totp } = require("otplib");
+const moment = require('moment-timezone');
+
+const registerationCode = {};
 
 const loginByUsernameAndPassword = async (username, password) => {
   try {
@@ -106,7 +109,8 @@ const verifyTwoFactorCode = (expirationDate, code) => {
 const createRegistURL = async (email) => {
   try {
     const code = crypto.randomBytes(20).toString("hex");
-    const expirationDate = new Date(Date.now() + 5 * 60 * 1000); // 5분 후 만료
+    const userTimezone = 'America/New_York'; // 사용자의 시간대
+    const expirationDate = moment().tz(userTimezone).add(5, 'minutes').toDate(); // 5분 후 만료
 
     // 이메일 내용 구성
     const emailContent = `안녕하세요
@@ -123,11 +127,29 @@ const createRegistURL = async (email) => {
       text: emailContent,
     });
 
-    return { code, expirationDate };
+    registerationCode[code] = expirationDate;
+
   } catch (error) {
     return { error: error.message };
   }
 };
+
+const verifyRegistURL = (code) => {
+  try {
+    const expirationDate = registerationCode[code];
+    if (!expirationDate) {
+      return false;
+    } else if (expirationDate < new Date()) {
+      delete registerationCode[code];
+      return false;
+    } else {
+      delete registerationCode[code];
+      return true;
+    }
+  } catch (error) {
+    return { error: error.message };
+  }
+}
 
 const createResetPasswordURL = async (req, email) => {
   try {
@@ -282,6 +304,7 @@ module.exports = {
   verifyTwoFactorCode,
 
   createRegistURL,
+  verifyRegistURL,
 
   createResetPasswordURL,
   verifyResetPasswordURL,
