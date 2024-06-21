@@ -346,6 +346,22 @@ const updateUserById = async (UserUpdateDto, id) => {
   }
 };
 
+const updateUserValidByEmail = async (email) => {
+  try {
+    await client.query(
+      `UPDATE users
+             SET is_valid = true, updated_at = now()
+             WHERE email = $1 AND deleted_at IS NULL
+             RETURNING *`,
+      [email]
+    );
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+}
+
+
 module.exports = {
   createUser,
   deleteUserById,
@@ -359,4 +375,5 @@ module.exports = {
   findUserById,
 
   updateUserById,
+  updateUserValidByEmail
 };

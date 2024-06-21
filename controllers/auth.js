@@ -3,6 +3,8 @@ const router = express.Router();
 const { verifyTwoFA, verifyValid } = require("../configs/middleware.js");
 const authService = require("../services/auth.service.js");
 
+require('dotenv').config();
+
 /* 일반 회원가입 
 1. 회원가입 후 JWT 발급, 쿠키에 담기
         id: user.id,
@@ -190,15 +192,15 @@ router.get("/callback", async function (req, res, next) {
 /* POST /auth/twoFactor/create
  */
 //TODO : verifyTwoFA 추가
-router.post("/twofactor/create", function (req, res, next) {
+router.post("/twofactor/create", async function (req, res, next) {
   try {
     //const email = req.jwtInfo.email;
     const email = req.body.email;
     if (!email) {
       res.status(400).send("Email not found.");
     }
-    authService.createTwofactorCode(req, email);
-    res.send();
+    await authService.createTwofactorCode(email);
+    return res.send();
   } catch (error) {
     next(error);
   }
@@ -213,38 +215,32 @@ router.post("/twofactor/verify", function (req, res, next) {
     //const email = req.jwtInfo.email;
     const code = req.body.code;
 
-    const expirationDate = req.session.twoFactorExpirationDate;
-
     if (!code) {
       return res.status(400).send("Code not found.");
-    } else if (!expirationDate) {
-      return res.status(401).send("Bad Access.");
-    } else if (expirationDate < new Date()) {
-      return res.status(400).send("Code expired.");
     }
 
-    const result = authService.verifyTwoFactorCode(expirationDate, code);
+    const result = authService.verifyTwoFactorCode(code);
 
     if (result === false) {
       return res.status(400).send("Invalid code.");
     } else {
-      const jwtToken = authService.generateJWT({
-        id: req.jwtInfo.id,
-        email: req.jwtInfo.email,
-        isValid: req.jwtInfo.isValid,
-        isOauth: req.jwtInfo.isOauth,
-        accessToken: req.jwtInfo.accessToken,
-        twofaVerified: true,
-      });
+      //const jwtToken = authService.generateJWT({
+      //  id: req.jwtInfo.id,
+      //  email: req.jwtInfo.email,
+      //  isValid: req.jwtInfo.isValid,
+      //  isOauth: req.jwtInfo.isOauth,
+      //  accessToken: req.jwtInfo.accessToken,
+      //  twofaVerified: true,
+      //});
 
-      res.cookie("jwt", jwtToken, {
-        httpOnly: true,
-        secure: false,
-      });
+      //res.cookie("jwt", jwtToken, {
+      //  httpOnly: true,
+      //  secure: false,
+      //});
 
-      res.set("Authorization", `Bearer ${jwtToken}`);
+      //res.set("Authorization", `Bearer ${jwtToken}`);
 
-      return res.send();
+      return res.redirect(process.env.FE_SEARCH_URL);
     }
   } catch (error) {
     next(error);
@@ -306,8 +302,8 @@ router.get("/register/email/verify", function (req, res, next) {
 
     //res.set("Authorization", `Bearer ${jwtToken}`);
 
-    //return res.redirect(process.env.FE_TWOFACTOR_URL);
-    return res.send("redirect");
+    return res.redirect(process.env.FE_TWOFACTOR_URL);
+    //return res.send("redirect");
   } catch (error) {
     next(error);
   }

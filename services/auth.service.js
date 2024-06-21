@@ -7,6 +7,7 @@ const { totp } = require("otplib");
 const moment = require('moment-timezone');
 
 const registerationCode = {};
+const twoFactorCode = {};
 
 const loginByUsernameAndPassword = async (username, password) => {
   try {
@@ -85,7 +86,12 @@ const createTwofactorCode = async (req, email) => {
       text: emailContent,
     });
 
-    req.session.twoFactorExpirationDate = new Date(Date.now() + 5 * 60 * 1000);
+    const userTimezone = 'Asia/Seoul'; // 사용자의 시간대
+    const expirationDate = moment().tz(userTimezone).add(5, 'minutes').toDate(); // 5분 후 만료
+
+    twoFactorCode[code] = expirationDate;
+
+
   } catch (error) {
     return { error: error.message };
   }
@@ -94,12 +100,15 @@ const createTwofactorCode = async (req, email) => {
 const verifyTwoFactorCode = (expirationDate, code) => {
   try {
     const secret = process.env.TWOFACTOR_SECRET;
-
-    if (totp.verify({ secret, code })) {
+    const expirationDate = twoFactorCode[code];
+    if (!expirationDate) {
+      return false
+    } else if (expirationDate < new Date()) {
+      delete twoFactorCode[code];
+      return false;
+    } else if (totp.verify({ secret, code })) {
       delete req.session.twoFactorCode;
       return true;
-    } else {
-      return false;
     }
   } catch (error) {
     return { error: error.message };
@@ -109,7 +118,7 @@ const verifyTwoFactorCode = (expirationDate, code) => {
 const createRegistURL = async (email) => {
   try {
     const code = crypto.randomBytes(20).toString("hex");
-    const userTimezone = 'America/New_York'; // 사용자의 시간대
+    const userTimezone = 'Asia/Seoul'; // 사용자의 시간대
     const expirationDate = moment().tz(userTimezone).add(5, 'minutes').toDate(); // 5분 후 만료
 
     // 이메일 내용 구성
@@ -144,6 +153,7 @@ const verifyRegistURL = (code) => {
       return false;
     } else {
       delete registerationCode[code];
+      //await userRepository.updateUserValidByEmail(email);
       return true;
     }
   } catch (error) {
