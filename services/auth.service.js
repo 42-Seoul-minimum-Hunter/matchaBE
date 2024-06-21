@@ -4,10 +4,12 @@ const userProfileImageRepository = require("../repositories/user.profileImage.re
 const userRepository = require("../repositories/user.repository");
 const sendEmail = require("../configs/sendEmail.js");
 const { totp } = require("otplib");
-const moment = require('moment-timezone');
+const moment = require("moment-timezone");
+const axios = require("axios");
 
 const registerationCode = {};
 const twoFactorCode = {};
+const resetPasswordCode = {};
 
 const loginByUsernameAndPassword = async (username, password) => {
   try {
@@ -54,13 +56,18 @@ const getOauthInfo = async (code) => {
     const oauthInfo = await getOAuthInfo(accessToken);
     var user = await userRepository.findUserByEmail(oauthInfo.email);
 
+    //console.log(user);
+    //console.log(oauthInfo);
+
     if (!user) {
       return { user: null, oauthInfo };
     } else {
       const profileImageInfo =
         await userProfileImageRepository.findProfileImagesById(user.id);
-      user.profileImage = profileImageInfo.profile_images[0];
-      return { user, oauthInfo };
+      console.log(profileImageInfo);
+      user.profileImage = profileImageInfo[0][0];
+      console.log(user);
+      return { user: user, oauthInfo: oauthInfo };
     }
   } catch (error) {
     return { error: error.message };
@@ -86,12 +93,10 @@ const createTwofactorCode = async (req, email) => {
       text: emailContent,
     });
 
-    const userTimezone = 'Asia/Seoul'; // 사용자의 시간대
-    const expirationDate = moment().tz(userTimezone).add(5, 'minutes').toDate(); // 5분 후 만료
+    const userTimezone = "Asia/Seoul"; // 사용자의 시간대
+    const expirationDate = moment().tz(userTimezone).add(5, "minutes").toDate(); // 5분 후 만료
 
     twoFactorCode[code] = expirationDate;
-
-
   } catch (error) {
     return { error: error.message };
   }
@@ -102,7 +107,7 @@ const verifyTwoFactorCode = (expirationDate, code) => {
     const secret = process.env.TWOFACTOR_SECRET;
     const expirationDate = twoFactorCode[code];
     if (!expirationDate) {
-      return false
+      return false;
     } else if (expirationDate < new Date()) {
       delete twoFactorCode[code];
       return false;
@@ -118,8 +123,8 @@ const verifyTwoFactorCode = (expirationDate, code) => {
 const createRegistURL = async (email) => {
   try {
     const code = crypto.randomBytes(20).toString("hex");
-    const userTimezone = 'Asia/Seoul'; // 사용자의 시간대
-    const expirationDate = moment().tz(userTimezone).add(5, 'minutes').toDate(); // 5분 후 만료
+    const userTimezone = "Asia/Seoul"; // 사용자의 시간대
+    const expirationDate = moment().tz(userTimezone).add(5, "minutes").toDate(); // 5분 후 만료
 
     // 이메일 내용 구성
     const emailContent = `안녕하세요
@@ -137,7 +142,6 @@ const createRegistURL = async (email) => {
     });
 
     registerationCode[code] = expirationDate;
-
   } catch (error) {
     return { error: error.message };
   }
@@ -159,7 +163,7 @@ const verifyRegistURL = (code) => {
   } catch (error) {
     return { error: error.message };
   }
-}
+};
 
 const createResetPasswordURL = async (req, email) => {
   try {
@@ -172,7 +176,8 @@ const createResetPasswordURL = async (req, email) => {
     }
 
     const code = crypto.randomBytes(20).toString("hex");
-    const expirationDate = new Date(Date.now() + 5 * 60 * 1000); // 5분 후 만료
+    const userTimezone = "Asia/Seoul"; // 사용자의 시간대
+    const expirationDate = moment().tz(userTimezone).add(5, "minutes").toDate(); // 5분 후 만료
 
     // 이메일 내용 구성
     const emailContent = `안녕하세요
@@ -188,42 +193,23 @@ const createResetPasswordURL = async (req, email) => {
       subject: "[MATCHA] 비밀번호 초기화 URL",
       text: emailContent,
     });
-
-    // 세션에 토큰 정보 저장
-    req.session.registrationToken = {
-      code,
-      expirationDate,
-      email,
-    };
+    resetPasswordCode[code] = expirationDate;
   } catch (error) {
     return { error: error.message };
   }
 };
 
-const verifyResetPasswordURL = (req, code) => {
+const verifyResetPasswordURL = async (req, code) => {
   try {
-    // 세션에서 토큰 정보 조회
-    const {
-      token: sessionToken,
-      expirationDate,
-      email,
-    } = req.session.registrationToken;
-    // 유효 기간 확인
-    if (expirationDate < new Date()) {
-      const error = new Error("Password reset link has expired.");
-      error.statusCode = 400;
-      throw error;
-    }
+    const expirationDate = resetPasswordCode[code];
 
-    // 토큰 일치 확인
-    if (sessionToken !== token) {
-      const error = new Error("Invalid password reset link.");
-      error.statusCode = 400;
-      throw error;
+    if (!expirationDate) {
+      return false;
+    } else if (expirationDate < new Date()) {
+      delete resetPasswordCode[code];
+      return false;
     } else {
-      const expirationDate = new Date(Date.now() + 5 * 60 * 1000); // 30분 후 만료
-      req.session.resetPasswordEmail = { email, expirationDate };
-      delete req.session.registrationToken;
+      delete resetPasswordCode[code];
       return true;
     }
 

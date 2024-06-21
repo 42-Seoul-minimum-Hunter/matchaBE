@@ -15,11 +15,14 @@ const createUser = async (UserCreateDto) => {
     const hashed = await bcrypt.hash(UserCreateDto.password, 10);
     UserCreateDto.password = hashed;
 
-    if (
-      (await userRepository.findUserByEmail(UserCreateDto.email)) ||
-      (await userRepository.findUserByUsername(UserCreateDto.username))
+    if (await userRepository.findUserByEmail(UserCreateDto.email)) {
+      const error = new Error("It has already been registered email");
+      error.status = 409;
+      throw error;
+    } else if (
+      await userRepository.findUserByUsername(UserCreateDto.username)
     ) {
-      const error = new Error("User already exists");
+      const error = new Error("It has already been registered username");
       error.status = 409;
       throw error;
     }

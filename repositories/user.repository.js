@@ -267,9 +267,10 @@ const findUserByUsername = async (username) => {
 const findUserByEmail = async (email) => {
   try {
     const { rows } = await client.query(
-      "SELECT * FROM users WHERE email = $1 AND deleted_at IS NULL",
+      `SELECT * FROM users WHERE email = $1 AND deleted_at IS NULL`,
       [email]
     );
+
     if (rows.length === 0) {
       return null;
     }
@@ -284,7 +285,7 @@ const findUserByEmail = async (email) => {
 const findUserById = async (id) => {
   try {
     const { rows } = await client.query(
-      "SELECT * FROM users WHERE id = $1 AND deleted_at IS NULL",
+      `SELECT * FROM users WHERE id = $1 AND deleted_at IS NULL`,
       [id]
     );
     if (rows.length === 0) {
@@ -359,8 +360,7 @@ const updateUserValidByEmail = async (email) => {
     console.log(error);
     throw error;
   }
-}
-
+};
 
 module.exports = {
   createUser,
@@ -375,5 +375,5 @@ module.exports = {
   findUserById,
 
   updateUserById,
-  updateUserValidByEmail
+  updateUserValidByEmail,
 };
