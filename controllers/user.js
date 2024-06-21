@@ -39,8 +39,15 @@ profileImages : String 사용자 프로필 이미지 => BASE64로 반환 예정
 //TODO: region si, gu 존재 확인, 올바른 시, 구인지 확인
 //TODO: 이미지 형식 확인
 //TODO: 해시태그 형식 확인
+
+//TODO: username 4~15 영어 숫자만
+//TODO: password 8~15 영어 숫자 특수문자
+//lastName, firstName 4~10 영어만
+//gender, preference, hashtags enum
+//biography 1~100자 영어 숫자만
+//age 1~100 숫자만
+
 router.post("/create", checkOauthLogin, async function (req, res, next) {
-  console.log("hello");
   try {
     const user = {
       email: req.body.email || undefined,
@@ -59,7 +66,6 @@ router.post("/create", checkOauthLogin, async function (req, res, next) {
       profileImages: req.body.profileImages || undefined,
     };
 
-    console.log(user);
     if (
       !user.email ||
       !user.username ||
@@ -100,6 +106,9 @@ router.post("/create", checkOauthLogin, async function (req, res, next) {
     }
 
     const user_id = await userSerivce.createUser(user);
+    if (!user_id) {
+      return res.status(400).send("Bad Request");
+    }
     user.id = user_id;
 
     let jwtToken;
@@ -107,32 +116,31 @@ router.post("/create", checkOauthLogin, async function (req, res, next) {
       jwtToken = authService.generateJWT({
         id: user.id,
         email: user.email,
-        isValid: true,
-        isOauth: true,
+        isValid: false,
+        isOauth: user.isOauth,
         accessToken: req.jwtInfo.accessToken,
         twofaVerified: false,
       });
-      user.isOauth = true;
     } else {
       jwtToken = authService.generateJWT({
         id: user.id,
         email: user.email,
         isValid: false,
-        isOauth: false,
+        isOauth: user.isOauth,
         accessToken: null,
         twofaVerified: false,
       });
-      user.isOauth = false;
     }
 
     res.cookie("jwt", jwtToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      maxAge: 1000000,
+      signed: true,
     });
 
-    res.set("Authorization", `Bearer ${jwtToken}`);
+    //res.set("Authorization", `Bearer ${jwtToken}`);
 
-    res.send(user);
+    return res.send(user);
   } catch (error) {
     next(error);
   }
@@ -146,7 +154,7 @@ router.delete("/unregister", async function (req, res, next) {
   try {
     await userSerivce.unregister(req.jwtInfo.id);
     res.clearCookie("jwt");
-    res.send();
+    return res.send();
   } catch (error) {
     next(error);
   }
@@ -170,7 +178,7 @@ router.post("/change/password", async function (req, res, next) {
     }
 
     const resultUserInfo = await userSerivce.changePassword(password, email);
-    res.send(resultUserInfo);
+    return res.send(resultUserInfo);
   } catch (error) {
     next(error);
   }
@@ -230,7 +238,7 @@ router.get("/find", async function (req, res, next) {
       page,
       pageSize
     );
-    res.send({ users, totalCount, currentPage: page });
+    return res.send({ users, totalCount, currentPage: page });
   } catch (error) {
     next(error);
   }
@@ -243,7 +251,7 @@ router.get("/find", async function (req, res, next) {
 router.get("/search/region", function (req, res, next) {
   try {
     let region = userSerivce.getRegion(req.jwtInfo.id);
-    res.send(region);
+    return res.send(region);
   } catch (error) {
     next(error);
   }

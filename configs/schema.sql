@@ -1,5 +1,5 @@
--- DROP SCHEMA public CASCADE;
--- CREATE SCHEMA public;
+ DROP SCHEMA public CASCADE;
+ CREATE SCHEMA public;
 
 CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY,
@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
   last_name VARCHAR(30) NOT NULL,
   first_name VARCHAR(30) NOT NULL,
   gender VARCHAR(10) NOT NULL,
-  preference VARCHAR(10),
+  preference VARCHAR(15),
   biography VARCHAR(255),
   age INT NOT NULL,
   is_oauth BOOLEAN NOT NULL,

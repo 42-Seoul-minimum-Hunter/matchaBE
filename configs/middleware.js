@@ -113,7 +113,6 @@ function checkOauthLogin(req, res, next) {
 
     if (!token) {
       req.jwtInfo = undefined;
-      console.log("No token provided");
       next();
     }
 

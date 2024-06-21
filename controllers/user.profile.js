@@ -21,7 +21,7 @@ router.get("/", async function (req, res, next) {
       username,
       req.jwtInfo.id
     );
-    res.send(user);
+    return res.send(user);
   } catch (error) {
     next(error);
   }
@@ -32,7 +32,7 @@ router.get("/", async function (req, res, next) {
 router.get("/me", async function (req, res, next) {
   try {
     const user = await userProfileService.getMyInfo(req.jwtInfo.id);
-    res.send(user);
+    return res.send(user);
   } catch (error) {
     next(error);
   }
@@ -118,12 +118,12 @@ router.put("/update", async function (req, res, next) {
 
       res.cookie("jwt", jwtToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: false,
       });
 
       res.set("Authorization", `Bearer ${jwtToken}`);
     }
-    res.send();
+    return res.send();
   } catch (error) {
     next(error);
   }
