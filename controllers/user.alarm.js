@@ -7,7 +7,6 @@ const userAlarmSerivce = require('../services/user.alarm.service.js');
 /* GET /user/alarm
 */
 //TODO: verifyAllprocess 미들웨어 추가
-//TODO: 차단된 사용자인지 확인 추가
 router.get('/', async function (req, res, next) {
     try {
         const id = req.jwtInfo.id;

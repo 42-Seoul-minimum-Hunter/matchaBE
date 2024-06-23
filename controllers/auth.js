@@ -302,7 +302,7 @@ router.get("/register/email/verify", function (req, res, next) {
 
     //res.set("Authorization", `Bearer ${jwtToken}`);
 
-    return res.redirect(process.env.FE_TWOFACTOR_URL);
+    return res.redirect(process.env.FE_SEARCH_URL);
     //return res.send("redirect");
   } catch (error) {
     next(error);
@@ -319,9 +319,17 @@ router.post("/reset/email/create", async function (req, res, next) {
   try {
     const email = req.body.email;
     if (!email) {
-      res.status(400).send("이메일이 없습니다.");
+      res.status(400).send("Email not found.");
     }
-    await authService.createResetPasswordURL(req, email);
+    const resetPasswordJwt = await authService.createResetPasswordURL(req, email);
+
+    res.cookie("resetPasswordJwt", resetPasswordJwt, {
+      httpOnly: true,
+      secure: false,
+    });
+
+    res.set("Authorization", `Bearer ${resetPasswordJwt}`);
+
     return res.send();
   } catch (error) {
     next(error);
@@ -335,12 +343,34 @@ code : String 인증 코드
 router.get("/reset/email/verify", function (req, res, next) {
   try {
     const code = req.query.code;
-    if (!code) {
-      res.status(400).send("코드가 없습니다.");
+    const { email, expirationDate, token } = req.resetPasswordVerified;
+    if (!code || !email || !expirationDate || !token) {
+      res.status(400).send("Code not found.");
     }
-    authService.verifyResetPasswordURL(req, code);
-    //res.redirect(FE_RESET_PASSWORD_URL);
+    const result = authService.verifyResetPasswordURL(code, expirationDate, token);
+
+    if (!result) {
+      return res.status(400).send("Invalid code OR Code expired.");
+    }
+
+    const jwtToken = authService.generateJWT({
+      email: email,
+      expirationDate: new Date(Date.now() + 30 * 60 * 1000),
+      token: token,
+      isPasswordResetVerified: true,
+    });
+
+
+    res.cookie("resetPasswordJwt", jwtToken, {
+      httpOnly: true,
+      secure: false,
+    });
+
+    res.set("Authorization", `Bearer ${jwtToken}`);
+
     return res.send("redirect");
+
+    //res.redirect(FE_RESET_PASSWORD_URL);
   } catch (error) {
     next(error);
   }

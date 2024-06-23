@@ -8,6 +8,7 @@ const moment = require('moment-timezone');
 
 const registerationCode = {};
 const twoFactorCode = {};
+const resetPasswordCode = {};
 
 const loginByUsernameAndPassword = async (username, password) => {
   try {
@@ -15,17 +16,17 @@ const loginByUsernameAndPassword = async (username, password) => {
 
     if (!userInfo) {
       const error = new Error("User not found");
-      error.statusCode = 404;
+      error.status = 404;
       throw error;
     } else if (userInfo.is_oauth === true) {
       const error = new Error(
         "OAuth user cannot login with username and password"
       );
-      error.statusCode = 400;
+      error.status = 400;
       throw error;
     } else if (await bcypt.compare(password, userInfo.password)) {
       const error = new Error("Password not match");
-      error.statusCode = 400;
+      error.status = 400;
       throw error;
     }
 
@@ -167,7 +168,7 @@ const createResetPasswordURL = async (req, email) => {
 
     if (!userInfo) {
       const error = new Error("User not found");
-      error.statusCode = 404;
+      error.status = 404;
       throw error;
     }
 
@@ -189,44 +190,37 @@ const createResetPasswordURL = async (req, email) => {
       text: emailContent,
     });
 
-    // 세션에 토큰 정보 저장
-    req.session.registrationToken = {
-      code,
-      expirationDate,
-      email,
-    };
+    const jwt = generateJWT({
+      email: email,
+      expirationDate: expirationDate,
+      token: code,
+      isPasswordResetVerified: false,
+    });
+
+    resetPasswordCode[code] = expirationDate;
+
+    return jwt
   } catch (error) {
     return { error: error.message };
   }
 };
 
-const verifyResetPasswordURL = (req, code) => {
+const verifyResetPasswordURL = (code, email, expirationDate, token) => {
   try {
     // 세션에서 토큰 정보 조회
-    const {
-      token: sessionToken,
-      expirationDate,
-      email,
-    } = req.session.registrationToken;
-    // 유효 기간 확인
-    if (expirationDate < new Date()) {
-      const error = new Error("Password reset link has expired.");
-      error.statusCode = 400;
-      throw error;
-    }
 
-    // 토큰 일치 확인
-    if (sessionToken !== token) {
-      const error = new Error("Invalid password reset link.");
-      error.statusCode = 400;
-      throw error;
+    const expirationDate = resetPasswordCode[code];
+
+    // 유효 기간 확인
+    if (!expirationDate) {
+      return false;
+    } else if (expirationDate < new Date()) {
+      delete resetPasswordCode[code];
+      return false;
     } else {
-      const expirationDate = new Date(Date.now() + 5 * 60 * 1000); // 30분 후 만료
-      req.session.resetPasswordEmail = { email, expirationDate };
-      delete req.session.registrationToken;
+      delete resetPasswordCode[code];
       return true;
     }
-
     // 세션 정보 삭제
   } catch (error) {
     return { error: error.message };
@@ -262,7 +256,7 @@ const getAccessTokens = async (code) => {
 
     if (response.status !== 200) {
       const error = new Error("Failed to get tokens");
-      error.statusCode = response.status;
+      error.status = response.status;
       throw error;
     }
     return response.data.access_token;
@@ -282,7 +276,7 @@ const getOAuthInfo = async (accessToken) => {
 
     if (response.status !== 200) {
       const error = new Error("Failed to get OAuth info");
-      error.statusCode = response.status;
+      error.status = response.status;
       throw error;
     }
 

@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 
 function verifyJWTToken(req, res, next) {
   // 1. 요청 헤더에서 토큰을 가져옵니다.
-  const token = req.headers.authorization?.split(" ")[1];
+  const token = req.cookies.jwt;
 
   if (!token) {
     // 토큰이 없는 경우 401 Unauthorized 응답을 보냅니다.
@@ -22,7 +22,7 @@ function verifyJWTToken(req, res, next) {
 
 function verifyTwoFA(req, res, next) {
   // 1. 요청 헤더에서 토큰을 가져옵니다.
-  const token = req.headers.authorization?.split(" ")[1];
+  const token = req.cookies.jwt;
 
   if (!token) {
     // 토큰이 없는 경우 401 Unauthorized 응답을 보냅니다.
@@ -51,7 +51,7 @@ function verifyTwoFA(req, res, next) {
 
 function verifyValid(req, res, next) {
   // 1. 요청 헤더에서 토큰을 가져옵니다.
-  const token = req.headers.authorization?.split(" ")[1];
+  const token = req.cookies.jwt;
 
   if (!token) {
     // 토큰이 없는 경우 401 Unauthorized 응답을 보냅니다.
@@ -80,7 +80,7 @@ function verifyValid(req, res, next) {
 
 function verifyAllprocess(req, res, next) {
   // 1. 요청 헤더에서 토큰을 가져옵니다.
-  const token = req.headers.authorization?.split(" ")[1];
+  const token = req.cookies.jwt;
 
   if (!token) {
     // 토큰이 없는 경우 401 Unauthorized 응답을 보냅니다.
@@ -109,7 +109,7 @@ function verifyAllprocess(req, res, next) {
 
 function checkOauthLogin(req, res, next) {
   try {
-    const token = req.headers.authorization?.split(" ")[1];
+    const token = req.cookies.jwt;
 
     if (!token) {
       req.jwtInfo = undefined;
@@ -124,7 +124,49 @@ function checkOauthLogin(req, res, next) {
 
     req.jwtInfo = decoded;
     next();
-  } catch (error) {}
+  } catch (error) { }
+}
+
+function resetPasswordVerify(req, res, next) {
+  try {
+    const token = req.cookies.resetPasswordJwt;
+
+    if (!token) {
+      return res.status(400).send("Bad Access");
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    if (decoded.isValid === false) {
+      return res.status(400).send("Bad Access");
+    } else if (decoded.isPasswordVerified === true) {
+      return res.status(400).send("Bad Access");
+    }
+
+    req.resetPasswordVerified = decoded;
+    next();
+  } catch (error) { }
+}
+
+function checkChangePassword(req, res, next) {
+  try {
+    const token = req.cookies.resetPasswordJwt;
+
+    if (!token) {
+      return res.status(400).send("Bad Access");
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    if (decoded.isValid === false) {
+      return res.status(400).send("Bad Access");
+    } else if (decoded.isPasswordVerified === false) {
+      return res.status(400).send("Bad Access");
+    }
+
+    req.resetPasswordJwt = decoded;
+    next();
+  } catch (error) { }
 }
 
 module.exports = {

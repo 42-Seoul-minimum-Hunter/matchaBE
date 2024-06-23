@@ -20,14 +20,16 @@ const saveProfileImagesById = async (profileImages, userId) => {
       return Buffer.from(image).toString("base64");
     });
 
-    await client.query(
+    const result = await client.query(
       `INSERT INTO user_profile_images (
                 user_id,
                 profile_images,
                 updated_at
-            ) VALUES ($1, $2, now())`,
+            ) VALUES ($1, $2, now())
+             RETURNING profile_images`,
       [userId, encodedProfileImages]
     );
+
   } catch (error) {
     console.log(error);
     throw error;
@@ -58,6 +60,7 @@ const findProfileImagesById = async (id) => {
       "SELECT profile_images FROM user_profile_images WHERE user_id = $1",
       [id]
     );
+
     return profileImageInfo.rows.map((row) => row.profile_images);
   } catch (error) {
     console.log(error);
