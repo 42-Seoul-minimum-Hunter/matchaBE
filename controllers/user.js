@@ -44,7 +44,7 @@ gender : String 사용자 성별
 preference : String 사용자 성적취향
 biography : String 사용자 자기소개
 age : Number 사용자 나이
-isGpsAllowed : Boolean GPS 사용 허용 여부 => Date로 반환 예정
+isGpsAllowed : Boolean GPS 사용 허용 여부
 hashtags : Object 사용자 해시태그
 si : String 사용자 시
 gu : String 사용자 구
@@ -60,6 +60,7 @@ profileImages : String 사용자 프로필 이미지 => BASE64로 반환 예정
 
 //gender, preference, hashtags enum
 
+//TODO: 2차원으로 profileImage 저장하는 거 해결
 router.post("/create", checkOauthLogin, async function (req, res, next) {
     try {
         const user = {
@@ -202,11 +203,12 @@ router.delete("/unregister", async function (req, res, next) {
 password : String 사용자 비밀번호
 */
 //TODO: jwt 토큰 확인 추가
+
+//TODO: jwt 토큰 확인 추가
 router.post("/change/password", async function (req, res, next) {
     try {
         let password = req.body.password;
-
-        const { email, expirationDate } = req.cookies.resetPasswordJwt;
+        const { email, expirationDate } = req.session.resetPassword;
 
         if (!password) {
             return res.status(400).send("비밀번호를 입력해주세요.");

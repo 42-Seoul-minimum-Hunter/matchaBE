@@ -3,7 +3,7 @@ const router = express.Router();
 const { verifyTwoFA, verifyValid } = require("../configs/middleware.js");
 const authService = require("../services/auth.service.js");
 
-require('dotenv').config();
+require("dotenv").config();
 
 /* 일반 회원가입 
 1. 회원가입 후 JWT 발급, 쿠키에 담기
@@ -24,7 +24,7 @@ require('dotenv').config();
         accessToken: null,
         twofaVerified: false
 
-        return 200
+        return 200 -> search redirect
 
 3. 2FA 인증 후 (세션으로 확인)
         id: user.id,
@@ -84,6 +84,24 @@ username : String 사용자 닉네임
 password : String 사용자 비밀번호
 */
 
+//최초 회원가입 -> 이메일인증 -> search
+//로그인 -> 2fa  -> search
+
+// 최초 인데 그냥 회원가입(jwt 없음)
+// oauth(/auth/callback 확인해서 처음 온 유저다) jwt oauth 관련한 정보를 쿠키로 담아서
+// 회원가입 페이지로 리다이렉트
+
+//회원가입 미들웨어 signup
+// jwt X -> 일반유저
+// jwt O && isOauth == true && acessToken != null -> oauth 유저
+
+// 회원가입(jwt cookie 재갱신) -> email 인증 -> search
+
+// 일반로그인 -> 2fa -> search
+// oauth 로그인(이미 가입한 유저다 ) -> 2fa -> search
+
+//TODO: OAUTH 유저도 username이랑 password로 로그인할 수 있어야함
+
 router.post("/login", async function (req, res, next) {
   try {
     const { username, password } = req.body;
@@ -142,7 +160,13 @@ router.get("/callback", async function (req, res, next) {
       return res.status(401).send("Code not found.");
     }
 
-    const { user, oauthInfo } = await authService.getOauthInfo(code);
+    const result = await authService.getOauthInfo(code);
+
+    const { user, oauthInfo } = result;
+    //const { user, oauthInfo } = await authService.getOauthInfo(code);
+
+    console.log("user " + user);
+    console.log("oauthInfo " + oauthInfo);
 
     if (!oauthInfo) {
       return res.status(401).send("oauthInfo not found.");
@@ -150,9 +174,11 @@ router.get("/callback", async function (req, res, next) {
 
     let jwtToken = null;
     if (!user) {
+      console.log("here is not user");
       jwtToken = authService.generateJWT({
         id: null,
         email: oauthInfo.email,
+        isValid: false,
         isValid: false,
         isOauth: true,
         accessToken: oauthInfo.accessToken,
@@ -167,10 +193,11 @@ router.get("/callback", async function (req, res, next) {
       res.set("Authorization", `Bearer ${jwtToken}`);
       return res.redirect(process.env.OAUTH_USER_REGISTRATION_URL);
     } else {
+      console.log("here is already user");
       jwtToken = authService.generateJWT({
         id: user.id,
         email: user.email,
-        isValid: user.isValid,
+        isValid: true,
         isOauth: true,
         accessToken: oauthInfo.accessToken,
         twofaVerified: false,
@@ -182,7 +209,9 @@ router.get("/callback", async function (req, res, next) {
       });
 
       res.set("Authorization", `Bearer ${jwtToken}`);
-      return res.send(user);
+      res.body = user;
+      return res.redirect(process.env.FE_SEARCH_URL);
+      //return res.send(user);
     }
   } catch (error) {
     next(error);
@@ -192,15 +221,15 @@ router.get("/callback", async function (req, res, next) {
 /* POST /auth/twoFactor/create
  */
 //TODO : verifyTwoFA 추가
-router.post("/twofactor/create", async function (req, res, next) {
+router.post("/twofactor/create", function (req, res, next) {
   try {
     //const email = req.jwtInfo.email;
     const email = req.body.email;
     if (!email) {
       res.status(400).send("Email not found.");
     }
-    await authService.createTwofactorCode(email);
-    return res.send();
+    authService.createTwofactorCode(req, email);
+    res.send();
   } catch (error) {
     next(error);
   }
@@ -215,32 +244,38 @@ router.post("/twofactor/verify", function (req, res, next) {
     //const email = req.jwtInfo.email;
     const code = req.body.code;
 
+    const expirationDate = req.session.twoFactorExpirationDate;
+
     if (!code) {
       return res.status(400).send("Code not found.");
+    } else if (!expirationDate) {
+      return res.status(401).send("Bad Access.");
+    } else if (expirationDate < new Date()) {
+      return res.status(400).send("Code expired.");
     }
 
-    const result = authService.verifyTwoFactorCode(code);
+    const result = authService.verifyTwoFactorCode(expirationDate, code);
 
     if (result === false) {
       return res.status(400).send("Invalid code.");
     } else {
-      //const jwtToken = authService.generateJWT({
-      //  id: req.jwtInfo.id,
-      //  email: req.jwtInfo.email,
-      //  isValid: req.jwtInfo.isValid,
-      //  isOauth: req.jwtInfo.isOauth,
-      //  accessToken: req.jwtInfo.accessToken,
-      //  twofaVerified: true,
-      //});
+      const jwtToken = authService.generateJWT({
+        id: req.jwtInfo.id,
+        email: req.jwtInfo.email,
+        isValid: req.jwtInfo.isValid,
+        isOauth: req.jwtInfo.isOauth,
+        accessToken: req.jwtInfo.accessToken,
+        twofaVerified: true,
+      });
 
-      //res.cookie("jwt", jwtToken, {
-      //  httpOnly: true,
-      //  secure: false,
-      //});
+      res.cookie("jwt", jwtToken, {
+        httpOnly: true,
+        secure: false,
+      });
 
-      //res.set("Authorization", `Bearer ${jwtToken}`);
+      res.set("Authorization", `Bearer ${jwtToken}`);
 
-      return res.redirect(process.env.FE_SEARCH_URL);
+      return res.send();
     }
   } catch (error) {
     next(error);
@@ -280,6 +315,7 @@ router.get("/register/email/verify", function (req, res, next) {
       return res.status(400).send("Code not found.");
     }
 
+    //TODO : email 추가해서 isValid true로 변경
     const result = authService.verifyRegistURL(code);
 
     if (!result) {
@@ -301,6 +337,8 @@ router.get("/register/email/verify", function (req, res, next) {
     //});
 
     //res.set("Authorization", `Bearer ${jwtToken}`);
+
+    console.log(process.env.FE_TWOFACTOR_URL);
 
     return res.redirect(process.env.FE_SEARCH_URL);
     //return res.send("redirect");
@@ -340,7 +378,9 @@ router.post("/reset/email/create", async function (req, res, next) {
 /* GET /auth/reset/email/verify
 code : String 인증 코드
 */
-router.get("/reset/email/verify", function (req, res, next) {
+
+//TODO: jwt cookie 추가해서 비밀번호 변경 페이지로 리다이렉트
+router.get("/reset/email/verify", async function (req, res, next) {
   try {
     const code = req.query.code;
     const { email, expirationDate, token } = req.resetPasswordVerified;

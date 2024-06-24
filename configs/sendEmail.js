@@ -7,7 +7,7 @@ async function sendEmail({ to, subject, text }) {
   try {
     if (!to || !subject || !text) {
       const error = new Error("Email, subject, text are required.");
-      error.statusCode = 400;
+      error.status = 400;
       throw error;
     }
 
@@ -37,6 +37,7 @@ async function sendEmail({ to, subject, text }) {
     const result = await transporter.sendMail(mailOptions);
   } catch (error) {
     console.error("이메일 전송 중 오류 발생:", error);
+
     throw error;
   }
 }

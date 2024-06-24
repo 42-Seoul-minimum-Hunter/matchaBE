@@ -7,8 +7,6 @@ const morgan = require("morgan");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 
-require("dotenv").config();
-
 const { Client } = require("pg");
 const fs = require("fs");
 const path = require("path");
@@ -38,7 +36,8 @@ const io = socketIO(server);
 //cors 허용
 app.use(
   cors({
-    origin: "*",
+    //origin: ["http://localhost:5173", "http://localhost:3000"],
+    origin: true,
     credentials: true,
   })
 );
