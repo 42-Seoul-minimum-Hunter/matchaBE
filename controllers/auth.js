@@ -3,6 +3,8 @@ const router = express.Router();
 const { verifyTwoFA, verifyValid } = require("../configs/middleware.js");
 const authService = require("../services/auth.service.js");
 
+const { validateUsername, validatePassword } = require("../configs/validate.js");
+
 require("dotenv").config();
 
 /* 일반 회원가입 
@@ -108,7 +110,7 @@ router.post("/login", async function (req, res, next) {
 
     if (!username || !password) {
       return res.status(400).send("username or password not found.");
-    }
+    } else if (!valid)
 
     const user = await authService.loginByUsernameAndPassword(
       username,
@@ -131,7 +133,7 @@ router.post("/login", async function (req, res, next) {
 
     res.set("Authorization", `Bearer ${jwtToken}`);
 
-    res.send(user);
+    return res.send();
   } catch (error) {
     next(error);
   }
@@ -197,7 +199,7 @@ router.get("/callback", async function (req, res, next) {
       jwtToken = authService.generateJWT({
         id: user.id,
         email: user.email,
-        isValid: true,
+        isValid: user.isValid,
         isOauth: true,
         accessToken: oauthInfo.accessToken,
         twofaVerified: false,
@@ -359,7 +361,10 @@ router.post("/reset/email/create", async function (req, res, next) {
     if (!email) {
       res.status(400).send("Email not found.");
     }
-    const resetPasswordJwt = await authService.createResetPasswordURL(req, email);
+    const resetPasswordJwt = await authService.createResetPasswordURL(
+      req,
+      email
+    );
 
     res.cookie("resetPasswordJwt", resetPasswordJwt, {
       httpOnly: true,
@@ -387,7 +392,11 @@ router.get("/reset/email/verify", async function (req, res, next) {
     if (!code || !email || !expirationDate || !token) {
       res.status(400).send("Code not found.");
     }
-    const result = authService.verifyResetPasswordURL(code, expirationDate, token);
+    const result = authService.verifyResetPasswordURL(
+      code,
+      expirationDate,
+      token
+    );
 
     if (!result) {
       return res.status(400).send("Invalid code OR Code expired.");
@@ -399,7 +408,6 @@ router.get("/reset/email/verify", async function (req, res, next) {
       token: token,
       isPasswordResetVerified: true,
     });
-
 
     res.cookie("resetPasswordJwt", jwtToken, {
       httpOnly: true,

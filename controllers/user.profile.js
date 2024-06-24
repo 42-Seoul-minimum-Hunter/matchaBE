@@ -4,7 +4,7 @@ const { verifyAllprocess } = require("../configs/middleware.js");
 
 const userProfileService = require("../services/user.profile.service.js");
 
-/* GET /user/profile/
+/* GET /user/profile?username=john
 username : String 사용자 닉네임
 */
 

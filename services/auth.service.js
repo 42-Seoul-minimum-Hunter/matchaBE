@@ -4,7 +4,7 @@ const userProfileImageRepository = require("../repositories/user.profileImage.re
 const userRepository = require("../repositories/user.repository");
 const sendEmail = require("../configs/sendEmail.js");
 const { totp } = require("otplib");
-const moment = require('moment-timezone');
+const moment = require("moment-timezone");
 const axios = require("axios");
 
 const registerationCode = {};
@@ -31,20 +31,7 @@ const loginByUsernameAndPassword = async (username, password) => {
       throw error;
     }
 
-    const profileImageInfo =
-      await userProfileImageRepository.findProfileImagesById(userInfo.id);
-
-    const user = {
-      id: userInfo.id,
-      username: userInfo.username,
-      lastName: userInfo.last_name,
-      firstName: userInfo.first_name,
-      profileImage: profileImageInfo.profile_images[0],
-      isValid: userInfo.is_valid,
-      isOauth: userInfo.is_oauth,
-    };
-
-    return user;
+    return userInfo;
   } catch (error) {
     return { error: error.message };
   }

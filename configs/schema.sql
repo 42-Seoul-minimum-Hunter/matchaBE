@@ -1,5 +1,5 @@
--- DROP SCHEMA public CASCADE;
--- CREATE SCHEMA public;
+ DROP SCHEMA public CASCADE;
+ CREATE SCHEMA public;
 
 CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY,
@@ -100,3 +100,12 @@ CREATE TABLE IF NOT EXISTS user_chat_histories (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
   viewed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
+
+INSERT INTO users 
+(email, username, password, last_name, first_name,
+gender, preference, biography, age, is_oauth, is_valid, is_gps_allowed, connected_at,
+updated_at, created_at, deleted_at)
+VALUES 
+('email@gmail.com', 'User1', 'password', 'min', 'yeomin', 'male', 'female',
+'hello, world!', '22', 'false', 'true', 'true', '2020-01-01 00:00:00', '2020-01-01 00:00:00', '2020-01-01 00:00:00', NULL);
+
