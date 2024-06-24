@@ -15,16 +15,22 @@ const getUserProfile = async (username, userId) => {
       throw error;
     }
 
+    //console.log("user info", userInfo.rows[0]);
+
     const hashtagInfo = await userHashtagRepository.findHashtagById(
       userInfo.id
     );
+    console.log("hashtag info", hashtagInfo);
     const regionInfo = await userRegionRepository.findRegionById(userInfo.id);
+    console.log("region info", regionInfo);
     const profileImageInfo =
       await userProfileImageRepository.findProfileImagesById(userInfo.id);
+    console.log("profile image info", profileImageInfo);
     const rateInfo = await userRateRepository.findRateInfoById(userInfo.id);
+    console.log("rate info", rateInfo);
 
     let rate;
-    if (rateInfo.length === 0) {
+    if (!rateInfo || rateInfo.length === 0) {
       rate = parseFloat(0);
     } else {
       const ratingScores = rateInfo.map((row) => row.rate_score);
@@ -36,20 +42,33 @@ const getUserProfile = async (username, userId) => {
       userId,
       userInfo.id
     );
-    const isBlocked = blockInfo.rows.length > 0;
+
+    let isBlocked = true;
+
+    if (!blockInfo || blockInfo.rows.length === 0) {
+      isBlocked = false;
+    }
+
+    console.log("user info", userInfo);
+    console.log("hashtag info", hashtagInfo);
+    console.log("region info", regionInfo);
+    console.log("profile image info", profileImageInfo);
+    console.log("rate info", rateInfo);
+    console.log("is blocked", isBlocked);
 
     const user = {
-      username: userInfo.rows[0].username,
-      lastName: userInfo.rows[0].last_name,
-      firstName: userInfo.rows[0].first_name,
-      gender: userInfo.rows[0].gender,
-      preference: userInfo.rows[0].preference,
-      biography: userInfo.rows[0].biography,
-      age: userInfo.rows[0].age,
+      username: userInfo.username,
+      lastName: userInfo.last_name,
+      firstName: userInfo.first_name,
+      gender: userInfo.gender,
+      preference: userInfo.preference,
+      biography: userInfo.biography,
+      age: userInfo.age,
 
-      hashtags: hashtagInfo,
-      profileImages: profileImageInfo,
-      region: regionInfo,
+      hashtags: hashtagInfo[0][0],
+      profileImages: profileImageInfo[0][0],
+      si: regionInfo[0].si,
+      gu: regionInfo[0].gu,
       rate: rate,
       isBlocked: isBlocked,
     };

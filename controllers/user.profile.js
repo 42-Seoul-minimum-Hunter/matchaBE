@@ -13,13 +13,14 @@ username : String 사용자 닉네임
 //TODO: 온라인 상태 확인 추가
 router.get("/", async function (req, res, next) {
   try {
-    const username = req.query.username;
+    const { username, userId } = req.query;
     if (!username) {
       return res.status(400).send("사용자 닉네임을 입력하세요.");
     }
     const user = await userProfileService.getUserProfile(
       username,
-      req.jwtInfo.id
+      //req.jwtInfo.id
+      userId
     );
     return res.send(user);
   } catch (error) {

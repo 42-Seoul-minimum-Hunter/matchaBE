@@ -25,7 +25,10 @@ module.exports = (server, app) => {
   // 소캣 연결
   io.on("connection", (socket) => {
     // 클라이언트가 보낸 데이터 접근
-    const userId = socket.handshake.query.userId; // 또는 socket.handshake.headers.userId
+    //const jwt = socket.handshake.headers.authorization.split(" ")[1];
+
+    // 유저 아이디
+    const userId = socket.handshake.query.userId;
 
     // 유저 접속 상태
     userActivate[userId] = socket.id;

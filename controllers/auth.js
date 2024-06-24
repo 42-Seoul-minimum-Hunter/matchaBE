@@ -3,7 +3,10 @@ const router = express.Router();
 const { verifyTwoFA, verifyValid } = require("../configs/middleware.js");
 const authService = require("../services/auth.service.js");
 
-const { validateUsername, validatePassword } = require("../configs/validate.js");
+const {
+  validateUsername,
+  validatePassword,
+} = require("../configs/validate.js");
 
 require("dotenv").config();
 
@@ -110,7 +113,11 @@ router.post("/login", async function (req, res, next) {
 
     if (!username || !password) {
       return res.status(400).send("username or password not found.");
-    } else if (!valid)
+    } else if (!validateUsername(username)) {
+      return res.status(400).send("username is invalid.");
+    } else if (!validatePassword(password)) {
+      return res.status(400).send("password is invalid.");
+    }
 
     const user = await authService.loginByUsernameAndPassword(
       username,
