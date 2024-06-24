@@ -20,14 +20,10 @@ const getUserProfile = async (username, userId) => {
     const hashtagInfo = await userHashtagRepository.findHashtagById(
       userInfo.id
     );
-    console.log("hashtag info", hashtagInfo);
     const regionInfo = await userRegionRepository.findRegionById(userInfo.id);
-    console.log("region info", regionInfo);
     const profileImageInfo =
       await userProfileImageRepository.findProfileImagesById(userInfo.id);
-    console.log("profile image info", profileImageInfo);
     const rateInfo = await userRateRepository.findRateInfoById(userInfo.id);
-    console.log("rate info", rateInfo);
 
     let rate;
     if (!rateInfo || rateInfo.length === 0) {
@@ -48,13 +44,6 @@ const getUserProfile = async (username, userId) => {
     if (!blockInfo || blockInfo.rows.length === 0) {
       isBlocked = false;
     }
-
-    console.log("user info", userInfo);
-    console.log("hashtag info", hashtagInfo);
-    console.log("region info", regionInfo);
-    console.log("profile image info", profileImageInfo);
-    console.log("rate info", rateInfo);
-    console.log("is blocked", isBlocked);
 
     const user = {
       username: userInfo.username,

@@ -1,55 +1,82 @@
-const { Client } = require('pg');
-const fs = require('fs');
-const path = require('path');
+const { Client } = require("pg");
+const fs = require("fs");
+const path = require("path");
 
-require('dotenv').config();
+require("dotenv").config();
 
 const client = new Client({
-    user: process.env.DB_USER,
-    host: process.env.DB_HOST,
-    database: process.env.DB_NAME,
-    password: process.env.DB_PASSWORD,
-    port: process.env.DB_PORT,
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  password: process.env.DB_PASSWORD,
+  port: process.env.DB_PORT,
 });
 
 client.connect();
 
 const getChatInfo = async (userId) => {
-    try {
-
-        const chatRoomInfo = await client.query(`
+  try {
+    const chatRoomInfo = await client.query(
+      `
             SELECT * FROM user_chat_rooms 
             WHERE user_id = $1 AND deleted_at IS NULL
             OR chated_id = $1 AND deleted_at IS NULL
-        `, [userId]);
+        `,
+      [userId]
+    );
 
-        const recentChat = await Promise.all(chatRoomInfo.rows.map(async (room) => {
-            const { rows } = await client.query(`
-                SELECT * FROM user_chat_messages
-                WHERE room_id = $1
-                ORDER BY created_at DESC
-                LIMIT 1
-            `, [room.id]);
+    //const recentChat = await Promise.all(
+    //  chatRoomInfo.rows.map(async (room) => {
+    //    const { rows } = await client.query(
+    //      `
+    //            SELECT * FROM user_chat_histories
+    //            WHERE room_id = $1
+    //            ORDER BY created_at DESC
+    //            LIMIT 1
+    //        `,
+    //      [room.id]
+    //    );
 
-            return rows.length > 0 ? rows[0] : null;
-        }));
+    //    return rows.length > 0 ? rows[0] : null;
+    //  })
+    //);
 
-        recentChat.sort((a, b) => {
-            if (a && b) {
-                return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-            } else {
-                return 0;
-            }
-        });
+    //if (!recentChat) {
+    //  return {
+    //    chatRoomInfo: chatRoomInfo.rows,
+    //    recentChat: [],
+    //  };
+    //}
 
-        return { chatRoomInfo, recentChat };
+    //const chatInfo = {
+    //  chatRoomInfo: chatRoomInfo.rows,
+    //};
 
-    } catch (error) {
-        console.log(error);
-        throw error;
-    }
+    return chatRoomInfo.rows;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
 };
 
+const getRecentChat = async (roomId) => {
+  try {
+    const recentChat = await client.query(
+      `
+            SELECT * FROM user_chat_histories
+            WHERE room_id = $1
+            ORDER BY created_at DESC
+            LIMIT 1
+        `,
+      [roomId]
+    );
+
+    return recentChat.rows[0];
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
 
 /*
 유저가 좋아요를 누르면
@@ -59,24 +86,36 @@ const getChatInfo = async (userId) => {
 삭제된 채팅방을 복구한다.
 */
 const generateChatRoom = async (chatUserId, userId) => {
-    try {
-        const existingChatRoom = await client.query(`
+  try {
+    if (userId >= chatUserId) {
+      const temp = userId;
+      userId = chatUserId;
+      chatUserId = temp;
+    }
+
+    const existingChatRoom = await client.query(
+      `
             SELECT * 
             FROM user_chat_rooms
             WHERE user_id = $1 AND chated_id = $2
-            OR WHERE chated_id = $1 AND user_id = $2
-        `, [userId, chatUserId]);
+        `,
+      [userId, chatUserId]
+    );
 
-        if (existingChatRoom.rows.length > 0) {
-            await client.query(`
+    if (existingChatRoom.rows.length > 0) {
+      await client.query(
+        `
                 UPDATE user_chat_rooms
                 SET delted_at = NULL
                 WHERE id = $1
-                `, [existingChatRoom.rows[0].id]);
-            return;
-        }
+                `,
+        [existingChatRoom.rows[0].id]
+      );
+      return;
+    }
 
-        await client.query(`
+    await client.query(
+      `
             INSERT INTO user_chat_rooms (
                 user_id,
                 chated_id,
@@ -86,107 +125,185 @@ const generateChatRoom = async (chatUserId, userId) => {
                 $2,
                 now()
             )
-        `, [userId, chatUserId]);
-
-    } catch (error) {
-        console.log(error);
-        throw error;
-    }
-}
+        `,
+      [userId, chatUserId]
+    );
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
 
 const deleteChatRoom = async (chatUserId, userId) => {
-    try {
-        const existingChatRoom = await client.query(`
+  try {
+    if (userId >= chatUserId) {
+      const temp = userId;
+      userId = chatUserId;
+      chatUserId = temp;
+    }
+
+    const existingChatRoom = await client.query(
+      `
             SELECT * 
             FROM user_chat_rooms
             WHERE user_id = $1 AND chated_id = $2
-            OR WHERE chated_id = $1 AND user_id = $2
-        `, [userId, chatUserId]);
+        `,
+      [userId, chatUserId]
+    );
 
-        if (existingChatRoom.rows.length === 0) {
-            const error = new Error('Chat room not found');
-            error.status = 404;
-            throw error;
-        }
+    if (existingChatRoom.rows.length === 0) {
+      const error = new Error("Chat room not found");
+      error.status = 404;
+      throw error;
+    }
 
-        await client.query(`
+    await client.query(
+      `
             UPDATE user_chat_rooms
             SET deleted_at = now()
             WHERE id = $1
-        `, [existingChatRoom.rows[0].id]);
-
-    } catch (error) {
-        console.log(error);
-        throw error;
-    }
-}
+        `,
+      [existingChatRoom.rows[0].id]
+    );
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
 
 const getChatHistoriesForAlarmById = async (id) => {
-    try {
-        const chatRoom = await client.query(`
+  try {
+    const chatRoom = await client.query(
+      `
             SELECT *
             FROM user_chat_rooms
             WHERE userid = $1 AND deleted_at IS NULL 
             OR chated_id = $1 AND deleted_at IS NULL
-        `, [id]);
+        `,
+      [id]
+    );
 
-
-        const chatHistories = await Promise.all(chatRoom.rows.map(async (room) => {
-            const { rows } = await client.query(`
+    const chatHistories = await Promise.all(
+      chatRoom.rows.map(async (room) => {
+        const { rows } = await client.query(
+          `
                 SELECT *
-                FROM user_chat_messages
+                FROM user_chat_histories
                 WHERE room_id = $1 AND deleted_at IS NULL
                 ORDER BY created_at DESC
-            `, [room.id]);
+            `,
+          [room.id]
+        );
 
-            return rows.length > 0 ? rows[0] : null;
-        }));
+        return rows.length > 0 ? rows[0] : null;
+      })
+    );
 
-        chatHistories.sort((a, b) => {
-            if (a && b) {
-                return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-            } else {
-                return 0;
-            }
-        });
+    chatHistories.sort((a, b) => {
+      if (a && b) {
+        return (
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+      } else {
+        return 0;
+      }
+    });
 
-        return chatHistories;
-
-    } catch (error) {
-        console.log(error);
-        throw error;
-    }
-}
+    return chatHistories;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
 
 const updateChatHistoriesForAlarmById = async (id) => {
-    try {
-        const chatRoom = await client.query(`
+  try {
+    const chatRoom = await client.query(
+      `
             SELECT *
             FROM user_chat_rooms
             WHERE userid = $1 AND deleted_at IS NULL 
             OR chated_id = $1 AND deleted_at IS NULL
-        `, [id]);
+        `,
+      [id]
+    );
 
-        await Promise.all(chatRoom.rows.map(async (room) => {
-            await client.query(`
-                UPDATE user_chat_messages
+    await Promise.all(
+      chatRoom.rows.map(async (room) => {
+        await client.query(
+          `
+                UPDATE user_chat_histories
                 SET viewed_at = now()
                 WHERE room_id = $1 AND deleted_at IS NULL
-            `, [room.id]);
-        }));
+            `,
+          [room.id]
+        );
+      })
+    );
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
 
-    } catch (error) {
-        console.log(error);
-        throw error;
+const getChatHistoriesById = async (userId, chatedId) => {
+  try {
+    if (userId >= chatedId) {
+      const temp = userId;
+      userId = chatedId;
+      chatedId = temp;
     }
-}
+
+    const chatIds = await client.query(
+      `
+                SELECT id
+                FROM user_chat_rooms
+                WHERE user_id = $1 AND chated_id = $2
+            `,
+      [userId, chatedId]
+    );
+
+    const chatHistories = await client.query(
+      `
+            SELECT * 
+            FROM chat_histories
+            WHERE id = $1
+        `,
+      [chatIds.rows[0].id]
+    );
+
+    //sort BY created_at
+
+    if (chatHistories) {
+      chatHistories.rows.sort((a, b) => {
+        if (a.created_at < b.created_at) {
+          return -1;
+        } else {
+          return 1;
+        }
+      });
+    }
+
+    const chatInfo = {
+      roomId: chatIds.rows[0].id,
+      chatHistories: chatHistories.rows,
+    };
+
+    return chatInfo;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
 
 module.exports = {
-    getChatInfo,
-    generateChatRoom,
-    deleteChatRoom,
+  getChatInfo,
+  getRecentChat,
+  generateChatRoom,
+  deleteChatRoom,
 
-    getChatHistoriesForAlarmById,
-    updateChatHistoriesForAlarmById
+  getChatHistoriesForAlarmById,
+  updateChatHistoriesForAlarmById,
 
-}
+  getChatHistoriesById,
+};

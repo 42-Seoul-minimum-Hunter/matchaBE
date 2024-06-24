@@ -174,8 +174,8 @@ router.get("/callback", async function (req, res, next) {
     const { user, oauthInfo } = result;
     //const { user, oauthInfo } = await authService.getOauthInfo(code);
 
-    console.log("user " + user);
-    console.log("oauthInfo " + oauthInfo);
+    //console.log("user " + user);
+    //console.log("oauthInfo " + oauthInfo);
 
     if (!oauthInfo) {
       return res.status(401).send("oauthInfo not found.");

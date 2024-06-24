@@ -9,7 +9,12 @@ const userChatSerivce = require("../services/user.chat.service.js");
 */
 router.get("/", async function (req, res, next) {
   try {
-    const chatInfo = await userChatSerivce.getChatInfo(req.jwtInfo.id);
+    const id = req.query.id;
+    if (!id) {
+      return res.status(400).send("id is required");
+    }
+    //const chatInfo = await userChatSerivce.getChatInfo(req.jwtInfo.id);
+    const chatInfo = await userChatSerivce.getChatInfo(parseInt(id));
     return res.send(chatInfo);
   } catch (error) {
     next(error);
