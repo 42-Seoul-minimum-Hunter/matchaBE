@@ -14,7 +14,7 @@ const client = new Client({
 
 client.connect();
 
-const addLikeUserByUsername = async (likeUserId, userId) => {
+const likeUserByUsername = async (likeUserId, userId) => {
   try {
     const existingLikeHistory = await client.query(
       `
@@ -51,7 +51,7 @@ const addLikeUserByUsername = async (likeUserId, userId) => {
   }
 };
 
-const deleteLikeUserByUsername = async (likeUserId, userId) => {
+const dislikeUserByUsername = async (likeUsunuserId) => {
   try {
     const existingLikeHistory = await client.query(
       `
@@ -71,7 +71,7 @@ const deleteLikeUserByUsername = async (likeUserId, userId) => {
     await client.query(
       `
             UPDATE user_like_histories
-            SET deleted_at = NULL
+            SET deleted_at = now() AND viewed_at = NULL
             WHERE user_id = $1 AND liked_id = $2
         `,
       [userId, likeUserId]
@@ -139,8 +139,8 @@ const checkUserLikeBoth = async (userId, likeUserId) => {
 };
 
 module.exports = {
-  addLikeUserByUsername,
-  deleteLikeUserByUsername,
+  likeUserByUsername,
+  dislikeUserByUsername,
 
   getLikeUserHistoriesById,
   updateLikeUserHistoriesById,

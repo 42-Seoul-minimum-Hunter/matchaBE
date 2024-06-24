@@ -14,12 +14,13 @@ const client = new Client({
 
 client.connect();
 
-const getViewedHistoriesById = async (id) => {
+const getViewedHistoriesById = async (id, viewedId) => {
     try {
+
         const viewedHistories = await client.query(`
             SELECT * FROM user_view_histories
-            WHERE user_id = $1 AND deleted_at IS NULL
-        `, [id]);
+            WHERE user_id = $1 AND viewed_id = $2 AND deleted_at IS NULL
+        `, [id, viewedId]);
 
         return viewedHistories.rows;
     } catch (error) {
@@ -28,13 +29,25 @@ const getViewedHistoriesById = async (id) => {
     }
 }
 
-const updateViewedHistoriesById = async (id) => {
+const updateViewedHistoriesById = async (id, viewedId) => {
     try {
         await client.query(`
             UPDATE user_view_histories
-            SET viewed_at = now()
-            WHERE user_id = $1 AND viewed_at IS NULL
-        `, [id]);
+            SET deleted_at = NOW()
+            WHERE user_id = $1 AND viewed_id = $2
+        `, [id, viewedId]);
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
+const saveVisitHistoryById = async (id, viewedId) => {
+    try {
+        await client.query(`
+            INSERT INTO user_view_histories (user_id, viewed_id, created_at)
+            VALUES ($1, $2, now())
+        `, [id, viewedId]);
     } catch (error) {
         console.log(error);
         throw error;
@@ -46,5 +59,6 @@ const updateViewedHistoriesById = async (id) => {
 
 module.exports = {
     getViewedHistoriesById,
-    updateViewedHistoriesById
+    updateViewedHistoriesById,
+    saveVisitHistoryById
 };

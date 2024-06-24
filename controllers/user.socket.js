@@ -5,7 +5,10 @@ const socket = require("socket.io");
 const userReposiotry = require("../repositories/user.repository");
 const userChatService = require("../services/user.chat.service");
 const userLikeService = require("../services/user.like.service");
+const userViewService = require("../services/user.view.service");
 const userService = require("../services/user.service");
+
+const { verifyAllprocess } = require("../configs/middleware")
 
 /* 필요한 기능
 - 유저는 다음 알림들을 실시간으로 보내야 한다
@@ -28,13 +31,15 @@ module.exports = (server, app) => {
     },
   });
   // 소캣 연결
-  io.on("connection", (socket) => {
+  io.on("connection", verifyAllprocess, (socket) => {
     // 클라이언트가 보낸 데이터 접근
+
+    const { userId, email } = req.jwtInfo;
     //const jwt = socket.handshake.headers.authorization.split(" ")[1];
 
     // 유저 아이디
     //const userId = socket.handshake.header["userId"];
-    const userId = socket.handshake.auth["userId"];
+    //const userId = socket.handshake.auth["userId"];
 
     if (!userId) {
       socket.disconnect();
@@ -45,6 +50,7 @@ module.exports = (server, app) => {
 
     // 유저 접속 상태
     userActivate[userId] = socket.id;
+    socket.join(socket.id);
 
     console.log("소켓 연결됨", socket.id);
 
@@ -93,6 +99,8 @@ module.exports = (server, app) => {
           throw Error;
         }
 
+        socket.join(chatRoomInfo.id);
+
         const chatHistories =
           await userChatService.findAllChatHistoriesByRoomId(chatRoomInfo.id);
 
@@ -125,30 +133,39 @@ module.exports = (server, app) => {
     });
 
     // 채팅 받아서 저장하고, 그 채팅 보내서 보여주기
-    socket.on("send_message", async (data) => {
-      let { message, roomKey, userKey } = data;
-      const newChat = await Chat.create({
-        roomKey,
-        userKey,
-        chat: message,
-      });
-      const chatUser = await Participant.findOne({
-        where: { roomKey, userKey },
-        include: [
-          { model: User, attributes: ["nickname"] },
-          { model: Room, attributes: ["title"] },
-        ],
-      });
+    socket.on("sendMessage", async (data) => {
+      try {
+        const { message, username } = data;
 
-      // 채팅 보내주기
-      let param = {
-        message,
-        roomKey,
-        nickname: chatUser.User.nickname,
-        time: newChat.createdAt, // (9시간 차이나는 시간)
-      };
+        if (!message || !username) {
+          const Error = new Error("Message or Username not found");
+          Error.status = 404;
+          throw Error;
+        }
 
-      io.to(chatUser.Room.title).emit("message", param);
+        const userInfo = await userReposiotry.findUserByUsername(username);
+
+        const chatRoomInfo = await userChatService.findOneChatRoomById(
+          userId,
+          userInfo.id
+        );
+
+        const param = {
+          message,
+          username,
+          time: new Date()
+        }
+
+        await userChatService.saveSendedChatById(chatRoomInfo.id, userInfo.id, message);
+        io.to(chatRoomInfo.id).emit("message", param);
+
+        //유저가 메세지를 받았을때
+        io.to(userActivate[userInfo.id]).emit("alarm", { AlarmType: "MESSAGED", username });
+
+      } catch (error) {
+        console.log(error);
+        throw error;
+      }
     });
 
     socket.on("onlineStatus", async (data) => {
@@ -178,6 +195,73 @@ module.exports = (server, app) => {
       }
     });
 
+    socket.on("likeUser", async (data) => {
+      try {
+        const { username } = data;
+
+        if (!username) {
+          const Error = new Error("Username not found");
+          Error.status = 404;
+          throw Error;
+        }
+        const result = await userLikeService.likeUserByUsername(username, userId);
+        io.emit("alarm", { alarmType: "LIKED", username }); //유저가 좋아요를 받았을때
+        if (result) {
+          io.emit("alarm", { alarmType: "MATCHED", username }); //좋아요를 눌렀던 유저에게 좋아요를 받았을때
+          const userInfo = await userReposiotry.findUserById(userId); // 본인
+          if (userActivate[userInfo.id])
+            io.to(userActivate[userInfo.id]).emit("alarm", { alarmType: "MATCHED", username: userInfo.username });
+        }
+      } catch (error) {
+        console.log(error);
+        return false;
+      }
+    });
+
+    socket.on("dislikeUser", async (data) => {
+      try {
+        const { username } = data;
+
+        if (!username) {
+          const Error = new Error("Username not found");
+          Error.status = 404;
+          throw Error;
+        }
+
+        const result = await userLikeService.dislikeUserByUsername(username, userId);
+
+        if (result) { //연결된 유저가 좋아요를 취소했을때
+          const dislikedUserInfo = await userReposiotry.findUserByUsername(username);
+          if (userActivate[dislikedUserInfo.id])
+            io.to(userActivate[dislikedUserInfo.id]).emit("alarm", { alarmType: "DISLIKED", username });
+        }
+      } catch (error) {
+        console.log(error);
+        return false;
+      }
+    });
+
+    socket.on("visitUserProfile", async (data) => {
+      try {
+        const { username } = data;
+
+        if (!username) {
+          const Error = new Error("Username not found");
+          Error.status = 404;
+          throw Error;
+        }
+
+        io.to(userActivate[userId]).emit("alarm", { alarmType: "VISITED", username }); //유저의 프로필을 방문했을때
+
+        await userViewService.saveVisitHistoryById(username, userId);
+      } catch (error) {
+        console.log(error);
+        return false;
+      }
+    });
+
+
+
     socket.on("disconnect", () => {
       console.log("소켓 연결 해제됨", socket.id);
 
@@ -190,6 +274,7 @@ module.exports = (server, app) => {
       // 유저 접속 상태
       delete userActivate[userId];
     });
+
 
     // 채팅방 나가기(채팅방에서 아에 퇴장)
     //socket.on("leave-room", async (data) => {

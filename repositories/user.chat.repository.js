@@ -106,7 +106,7 @@ const generateChatRoom = async (chatUserId, userId) => {
       await client.query(
         `
                 UPDATE user_chat_rooms
-                SET delted_at = NULL
+                SET delted_at = NULL AND viewed_at = NULL
                 WHERE id = $1
                 `,
         [existingChatRoom.rows[0].id]
@@ -289,6 +289,29 @@ const findOneChatRoomById = async (userId, chatedId) => {
   }
 };
 
+const saveSendedChatById = async (roomId, senderId, content) => {
+  try {
+    await client.query(
+      `
+      INSERT INTO user_chat_histories (
+            room_id,
+            sender_id,
+            content,
+            created_at
+        ) VALUES (
+            $1,
+            $2,
+            $3
+            now()
+        )
+      `, [roomId, senderId, content]
+    )
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
+
 module.exports = {
   getChatInfo,
   getRecentChat,
@@ -300,4 +323,5 @@ module.exports = {
 
   getChatHistoriesById,
   findOneChatRoomById,
+  saveSendedChatById
 };

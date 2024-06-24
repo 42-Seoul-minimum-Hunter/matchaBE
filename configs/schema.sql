@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS user_view_histories (
   user_id INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   viewed_id INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  viewed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+  viewed_at TIMESTAMP 
 );
 
 CREATE TABLE IF NOT EXISTS user_like_histories (
@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS user_like_histories (
   user_id INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   liked_id INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  viewed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+  viewed_at TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS user_chat_rooms (
@@ -89,7 +89,8 @@ CREATE TABLE IF NOT EXISTS user_chat_rooms (
   user_id INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   chated_id INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  deleted_at TIMESTAMP
+  deleted_at TIMESTAMP,
+  viewed_at TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS user_chat_histories (
@@ -98,7 +99,7 @@ CREATE TABLE IF NOT EXISTS user_chat_histories (
   sender_id INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   content VARCHAR(255) NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  viewed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+  viewed_at TIMESTAMP
 );
 
 INSERT INTO users 
@@ -178,14 +179,14 @@ VALUES
 (2, 1, '2020-01-01 00:00:00', '2020-01-01 00:00:00');
 
 INSERT INTO user_chat_rooms
-(user_id, chated_id, created_at, deleted_at)
+(user_id, chated_id, created_at, deleted_at, viewed_at)
 VALUES
-(1, 2, '2020-01-01 00:00:00', NULL);
+(1, 2, '2020-01-01 00:00:00', NULL, '2020-01-01 00:00:00');
 
 INSERT INTO user_chat_rooms
-(user_id, chated_id, created_at, deleted_at)
+(user_id, chated_id, created_at, deleted_at, viewed_at )
 VALUES
-(1, 3, '2020-01-01 00:00:00', NULL);
+(1, 3, '2020-01-01 00:00:00', NULL, '2020-01-01 00:00:00');
 
 INSERT INTO user_chat_histories
 (room_id, sender_id, content, created_at, viewed_at)

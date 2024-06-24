@@ -2,7 +2,7 @@ const userLikeRepository = require("../repositories/user.like.repository");
 const userChatRepository = require("../repositories/user.chat.repository");
 const userRepository = require("../repositories/user.repository");
 
-const addLikeUserByUsername = async (likedUsername, userId) => {
+const likeUserByUsername = async (likedUsername, userId) => {
   try {
     const likedUserInfo = await userRepository.findUserByUsername(
       likedUsername
@@ -12,17 +12,20 @@ const addLikeUserByUsername = async (likedUsername, userId) => {
       error.status = 404;
       throw error;
     }
-    await userLikeRepository.addLikeUserByUsername(likedUserInfo.id, userId);
+    await userLikeRepository.likeUserByUsername(likedUserInfo.id, userId);
 
     if (await userLikeRepository.checkUserLikeBoth(likedUserInfo.id, userId)) {
       await userChatRepository.generateChatRoom(likedUserInfo.id, userId);
+      return true;
+    } else {
+      return false;
     }
   } catch (error) {
     return { error: error.message };
   }
 };
 
-const deleteLikeUserByUsername = async (likedUsername, userId) => {
+const dislikeUserByUsername = async (likedUsername, userId) => {
   try {
     const likedUserInfo = await userRepository.findUserByUsername(
       likedUsername
@@ -32,9 +35,12 @@ const deleteLikeUserByUsername = async (likedUsername, userId) => {
       error.status = 404;
       throw error;
     }
-    await userLikeRepository.deleteLikeUserByUsername(likedUserInfo.id, userId);
+    await userLikeRepository.dislikeUserByUsername(likedUserInfo.id, userId);
     if (await userChatRepository.checkChatRoomExist(likedUserInfo.id, userId)) {
       await userChatRepository.deleteChatRoom(likedUserInfo.id, userId);
+      return true;
+    } else {
+      return false;
     }
   } catch (error) {
     return { error: error.message };
@@ -70,7 +76,7 @@ const validateLike = async (userId, username) => {
 };
 
 module.exports = {
-  addLikeUserByUsername,
-  deleteLikeUserByUsername,
+  likeUserByUsername,
+  dislikeUserByUsername,
   validateLike,
 };

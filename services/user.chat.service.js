@@ -82,8 +82,19 @@ const findOneChatRoomById = async (userId, chatedId) => {
   }
 };
 
+const saveSendedChatById = async (roomId, senderId, content) => {
+  try {
+    return await userChatRepository.saveSendedChatById(roomId, senderId, content);
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+}
+
 module.exports = {
   getChatInfo,
   findAllChatHistoriesByRoomId,
   findOneChatRoomById,
+
+  saveSendedChatById
 };
