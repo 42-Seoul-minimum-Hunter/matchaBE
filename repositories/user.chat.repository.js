@@ -246,7 +246,26 @@ const updateChatHistoriesForAlarmById = async (id) => {
   }
 };
 
-const getChatHistoriesById = async (userId, chatedId) => {
+const getChatHistoriesById = async (roomId) => {
+  try {
+    const chatHistories = await client.query(
+      `
+            SELECT * 
+            FROM user_chat_histories
+            WHERE id = $1 
+            ORDER BY created_at DESC
+        `,
+      [roomId]
+    );
+
+    return chatHistories.rows;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
+
+const findOneChatRoomById = async (userId, chatedId) => {
   try {
     if (userId >= chatedId) {
       const temp = userId;
@@ -254,42 +273,16 @@ const getChatHistoriesById = async (userId, chatedId) => {
       chatedId = temp;
     }
 
-    const chatIds = await client.query(
+    const chatRoom = await client.query(
       `
-                SELECT id
-                FROM user_chat_rooms
-                WHERE user_id = $1 AND chated_id = $2
-            `,
+        SELECT *
+        FROM user_chat_rooms
+        WHERE user_id = $1 AND chated_id = $2 AND deleted_at IS NULL
+        `,
       [userId, chatedId]
     );
 
-    const chatHistories = await client.query(
-      `
-            SELECT * 
-            FROM chat_histories
-            WHERE id = $1
-        `,
-      [chatIds.rows[0].id]
-    );
-
-    //sort BY created_at
-
-    if (chatHistories) {
-      chatHistories.rows.sort((a, b) => {
-        if (a.created_at < b.created_at) {
-          return -1;
-        } else {
-          return 1;
-        }
-      });
-    }
-
-    const chatInfo = {
-      roomId: chatIds.rows[0].id,
-      chatHistories: chatHistories.rows,
-    };
-
-    return chatInfo;
+    return chatRoom.rows[0];
   } catch (error) {
     console.log(error);
     throw error;
@@ -306,4 +299,5 @@ module.exports = {
   updateChatHistoriesForAlarmById,
 
   getChatHistoriesById,
+  findOneChatRoomById,
 };

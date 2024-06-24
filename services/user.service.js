@@ -100,9 +100,27 @@ const checkRightRegion = async (si, gu) => {
   }
 };
 
+const findOneUserByUsername = async (username) => {
+  try {
+    return await userRepository.findUserByUsername(username);
+  } catch (error) {
+    return { error: error.message };
+  }
+};
+
+const findOneUserById = async (id) => {
+  try {
+    return await userRepository.findUserById(id);
+  } catch (error) {
+    return { error: error.message };
+  }
+};
+
 module.exports = {
   createUser,
   unregister,
   changePassword,
   findUserByFilter,
+  findOneUserByUsername,
+  findOneUserById,
 };

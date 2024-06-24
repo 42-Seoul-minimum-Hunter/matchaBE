@@ -5,6 +5,7 @@ const socket = require("socket.io");
 const userReposiotry = require("../repositories/user.repository");
 const userChatService = require("../services/user.chat.service");
 const userLikeService = require("../services/user.like.service");
+const userService = require("../services/user.service");
 
 /* 필요한 기능
 - 유저는 다음 알림들을 실시간으로 보내야 한다
@@ -53,30 +54,49 @@ module.exports = (server, app) => {
     // TODO: 채팅이력이 있는지 확인
     socket.on("joinChatRoom", async (data) => {
       try {
+        var rooms = io.sockets.adapter.sids[socket.id];
+        for (var room in rooms) {
+          socket.leave(room);
+        }
+        console.log("joinChatRoom", data);
         const { username } = data;
 
+        console.log("username", username);
+        console.log("userId", userId);
+
         if (!userId || !username) {
+          return;
+        }
+
+        const chatedInfo = await userService.findOneUserByUsername(username);
+        console.log("chatedInfo", chatedInfo);
+
+        const userInfo = await userService.findOneUserById(userId);
+        console.log("userInfo", userInfo);
+
+        if (!chatedInfo) {
           const Error = new Error("User not found");
           Error.status = 404;
           throw Error;
         }
 
-        const validateLike = await userLikeService.validateLike(
+        const chatRoomInfo = await userChatService.findOneChatRoomById(
           userId,
-          username
+          chatedInfo.id
         );
 
-        if (!validateLike) {
-          const Error = new Error("Bad Access");
+        console.log("chatRoomInfo", chatRoomInfo);
+
+        if (!chatRoomInfo) {
+          const Error = new Error("Chat room not found");
           Error.status = 404;
           throw Error;
         }
 
-        const { roomId, chatHistories, userSenderUsername } =
-          await userChatService.getChatHistories(userId, username);
+        const chatHistories =
+          await userChatService.findAllChatHistoriesByRoomId(chatRoomInfo.id);
 
-        // 해당 채팅방 입장
-        socket.join(roomId);
+        console.log("chatHistories", chatHistories);
 
         let chatInfos = [];
 
@@ -85,37 +105,19 @@ module.exports = (server, app) => {
             let param = {
               message: chat.content,
               username:
-                chatHistories.send_id === userId
-                  ? userSenderUsername.username
-                  : username,
-              time: chatHistories.created_at, // (9시간 차이나는 시간)
+                chat.user_id === userId
+                  ? userInfo.username
+                  : chatedInfo.username,
+              time: chat.created_at, // (9시간 차이나는 시간)
             };
+            console.log("param", param);
             chatInfos.push(param);
           });
+
           io.emit("sendHistories", chatInfos);
+        } else {
+          io.emit("sendHistories", null);
         }
-        //const enterMsg = await Chat.findOne({
-        //  where: {
-        //    roomKey,
-        //    userKey: 12,
-        //    chat: `${enterUser.User.nickname}님이 입장했습니다.`,
-        //  },
-        //});
-
-        // 처음입장이라면 환영 메세지가 없을테니
-        //if (!enterMsg) {
-        //  await Chat.create({
-        //    roomKey,
-        //    userKey: 12, // 관리자 유저키
-        //    chat: `${enterUser.User.nickname}님이 입장했습니다.`,
-        //  });
-
-        //  // 관리자 환영메세지 보내기
-        //  let param = { nickname: enterUser.User.nickname };
-        //  io.to(enterUser.Room.title).emit("welcome", param);
-        //} else {
-        //  // 재입장이라면 아무것도 없음
-        //}
       } catch (error) {
         console.log(error);
         throw error;

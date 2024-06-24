@@ -53,24 +53,29 @@ const getChatInfo = async (userId) => {
   }
 };
 
-const getChatHistories = async (userId, username) => {
+const findAllChatHistoriesByRoomId = async (roomId) => {
   try {
-    const userInfo = await userRepository.findUserByUsername(username);
+    const chatHistories = await userChatRepository.getChatHistoriesById(roomId);
 
-    const chatInfo = await userChatRepository.getChatHistoriesById(
+    return chatHistories;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
+
+const findOneChatRoomById = async (userId, chatedId) => {
+  try {
+    const chatRoom = await userChatRepository.findOneChatRoomById(
       userId,
-      userInfo.id
+      chatedId
     );
 
-    const userSenderInfo = await userRepository.findUserById(userId);
+    if (!chatRoom) {
+      return null;
+    }
 
-    const chatAllInfo = {
-      roomId: chatInfo.roomId,
-      chatHistories: chatInfo.chatHistories,
-      userSenderUsername: userSenderInfo.username,
-    };
-
-    return chatAllInfo;
+    return chatRoom;
   } catch (error) {
     console.log(error);
     throw error;
@@ -79,5 +84,6 @@ const getChatHistories = async (userId, username) => {
 
 module.exports = {
   getChatInfo,
-  getChatHistories,
+  findAllChatHistoriesByRoomId,
+  findOneChatRoomById,
 };
