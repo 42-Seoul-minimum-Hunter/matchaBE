@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 
 function verifyJWTToken(req, res, next) {
   // 1. 요청 헤더에서 토큰을 가져옵니다.
-  const token = req.cookies.jwt;
+  const token = req.headers.authorization.split(" ")[1];
 
   if (!token) {
     // 토큰이 없는 경우 401 Unauthorized 응답을 보냅니다.
@@ -22,7 +22,7 @@ function verifyJWTToken(req, res, next) {
 
 function verifyTwoFA(req, res, next) {
   // 1. 요청 헤더에서 토큰을 가져옵니다.
-  const token = req.cookies.jwt;
+  const token = req.headers.authorization.split(" ")[1];
 
   if (!token) {
     // 토큰이 없는 경우 401 Unauthorized 응답을 보냅니다.
@@ -51,7 +51,7 @@ function verifyTwoFA(req, res, next) {
 
 function verifyValid(req, res, next) {
   // 1. 요청 헤더에서 토큰을 가져옵니다.
-  const token = req.cookies.jwt;
+  const token = req.headers.authorization.split(" ")[1];
 
   if (!token) {
     // 토큰이 없는 경우 401 Unauthorized 응답을 보냅니다.
@@ -80,7 +80,7 @@ function verifyValid(req, res, next) {
 
 function verifyAllprocess(req, res, next) {
   // 1. 요청 헤더에서 토큰을 가져옵니다.
-  const token = req.cookies.jwt;
+  const token = req.headers.authorization.split(" ")[1];
 
   if (!token) {
     // 토큰이 없는 경우 401 Unauthorized 응답을 보냅니다.
@@ -109,7 +109,7 @@ function verifyAllprocess(req, res, next) {
 
 function checkOauthLogin(req, res, next) {
   try {
-    const token = req.cookies.jwt;
+    const token = req.headers.authorization.split(" ")[1];
 
     if (!token) {
       req.jwtInfo = undefined;
@@ -177,3 +177,12 @@ module.exports = {
 
   checkOauthLogin,
 };
+
+/*
+Header, authorization
+{
+  'content-type': 'application/json',
+  authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6bnVsbCwiZW1haWwiOiJ5ZW9taW5Ac3R1ZGVudC40MnNlb3VsLmtyIiwiaXNWYWxpZCI6ZmFsc2UsImlzT2F1dGgiOnRydWUsImFjY2Vzc1Rva2VuIjoiZTQxNDIwODY4M2JhYzE3ZjQ4N2QyNzY5ODFjODQ4YmRmZTQxYTYwNjhlZjQyY2UxOTI1MWU2NDZjYjU1ODg2NSIsInR3b2ZhVmVyaWZpZWQiOmZhbHNlLCJpYXQiOjE3MTkxNTQ5NTQsImV4cCI6MTcxOTI0MTM1NH0.52-Kq_ACUsYtAVRNb3y_qiSoYlC0XcD0flQ3EKiZtLc',
+  'user-agent': 'PostmanRuntime/7.39.0',
+}
+*/

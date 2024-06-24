@@ -48,6 +48,7 @@ app.use(cookieParser("cookie_secret"));
 
 // 포트 정보
 const port = 3000;
+const wsPort = 3001;
 
 const userRouter = require("./controllers/user.js");
 const userRateRouter = require("./controllers/user.rate.js");
@@ -98,5 +99,14 @@ app.listen(port, async () => {
     console.error("Error creating tables:", err);
   }
 });
+
+// WebSocket 서버 실행
+const WsServer = server.listen(wsPort, () => {
+
+  console.log(`WebSocket server running on port ${wsPort}...`);
+});
+
+//socketIO(WsServer, app);
+
 
 //TODO : jwt 확인, 삭제된 유저인지 확인 + 유저 존재 유무 확인

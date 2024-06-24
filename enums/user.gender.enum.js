@@ -1,6 +1,6 @@
 const UserGender = {
-    MALE: 'MALE',
-    FEMALE: 'FEMALE',
+    MALE: 'male',
+    FEMALE: 'female',
 };
 
 module.exports = UserGender;

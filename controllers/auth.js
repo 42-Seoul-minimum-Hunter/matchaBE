@@ -153,7 +153,7 @@ router.get("/callback", async function (req, res, next) {
       jwtToken = authService.generateJWT({
         id: null,
         email: oauthInfo.email,
-        isValid: true,
+        isValid: false,
         isOauth: true,
         accessToken: oauthInfo.accessToken,
         twofaVerified: false,
@@ -170,7 +170,7 @@ router.get("/callback", async function (req, res, next) {
       jwtToken = authService.generateJWT({
         id: user.id,
         email: user.email,
-        isValid: true,
+        isValid: user.isValid,
         isOauth: true,
         accessToken: oauthInfo.accessToken,
         twofaVerified: false,

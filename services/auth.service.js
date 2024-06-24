@@ -5,6 +5,7 @@ const userRepository = require("../repositories/user.repository");
 const sendEmail = require("../configs/sendEmail.js");
 const { totp } = require("otplib");
 const moment = require('moment-timezone');
+const axios = require("axios");
 
 const registerationCode = {};
 const twoFactorCode = {};

@@ -2,6 +2,24 @@ const express = require("express");
 const router = express.Router();
 const morgan = require("morgan");
 
+const { UserGender } = require("../enums/user.gender.enum.js");
+const { UserPreference } = require("../enums/user.preference.enum.js");
+const { UserHashtag } = require("../enums/user.hashtag.enum.js");
+
+const {
+    validateEmail,
+    validateUsername,
+    validatePassword,
+    validateName,
+    validateBiography,
+    validateAge,
+    validateGender,
+    validatePreference,
+    validateHashtags,
+    validateSi,
+    validateGu,
+} = require("../configs/validate.js");
+
 const {
     checkOauthLogin,
     verifyAllprocess,
@@ -36,16 +54,11 @@ profileImages : String 사용자 프로필 이미지 => BASE64로 반환 예정
 
 //TODO: jwt 토큰 확인 추가
 //TODO: username, password 정규표현식, email 형식 확인, biography 정규표현식
-//TODO: region si, gu 존재 확인, 올바른 시, 구인지 확인
+
 //TODO: 이미지 형식 확인
 //TODO: 해시태그 형식 확인
 
-//TODO: username 4~15 영어 숫자만
-//TODO: password 8~15 영어 숫자 특수문자
-//lastName, firstName 4~10 영어만
 //gender, preference, hashtags enum
-//biography 1~100자 영어 숫자만
-//age 1~100 숫자만
 
 router.post("/create", checkOauthLogin, async function (req, res, next) {
     try {
@@ -66,39 +79,61 @@ router.post("/create", checkOauthLogin, async function (req, res, next) {
             profileImages: req.body.profileImages || undefined,
         };
 
-        console.log(user)
+        //console.log(user)
 
-        if (
-            !user.email ||
-            !user.username ||
-            !user.password ||
-            !user.lastName ||
-            !user.firstName ||
-            !user.gender ||
-            !user.preference ||
-            !user.biography ||
-            !user.age ||
-            !user.hashtags ||
-            !user.si ||
-            !user.gu ||
-            !user.profileImages ||
-            user.isGpsAllowed === undefined
-        ) {
-            return res.status(400).send("모든 항목을 입력해주세요.");
-        } else if (user.profileImages.length > 5 && user.profileImages.length < 1) {
+        const requiredFields = [
+            "email",
+            "username",
+            "password",
+            "lastName",
+            "firstName",
+            "gender",
+            "preference",
+            "biography",
+            "age",
+            "isGpsAllowed",
+            "hashtags",
+            "si",
+            "gu",
+            "profileImages",
+        ];
+
+        for (const field of requiredFields) {
+            if (user[field] === undefined) {
+                return res.status(400).send(`Please enter the ${field} field.`);
+            }
+        }
+
+        if (!validateEmail(user.email)) {
+            return res.status(400).send("Please enter a valid email.");
+        } else if (!validateUsername(user.username)) {
+            console.log("hashtags")
             return res
                 .status(400)
-                .send("프로필 이미지는 최대 5개까지만 등록할 수 있습니다.");
-        } else if (user.hashtags.length > 5 && user.hashtags.length < 1) {
+                .send("Please enter a valid username. (4~15 characters)");
+        } else if (!validatePassword(user.password)) {
+            console.log("hashtags")
             return res
                 .status(400)
-                .send("해시태그는 최대 5개까지만 등록할 수 있습니다.");
-        } else if (user.biography.length > 100) {
-            return res.status(400).send("자기소개는 100자 이내로 입력해주세요.");
-        } else if (user.password.length < 8 && user.password.length > 15) {
+                .send("Please enter a valid password. (8~15 characters)");
+        } else if (!validateName(user.lastName) || !validateName(user.firstName)) {
+            return res.status(400).send("Please enter a valid name. (4~10 characters)");
+        } else if (!validateBiography(user.biography)) {
             return res
                 .status(400)
-                .send("비밀번호는 8자 이상 15자 이하로 입력해주세요.");
+                .send("Please enter a valid biography. (1~100 characters)");
+        } else if (!validateAge(user.age)) {
+            return res.status(400).send("Please enter a valid age. (1~100)");
+        } else if (!validateGender(user.gender)) {
+            return res.status(400).send("Please enter a valid gender.");
+        } else if (!validatePreference(user.preference)) {
+            return res.status(400).send("Please enter a valid preference.");
+        } else if (!validateHashtags(user.hashtags)) {
+            return res.status(400).send("Please enter a valid hashtags.");
+        } else if (!validateSi(user.si)) {
+            return res.status(400).send("Please enter a valid si.");
+        } else if (!validateGu(user.si, user.gu)) {
+            return res.status(400).send("Please enter a valid gu.");
         }
 
         if (req.jwtInfo && req.jwtInfo.isOauth && req.jwtInfo.accessToken) {
@@ -140,7 +175,7 @@ router.post("/create", checkOauthLogin, async function (req, res, next) {
             signed: true,
         });
 
-        //res.set("Authorization", `Bearer ${jwtToken}`);
+        res.set("Authorization", `Bearer ${jwtToken}`);
 
         return res.send(user);
     } catch (error) {
@@ -260,5 +295,6 @@ router.get("/search/region", function (req, res, next) {
         next(error);
     }
 });
+
 
 module.exports = router;
