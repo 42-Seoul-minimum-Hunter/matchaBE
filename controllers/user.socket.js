@@ -7,6 +7,7 @@ const userChatService = require("../services/user.chat.service");
 const userLikeService = require("../services/user.like.service");
 const userViewService = require("../services/user.view.service");
 const userService = require("../services/user.service");
+const userAlarmRepository = require("../repositories/user.alarm.repository");
 
 const { verifyAllprocess } = require("../configs/middleware")
 
@@ -145,6 +146,12 @@ module.exports = (server, app) => {
 
         const userInfo = await userReposiotry.findUserByUsername(username);
 
+        if (!userInfo) {
+          const Error = new Error("User not found");
+          Error.status = 404;
+          throw Error;
+        }
+
         const chatRoomInfo = await userChatService.findOneChatRoomById(
           userId,
           userInfo.id
@@ -161,6 +168,7 @@ module.exports = (server, app) => {
 
         //유저가 메세지를 받았을때
         io.to(userActivate[userInfo.id]).emit("alarm", { AlarmType: "MESSAGED", username });
+        await userAlarmRepository.saveAlarmById(userId, userInfo.id, "MESSAGED");
 
       } catch (error) {
         console.log(error);
