@@ -61,7 +61,7 @@ const getOauthInfo = async (code) => {
   }
 };
 
-const createTwofactorCode = async (req, email) => {
+const createTwofactorCode = async (email) => {
   try {
     const code = totp.generate(process.env.TWOFACTOR_SECRET);
 
@@ -134,7 +134,7 @@ const createRegistURL = async (email) => {
   }
 };
 
-const verifyRegistURL = (code) => {
+const verifyRegistURL = async (code, email) => {
   try {
     const expirationDate = registerationCode[code];
     if (!expirationDate) {
@@ -144,7 +144,7 @@ const verifyRegistURL = (code) => {
       return false;
     } else {
       delete registerationCode[code];
-      //await userRepository.updateUserValidByEmail(email);
+      await userRepository.updateUserValidByEmail(email);
       return true;
     }
   } catch (error) {
@@ -152,7 +152,7 @@ const verifyRegistURL = (code) => {
   }
 };
 
-const createResetPasswordURL = async (req, email) => {
+const createResetPasswordURL = async (email) => {
   try {
     const userInfo = await userRepository.findUserByEmail(email);
 
@@ -164,7 +164,7 @@ const createResetPasswordURL = async (req, email) => {
 
     const code = crypto.randomBytes(20).toString("hex");
     const userTimezone = "Asia/Seoul"; // 사용자의 시간대
-    const expirationDate = moment().tz(userTimezone).add(5, "minutes").toDate(); // 5분 후 만료
+    const expirationDate = moment().tz(userTimezone).add(30, "minutes").toDate(); // 5분 후 만료
 
     // 이메일 내용 구성
     const emailContent = `안녕하세요
@@ -181,42 +181,35 @@ const createResetPasswordURL = async (req, email) => {
       text: emailContent,
     });
 
-    // 세션에 토큰 정보 저장
-    req.session.registrationToken = {
-      code,
-      expirationDate,
+    const resetPasswordInfo = {
       email,
+      isPasswordResetVerified: false,
+      isValid: userInfo.isValid
     };
+
+    resetPasswordCode[code] = expirationDate;
+
+    return resetPasswordInfo;
+
   } catch (error) {
     return { error: error.message };
   }
 };
 
-const verifyResetPasswordURL = (req, code) => {
+const verifyResetPasswordURL = (code) => {
   try {
-    // 세션에서 토큰 정보 조회
-    const {
-      token: sessionToken,
-      expirationDate,
-      email,
-    } = req.session.registrationToken;
-    // 유효 기간 확인
-    if (expirationDate < new Date()) {
-      const error = new Error("Password reset link has expired.");
-      error.statusCode = 400;
-      throw error;
-    }
 
-    // 토큰 일치 확인
-    if (sessionToken !== token) {
-      const error = new Error("Invalid password reset link.");
-      error.statusCode = 400;
-      throw error;
+    const expirationDate = resetPasswordCode[code];
+    if (!expirationDate) {
+      return false;
+    } else if (expirationDate < new Date()) {
+      delete resetPasswordCode[code];
+      return false;
     } else {
       delete resetPasswordCode[code];
       return true;
     }
-    // 세션 정보 삭제
+
   } catch (error) {
     return { error: error.message };
   }

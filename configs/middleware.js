@@ -43,9 +43,7 @@ function verifyTwoFA(req, res, next) {
 
     if (decoded.twofaVerified === true) {
       return res.status(401).send("Two Factor Authentication is not verified.");
-    }
-
-    if (decoded.isValid === false) {
+    } else if (decoded.isValid === false) {
       return res.status(401).send("User is not verified.");
     }
 
@@ -103,9 +101,7 @@ function verifyAllprocess(req, res, next) {
 
     if (decoded.isValid === false) {
       return res.status(401).send("User is not verified.");
-    }
-
-    if (decoded.twofaVerified === false) {
+    } else if (decoded.twofaVerified === false) {
       return res.status(401).send("Two Factor Authentication is not verified.");
     }
 
@@ -134,15 +130,15 @@ function checkOauthLogin(req, res, next) {
 
     req.jwtInfo = decoded;
     next();
-  } catch (error) {}
+  } catch (error) { }
 }
 
-function resetPasswordVerify(req, res, next) {
+function verifyResetPassword(req, res, next) {
   try {
     if (!req.headers.authorization) {
       return res.status(401).send("No token provided.");
     }
-    const token = req.headers.resetPasswordJwt.split(" ")[1];
+    const token = req.headers.authorization.split(" ")[1];
 
     if (!token) {
       return res.status(400).send("Bad Access");
@@ -156,13 +152,16 @@ function resetPasswordVerify(req, res, next) {
       return res.status(400).send("Bad Access");
     }
 
-    req.resetPasswordVerified = decoded;
+    req.jwtInfo = decoded;
     next();
-  } catch (error) {}
+  } catch (error) { }
 }
 
-function checkChangePassword(req, res, next) {
+function verifyChangePassword(req, res, next) {
   try {
+    if (!req.headers.authorization) {
+      return res.status(401).send("No token provided.");
+    }
     const token = req.headers.resetPasswordJwt.split(" ")[1];
 
     if (!token) {
@@ -171,20 +170,21 @@ function checkChangePassword(req, res, next) {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    if (decoded.isValid === false) {
-      return res.status(400).send("Bad Access");
-    } else if (decoded.isPasswordVerified === false) {
+    if (decoded.isPasswordVerified === false) {
       return res.status(400).send("Bad Access");
     }
 
     req.resetPasswordJwt = decoded;
     next();
-  } catch (error) {}
+  } catch (error) { }
 }
 
-function socketVerify(req, res, next) {
+function verifySocket(req, res, next) {
   try {
     //console.log(req.handshake.headers.authorization);
+    if (!req.handshake.headers.authorization) {
+      return res.status(400).send("Bad Access");
+    }
     const token = req.handshake.headers.authorization.split(" ")[1];
 
     if (!token) {
@@ -195,11 +195,17 @@ function socketVerify(req, res, next) {
 
     if (decoded.isValid === false) {
       return res.status(400).send("Bad Access");
+    } else if (decoded.twofaVerified === false) {
+
+      return res.status(400).send("Bad Access");
     }
+
+    req.resetPasswordJwt = decoded;
+    next();
 
     req.jwtInfo = decoded;
     next();
-  } catch (error) {}
+  } catch (error) { }
 }
 
 module.exports = {
@@ -207,10 +213,12 @@ module.exports = {
   verifyTwoFA,
   verifyValid,
   verifyAllprocess,
-  socketVerify,
+  verifySocket,
+
+  verifyResetPassword,
 
   checkOauthLogin,
-  checkChangePassword,
+  verifyChangePassword,
 };
 
 /*

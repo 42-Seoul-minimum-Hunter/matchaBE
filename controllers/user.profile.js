@@ -11,7 +11,7 @@ username : String 사용자 닉네임
 //TODO: verifyAllprocess 미들웨어 추가
 //TODO: 조회 기록 저장 추가
 //TODO: 온라인 상태 확인 추가
-router.get("/", async function (req, res, next) {
+router.get("/", verifyAllprocess, async function (req, res, next) {
   try {
     const { username, userId } = req.query;
     if (!username) {
@@ -30,7 +30,7 @@ router.get("/", async function (req, res, next) {
 
 /* GET /user/profile/me/
  */
-router.get("/me", async function (req, res, next) {
+router.get("/me", verifyAllprocess, async function (req, res, next) {
   try {
     const user = await userProfileService.getMyInfo(req.jwtInfo.id);
     return res.send(user);
@@ -55,7 +55,7 @@ profileImages : String 사용자 프로필 이미지 => BASE64로 반환 예정
 }
 */
 
-router.put("/update", async function (req, res, next) {
+router.put("/update", verifyAllprocess, async function (req, res, next) {
   try {
     const user = {
       email: req.body.email,

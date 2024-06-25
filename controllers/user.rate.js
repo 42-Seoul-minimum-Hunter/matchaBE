@@ -10,7 +10,7 @@ rateScore : Float 평가 점수
 
 //TODO: jwt 토큰 확인 추가
 //TODO: 정밀도 소수점 1자리
-router.post("/", async function (req, res, next) {
+router.post("/", verifyAllprocess, async function (req, res, next) {
   try {
     const ratedUsername = req.body.ratedUsername;
     var rateScore = req.body.rateScore;

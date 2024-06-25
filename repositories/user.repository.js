@@ -90,20 +90,13 @@ const deleteUserById = async (id) => {
 
 const changePassword = async (hashedPassword, email) => {
   try {
-    //console.log(hashedPassword)
-    const result = await client.query(
+    await client.query(
       `UPDATE users
              SET password = $1, updated_at = now()
-             WHERE email = $2 AND deleted_at IS NULL
-             RETURNING *`,
+             WHERE email = $2 AND deleted_at IS NULL`,
       [hashedPassword, email]
     );
 
-    if (result.rows.length === 0) {
-      const error = new Error("Password change failed.");
-      error.statusCode = 400;
-      throw error;
-    }
   } catch (error) {
     console.log(error);
     throw error;
@@ -352,8 +345,7 @@ const updateUserValidByEmail = async (email) => {
     await client.query(
       `UPDATE users
              SET is_valid = true, updated_at = now()
-             WHERE email = $1 AND deleted_at IS NULL
-             RETURNING *`,
+             WHERE email = $1 AND deleted_at IS NULL`,
       [email]
     );
   } catch (error) {

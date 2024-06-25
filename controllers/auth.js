@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { verifyTwoFA, verifyValid } = require("../configs/middleware.js");
+const { verifyTwoFA, verifyValid, verifyResetPassword } = require("../configs/middleware.js");
 const authService = require("../services/auth.service.js");
 
 const {
@@ -140,7 +140,13 @@ router.post("/login", async function (req, res, next) {
 
     res.set("Authorization", `Bearer ${jwtToken}`);
 
-    return res.send();
+    if (user.isValid === true) {
+      return res.redirect(process.env.FE_TWOFACTOR_URL);
+    } else {
+      //return res.redirect(process.env.FE_EMAIL_VERIFY_URL);
+    }
+
+    //return res.send();
   } catch (error) {
     next(error);
   }
@@ -218,9 +224,12 @@ router.get("/callback", async function (req, res, next) {
       });
 
       res.set("Authorization", `Bearer ${jwtToken}`);
-      res.body = user;
-      return res.redirect(process.env.FE_SEARCH_URL);
-      //return res.send(user);
+      //TODO: 테스트 필요
+      if (user.isValid === true) {
+        return res.redirect(process.env.FE_TWOFACTOR_URL);
+      } else {
+        return res.redirect(process.env.FE_REGISTRATION_URL);
+      }
     }
   } catch (error) {
     next(error);
@@ -230,14 +239,14 @@ router.get("/callback", async function (req, res, next) {
 /* POST /auth/twoFactor/create
  */
 //TODO : verifyTwoFA 추가
-router.post("/twofactor/create", function (req, res, next) {
+router.post("/twofactor/create", verifyTwoFA, async function (req, res, next) {
   try {
-    //const email = req.jwtInfo.email;
-    const email = req.body.email;
+    const email = req.jwtInfo.email;
+    //const email = req.body.email;
     if (!email) {
       res.status(400).send("Email not found.");
     }
-    authService.createTwofactorCode(req, email);
+    await authService.createTwofactorCode(email);
     res.send();
   } catch (error) {
     next(error);
@@ -248,19 +257,15 @@ router.post("/twofactor/create", function (req, res, next) {
 code : String 2FA 인증 코드
 */
 //TODO : verifyTwoFA 추가
-router.post("/twofactor/verify", function (req, res, next) {
+router.post("/twofactor/verify", verifyTwoFA, function (req, res, next) {
   try {
-    //const email = req.jwtInfo.email;
+    const email = req.jwtInfo.email;
     const code = req.body.code;
-
-    const expirationDate = req.session.twoFactorExpirationDate;
 
     if (!code) {
       return res.status(400).send("Code not found.");
-    } else if (!expirationDate) {
-      return res.status(401).send("Bad Access.");
-    } else if (expirationDate < new Date()) {
-      return res.status(400).send("Code expired.");
+    } else if (!email) {
+      return res.status(400).send("Email not found.");
     }
 
     const result = authService.verifyTwoFactorCode(expirationDate, code);
@@ -296,11 +301,11 @@ router.post("/twofactor/verify", function (req, res, next) {
 /* POST /auth/register/email/send
  */
 //TODO : verifyValid 추가
-router.post("/register/email/send", async function (req, res, next) {
+router.post("/register/email/send", verifyValid, async function (req, res, next) {
   try {
-    const email = req.body.email;
+    //const email = req.body.email;
+    const email = req.jwtInfo.email;
     console.log(email);
-    //const email = req.jwtInfo.email;
     if (!email) {
       return res.status(400).send("Email not found.");
     }
@@ -316,34 +321,35 @@ code : String 인증 코드
 */
 
 //TODO : verifyValid 추가
-router.get("/register/email/verify", function (req, res, next) {
+router.get("/register/email/verify", verifyValid, function (req, res, next) {
   try {
     const code = req.query.code;
+    const email = req.jwtInfo.email;
 
-    if (!code) {
+    if (!code || !email) {
       return res.status(400).send("Code not found.");
     }
 
     //TODO : email 추가해서 isValid true로 변경
-    const result = authService.verifyRegistURL(code);
+    const result = authService.verifyRegistURL(code, email);
 
     if (!result) {
       return res.status(400).send("Invalid code OR Code expired.");
     }
 
-    //jwtToken = authService.generateJWT({
-    //  id: req.jwtInfo.id,
-    //  email: req.jwtInfo.email,
-    //  isValid: true,
-    //  isOauth: req.jwtInfo.isOauth,
-    //  accessToken: req.jwtInfo.accessToken,
-    //  twofaVerified: false,
-    //});
+    jwtToken = authService.generateJWT({
+      id: req.jwtInfo.id,
+      email: req.jwtInfo.email,
+      isValid: true,
+      isOauth: req.jwtInfo.isOauth,
+      accessToken: req.jwtInfo.accessToken,
+      twofaVerified: true,
+    });
 
-    //res.cookie("jwt", jwtToken, {
-    //  httpOnly: true,
-    //  secure: false,
-    //});
+    res.cookie("jwt", jwtToken, {
+      httpOnly: true,
+      secure: false,
+    });
 
     //res.set("Authorization", `Bearer ${jwtToken}`);
 
@@ -369,11 +375,10 @@ router.post("/reset/email/create", async function (req, res, next) {
       res.status(400).send("Email not found.");
     }
     const resetPasswordJwt = await authService.createResetPasswordURL(
-      req,
       email
     );
 
-    res.cookie("resetPasswordJwt", resetPasswordJwt, {
+    res.cookie("jwt", resetPasswordJwt, {
       httpOnly: true,
       secure: false,
     });
@@ -392,17 +397,15 @@ code : String 인증 코드
 */
 
 //TODO: jwt cookie 추가해서 비밀번호 변경 페이지로 리다이렉트
-router.get("/reset/email/verify", async function (req, res, next) {
+router.get("/reset/email/verify", verifyResetPassword, async function (req, res, next) {
   try {
     const code = req.query.code;
-    const { email, expirationDate, token } = req.resetPasswordVerified;
-    if (!code || !email || !expirationDate || !token) {
+    const email = req.jwtInfo.email;
+    if (!code || !email) {
       res.status(400).send("Code not found.");
     }
     const result = authService.verifyResetPasswordURL(
       code,
-      expirationDate,
-      token
     );
 
     if (!result) {
@@ -411,14 +414,14 @@ router.get("/reset/email/verify", async function (req, res, next) {
 
     const jwtToken = authService.generateJWT({
       email: email,
-      expirationDate: new Date(Date.now() + 30 * 60 * 1000),
-      token: token,
+      expirationDate: new Date(Date.now() + 30 * 60 * 1000), //30분 뒤에 만료
       isPasswordResetVerified: true,
     });
 
-    res.cookie("resetPasswordJwt", jwtToken, {
+    res.cookie("jwt", jwtToken, {
       httpOnly: true,
-      secure: false,
+      secure: true, // HTTPS 프로토콜에서만 전송되도록 설정
+      sameSite: 'none', // 크로스 사이트 요청 위험을 방지하기 위해 설정
     });
 
     res.set("Authorization", `Bearer ${jwtToken}`);

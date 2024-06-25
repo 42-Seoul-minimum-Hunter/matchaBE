@@ -7,7 +7,7 @@ const userChatSerivce = require("../services/user.chat.service.js");
 /* GET /user/chat
 
 */
-router.get("/", async function (req, res, next) {
+router.get("/", verifyAllprocess, async function (req, res, next) {
   try {
     const id = req.query.id;
     if (!id) {

@@ -23,6 +23,7 @@ const {
 const {
   checkOauthLogin,
   verifyAllprocess,
+  verifyChangePassword,
 } = require("../configs/middleware.js");
 
 const userSerivce = require("../services/user.service.js");
@@ -183,7 +184,6 @@ router.post("/create", checkOauthLogin, async function (req, res, next) {
       httpOnly: true, // 클라이언트 측 스크립트에서 접근할 수 없도록 설정
       secure: true, // HTTPS 프로토콜에서만 전송되도록 설정
       sameSite: 'none', // 크로스 사이트 요청 위험을 방지하기 위해 설정
-      maxAge: 24 * 60 * 60 * 1000, // 쿠키 만료 시간 (24시간)
     });
 
 
@@ -200,7 +200,7 @@ router.post("/create", checkOauthLogin, async function (req, res, next) {
  */
 
 //TODO: jwt 토큰 확인 추가
-router.delete("/unregister", async function (req, res, next) {
+router.delete("/unregister", verifyAllprocess, async function (req, res, next) {
   try {
     await userSerivce.unregister(req.jwtInfo.id);
     res.clearCookie("jwt");
@@ -214,24 +214,22 @@ router.delete("/unregister", async function (req, res, next) {
 /* POST /user/change/password
 password : String 사용자 비밀번호
 */
-//TODO: jwt 토큰 확인 추가
-
-//TODO: jwt 토큰 확인 추가
-router.post("/change/password", async function (req, res, next) {
+router.post("/change/password", verifyChangePassword, async function (req, res, next) {
   try {
     let password = req.body.password;
-    const { email, expirationDate } = req.session.resetPassword;
+    const { email, expirationDate } = req.jwtInfo.email;
 
-    if (!password) {
-      return res.status(400).send("비밀번호를 입력해주세요.");
-    } else if (!email || !expirationDate) {
-      return res.status(400).send("비밀번호 변경 요청을 먼저 해주세요.");
+    if (!password || !validatePassword(password)) {
+      return res.status(400).send("Please enter the password field.");
+    } else if (!email) {
+      return res.status(400).send("Please enter the email field.");
     } else if (expirationDate < new Date()) {
-      return res.status(400).send("비밀번호 변경 기간이 만료되었습니다.");
+      return res.status(400).send("The link has expired. Please try again.");
     }
 
-    const resultUserInfo = await userSerivce.changePassword(password, email);
-    return res.send(resultUserInfo);
+    await userSerivce.changePassword(password, email);
+    res.clearCookie("jwt");
+    return res.send();
   } catch (error) {
     next(error);
   }
@@ -251,7 +249,7 @@ gu : String 사용자 구
 //TODO: si, gu 올바른 형식인지 확인
 //TODO: user preference 필터 추가
 //TODO: gu 기준으로 정렬, si 기준으로 정렬 추가
-router.get("/find", async function (req, res, next) {
+router.get("/find", verifyChangePassword, async function (req, res, next) {
   try {
     let {
       username,

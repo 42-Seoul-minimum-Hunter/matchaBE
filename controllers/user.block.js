@@ -9,7 +9,7 @@ blockUsername : String 차단 대상사용자 닉네임
 */
 
 //TODO: verifyAllprocess 미들웨어 추가
-router.post("/", async function (req, res, next) {
+router.post("/", verifyAllprocess, async function (req, res, next) {
   try {
     const blockUsername = req.body.blockUsername;
     if (!blockUsername) {
@@ -28,7 +28,7 @@ blockUsername : String 차단 대상사용자 닉네임
 */
 
 //TODO: verifyAllprocess 미들웨어 추가
-router.delete("/", async function (req, res, next) {
+router.delete("/", verifyAllprocess, async function (req, res, next) {
   try {
     const blockUsername = req.body.blockUsername;
     if (!blockUsername) {

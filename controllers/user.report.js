@@ -12,7 +12,7 @@ reason : String(ENUM) 신고 사유
 //TODO: jwt 토큰 확인 추가
 //TODO: reason ENUM 확인
 //TODO: 신고 시 사용자 차단 추가
-router.post("/", async function (req, res, next) {
+router.post("/", verifyAllprocess, async function (req, res, next) {
   try {
     const { reportedUsername, reason } = req.body;
     if (!reportedUsername || !reason) {
