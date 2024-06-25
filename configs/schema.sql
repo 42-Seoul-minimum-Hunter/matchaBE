@@ -72,14 +72,14 @@ CREATE TABLE IF NOT EXISTS user_view_histories (
   id SERIAL PRIMARY KEY,
   user_id INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   viewed_id INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS user_like_histories (
   id SERIAL PRIMARY KEY,
   user_id INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   liked_id INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 
@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS user_chat_rooms (
   user_id INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   chated_id INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  deleted_at TIMESTAMP,
+  deleted_at TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS user_chat_histories (
@@ -96,7 +96,7 @@ CREATE TABLE IF NOT EXISTS user_chat_histories (
   room_id INT REFERENCES user_chat_rooms(id) ON DELETE CASCADE NOT NULL,
   sender_id INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   content VARCHAR(255) NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS user_alarm_histories (
@@ -190,7 +190,7 @@ VALUES
 (1, 2, '2020-01-01 00:00:00', NULL);
 
 INSERT INTO user_chat_rooms
-(user_id, chated_id, created_at, deleted_at )
+(user_id, chated_id, created_at, deleted_at)
 VALUES
 (1, 3, '2020-01-01 00:00:00', NULL);
 
