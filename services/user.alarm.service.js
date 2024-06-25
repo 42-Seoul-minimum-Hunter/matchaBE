@@ -1,31 +1,55 @@
-const userBlockRepository = require('../repositories/user.block.repository');
+const userAlarmRepository = require("../repositories/user.alarm.repository");
+const userRepository = require("../repositories/user.repository");
 
-const userLikeRepository = require('../repositories/user.like.repository');
-const userViewRepository = require('../repositories/user.view.repository');
-const userChatRepository = require('../repositories/user.chat.repository');
+const saveAlarmById = async (id, alarmedId, alarmType) => {
+    try {
+        const alarmedUserInfo = await userRepository.findUserById(alarmedId);
+        if (!alarmedUserInfo) {
+            const error = new Error("User not found.");
+            error.status = 404;
+            throw error;
+        }
+        await userAlarmRepository.addAlarm(id, alarmedId, alarmType);
 
-const getAlarmsById = async (id) => {
+    } catch (error) {
+        return { error: error.message };
+    }
+}
+
+const findAllAlarmsById = async (id) => {
     try {
 
-        const viewInfo = await userViewRepository.getViewedHistoriesById(id);
-        const likeInfo = await userLikeRepository.getLikeUserHistoriesById(id);
-        const chatInfo = await userChatRepository.getChatHistoriesForAlarmById(id);
+        const result = await userAlarmRepository.findAllAlarmsById(id);
 
-        const alarmInfo = [...viewInfo.rows, ...likeInfo.rows, ...chatInfo.rows].sort((a, b) => {
-            return new Date(b.created_at) - new Date(a.created_at);
-        });
+        let alarmedUserInfo = [];
 
-        const filterdByBlocked = await userBlockRepository.filterBlockedUser(id, alarmInfo);
+        if (result) {
+            result.forEach(async (element) => {
+                const alarmedUserInfo = await userRepository.findUserById(element.alarmed_id);
+                alarmedUserInfo.push({
+                    username: alarmedUserInfo.username,
+                    alarm_type: element.alarm_type,
+                    created_at: element.created_at
+                });
+            });
+        }
+        return alarmedUserInfo;
+    }
+    catch (error) {
+        return { error: error.message };
+    }
+};
 
-        await userLikeRepository.updateLikeUserHistoriesById(id);
-        await userViewRepository.updateViewedHistoriesById(id);
-        await userChatRepository.updateChatHistoriesForAlarmById(id);
-        return filterdByBlocked;
+const deleteAllAlarmsById = async (id) => {
+    try {
+        await userAlarmRepository.deleteAllAlarmsById(id);
     } catch (error) {
         return { error: error.message };
     }
 }
 
 module.exports = {
-    getAlarmsById,
+    saveAlarmById,
+    findAllAlarmsById,
+    deleteAllAlarmsById
 };

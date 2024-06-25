@@ -1,6 +1,7 @@
 const userLikeRepository = require("../repositories/user.like.repository");
 const userChatRepository = require("../repositories/user.chat.repository");
 const userRepository = require("../repositories/user.repository");
+const userAlarmRepository = require("../repositories/user.alarm.repository");
 
 const likeUserByUsername = async (likedUsername, userId) => {
   try {
@@ -13,8 +14,10 @@ const likeUserByUsername = async (likedUsername, userId) => {
       throw error;
     }
     await userLikeRepository.likeUserByUsername(likedUserInfo.id, userId);
+    await userAlarmRepository.saveAlarmById(userId, likedUserInfo.id, "LIKE");
 
     if (await userLikeRepository.checkUserLikeBoth(likedUserInfo.id, userId)) {
+      await userAlarmRepository.saveAlarmById(userId, likedUserInfo.id, "MATCHED");
       await userChatRepository.generateChatRoom(likedUserInfo.id, userId);
       return true;
     } else {
@@ -38,6 +41,7 @@ const dislikeUserByUsername = async (likedUsername, userId) => {
     await userLikeRepository.dislikeUserByUsername(likedUserInfo.id, userId);
     if (await userChatRepository.checkChatRoomExist(likedUserInfo.id, userId)) {
       await userChatRepository.deleteChatRoom(likedUserInfo.id, userId);
+      await userAlarmRepository.saveAlarmById(userId, likedUserInfo.id, "DISLIKED");
       return true;
     } else {
       return false;

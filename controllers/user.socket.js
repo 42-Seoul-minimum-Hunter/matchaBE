@@ -62,9 +62,10 @@ module.exports = (server, app) => {
       try {
         var rooms = io.sockets.adapter.sids[socket.id];
         for (var room in rooms) {
-          socket.leave(room);
+          if (room !== socket.id)
+            socket.leave(room);
         }
-        console.log("joinChatRoom", data);
+
         const { username } = data;
 
         console.log("username", username);
@@ -99,8 +100,6 @@ module.exports = (server, app) => {
           throw Error;
         }
 
-        socket.join(chatRoomInfo.id);
-
         const chatHistories =
           await userChatService.findAllChatHistoriesByRoomId(chatRoomInfo.id);
 
@@ -122,10 +121,11 @@ module.exports = (server, app) => {
             chatInfos.push(param);
           });
 
-          io.emit("sendHistories", chatInfos);
+          io.to(socket.id).emit("sendHistories", chatInfos);
         } else {
-          io.emit("sendHistories", null);
+          io.to(socket.id).emit("sendHistories", null);
         }
+        socket.join(chatRoomInfo.id);
       } catch (error) {
         console.log(error);
         throw error;
@@ -170,7 +170,6 @@ module.exports = (server, app) => {
 
     socket.on("onlineStatus", async (data) => {
       try {
-        console.log("onlineStatus", data);
         const { username } = data;
 
         const userInfo = await userReposiotry.findUserByUsername(username);
@@ -205,9 +204,9 @@ module.exports = (server, app) => {
           throw Error;
         }
         const result = await userLikeService.likeUserByUsername(username, userId);
-        io.emit("alarm", { alarmType: "LIKED", username }); //유저가 좋아요를 받았을때
+        io.emit("alarm"); //유저가 좋아요를 받았을때
         if (result) {
-          io.emit("alarm", { alarmType: "MATCHED", username }); //좋아요를 눌렀던 유저에게 좋아요를 받았을때
+          io.emit("alarm"); //좋아요를 눌렀던 유저에게 좋아요를 받았을때
           const userInfo = await userReposiotry.findUserById(userId); // 본인
           if (userActivate[userInfo.id])
             io.to(userActivate[userInfo.id]).emit("alarm", { alarmType: "MATCHED", username: userInfo.username });

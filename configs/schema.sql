@@ -73,7 +73,6 @@ CREATE TABLE IF NOT EXISTS user_view_histories (
   user_id INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   viewed_id INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  viewed_at TIMESTAMP 
 );
 
 CREATE TABLE IF NOT EXISTS user_like_histories (
@@ -81,8 +80,8 @@ CREATE TABLE IF NOT EXISTS user_like_histories (
   user_id INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   liked_id INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  viewed_at TIMESTAMP
 );
+
 
 CREATE TABLE IF NOT EXISTS user_chat_rooms (
   id SERIAL PRIMARY KEY,
@@ -90,7 +89,6 @@ CREATE TABLE IF NOT EXISTS user_chat_rooms (
   chated_id INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
   deleted_at TIMESTAMP,
-  viewed_at TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS user_chat_histories (
@@ -99,7 +97,15 @@ CREATE TABLE IF NOT EXISTS user_chat_histories (
   sender_id INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   content VARCHAR(255) NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  viewed_at TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS user_alarm_histories (
+  id SERIAL PRIMARY KEY,
+  user_id INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  alarmed_id INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  alarm_content VARCHAR(10) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  deleted_at TIMESTAMP
 );
 
 INSERT INTO users 
@@ -169,31 +175,31 @@ VALUES
 (2, '서울', '강남구', '2020-01-01 00:00:00');
 
 INSERT INTO user_like_histories
-(user_id, liked_id, created_at, viewed_at)
+(user_id, liked_id, created_at)
 VALUES
-(1, 2, '2020-01-01 00:00:00', '2020-01-01 00:00:00');
+(1, 2, '2020-01-01 00:00:00');
 
 INSERT INTO user_like_histories
-(user_id, liked_id, created_at, viewed_at)
+(user_id, liked_id, created_at)
 VALUES
-(2, 1, '2020-01-01 00:00:00', '2020-01-01 00:00:00');
+(2, 1, '2020-01-01 00:00:00');
 
 INSERT INTO user_chat_rooms
-(user_id, chated_id, created_at, deleted_at, viewed_at)
+(user_id, chated_id, created_at, deleted_at)
 VALUES
-(1, 2, '2020-01-01 00:00:00', NULL, '2020-01-01 00:00:00');
+(1, 2, '2020-01-01 00:00:00', NULL);
 
 INSERT INTO user_chat_rooms
-(user_id, chated_id, created_at, deleted_at, viewed_at )
+(user_id, chated_id, created_at, deleted_at )
 VALUES
-(1, 3, '2020-01-01 00:00:00', NULL, '2020-01-01 00:00:00');
+(1, 3, '2020-01-01 00:00:00', NULL);
 
 INSERT INTO user_chat_histories
-(room_id, sender_id, content, created_at, viewed_at)
+(room_id, sender_id, content, created_at)
 VALUES
-(1, 2, 'hello', '2020-01-01 00:00:00', '2020-01-01 00:00:00');
+(1, 2, 'hello', '2020-01-01 00:00:00');
 
 INSERT INTO user_chat_histories
-(room_id, sender_id, content, created_at, viewed_at)
+(room_id, sender_id, content, created_at)
 VALUES
-(2, 1, 'world', '2020-01-01 00:00:00', '2020-01-01 00:00:00');
+(2, 1, 'world', '2020-01-01 00:00:00');
