@@ -12,6 +12,7 @@ const userProfileImageRepository = require("../repositories/user.profileImage.re
 //https://jinyisland.kr/post/middleware/
 const createUser = async (UserCreateDto) => {
   try {
+    console.log("user.service.createUser");
     const hashed = await bcrypt.hash(UserCreateDto.password, 10);
     UserCreateDto.password = hashed;
 

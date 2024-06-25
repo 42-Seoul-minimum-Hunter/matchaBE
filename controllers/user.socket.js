@@ -9,7 +9,7 @@ const userViewService = require("../services/user.view.service");
 const userService = require("../services/user.service");
 const userAlarmRepository = require("../repositories/user.alarm.repository");
 
-const { verifyAllprocess } = require("../configs/middleware")
+const { verifyAllprocess, socketVerify } = require("../configs/middleware");
 
 /* 필요한 기능
 - 유저는 다음 알림들을 실시간으로 보내야 한다
@@ -32,7 +32,7 @@ module.exports = (server, app) => {
     },
   });
   // 소캣 연결
-  io.on("connection", verifyAllprocess, (socket) => {
+  io.on("connection", socketVerify, (socket) => {
     // 클라이언트가 보낸 데이터 접근
 
     const { userId, email } = req.jwtInfo;
@@ -63,8 +63,7 @@ module.exports = (server, app) => {
       try {
         var rooms = io.sockets.adapter.sids[socket.id];
         for (var room in rooms) {
-          if (room !== socket.id)
-            socket.leave(room);
+          if (room !== socket.id) socket.leave(room);
         }
 
         const { username } = data;
@@ -160,16 +159,26 @@ module.exports = (server, app) => {
         const param = {
           message,
           username,
-          time: new Date()
-        }
+          time: new Date(),
+        };
 
-        await userChatService.saveSendedChatById(chatRoomInfo.id, userInfo.id, message);
+        await userChatService.saveSendedChatById(
+          chatRoomInfo.id,
+          userInfo.id,
+          message
+        );
         io.to(chatRoomInfo.id).emit("message", param);
 
         //유저가 메세지를 받았을때
-        io.to(userActivate[userInfo.id]).emit("alarm", { AlarmType: "MESSAGED", username });
-        await userAlarmRepository.saveAlarmById(userId, userInfo.id, "MESSAGED");
-
+        io.to(userActivate[userInfo.id]).emit("alarm", {
+          AlarmType: "MESSAGED",
+          username,
+        });
+        await userAlarmRepository.saveAlarmById(
+          userId,
+          userInfo.id,
+          "MESSAGED"
+        );
       } catch (error) {
         console.log(error);
         throw error;
@@ -211,13 +220,19 @@ module.exports = (server, app) => {
           Error.status = 404;
           throw Error;
         }
-        const result = await userLikeService.likeUserByUsername(username, userId);
+        const result = await userLikeService.likeUserByUsername(
+          username,
+          userId
+        );
         io.emit("alarm"); //유저가 좋아요를 받았을때
         if (result) {
           io.emit("alarm"); //좋아요를 눌렀던 유저에게 좋아요를 받았을때
           const userInfo = await userReposiotry.findUserById(userId); // 본인
           if (userActivate[userInfo.id])
-            io.to(userActivate[userInfo.id]).emit("alarm", { alarmType: "MATCHED", username: userInfo.username });
+            io.to(userActivate[userInfo.id]).emit("alarm", {
+              alarmType: "MATCHED",
+              username: userInfo.username,
+            });
         }
       } catch (error) {
         console.log(error);
@@ -235,12 +250,21 @@ module.exports = (server, app) => {
           throw Error;
         }
 
-        const result = await userLikeService.dislikeUserByUsername(username, userId);
+        const result = await userLikeService.dislikeUserByUsername(
+          username,
+          userId
+        );
 
-        if (result) { //연결된 유저가 좋아요를 취소했을때
-          const dislikedUserInfo = await userReposiotry.findUserByUsername(username);
+        if (result) {
+          //연결된 유저가 좋아요를 취소했을때
+          const dislikedUserInfo = await userReposiotry.findUserByUsername(
+            username
+          );
           if (userActivate[dislikedUserInfo.id])
-            io.to(userActivate[dislikedUserInfo.id]).emit("alarm", { alarmType: "DISLIKED", username });
+            io.to(userActivate[dislikedUserInfo.id]).emit("alarm", {
+              alarmType: "DISLIKED",
+              username,
+            });
         }
       } catch (error) {
         console.log(error);
@@ -258,7 +282,10 @@ module.exports = (server, app) => {
           throw Error;
         }
 
-        io.to(userActivate[userId]).emit("alarm", { alarmType: "VISITED", username }); //유저의 프로필을 방문했을때
+        io.to(userActivate[userId]).emit("alarm", {
+          alarmType: "VISITED",
+          username,
+        }); //유저의 프로필을 방문했을때
 
         await userViewService.saveVisitHistoryById(username, userId);
       } catch (error) {
@@ -266,8 +293,6 @@ module.exports = (server, app) => {
         return false;
       }
     });
-
-
 
     socket.on("disconnect", () => {
       console.log("소켓 연결 해제됨", socket.id);
@@ -281,7 +306,6 @@ module.exports = (server, app) => {
       // 유저 접속 상태
       delete userActivate[userId];
     });
-
 
     // 채팅방 나가기(채팅방에서 아에 퇴장)
     //socket.on("leave-room", async (data) => {

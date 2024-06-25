@@ -1,6 +1,5 @@
 // express 불러오기
 const express = require("express");
-const session = require("express-session");
 const http = require("http");
 const socketIO = require("socket.io");
 const morgan = require("morgan");
@@ -23,13 +22,7 @@ const client = new Client({
 
 // express 인스턴스 생성
 const app = express();
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET, // 세션 암호화에 사용되는 비밀 키
-    resave: false, // 세션을 항상 저장할지 여부
-    saveUninitialized: true, // 초기화되지 않은 세션을 저장할지 여부
-  })
-);
+
 const server = http.createServer(app);
 const io = socketIO(server);
 
@@ -37,8 +30,8 @@ const io = socketIO(server);
 app.use(
   cors({
     //origin: ["http://localhost:5173", "http://localhost:3000"],
-    origin: true,
-    credentials: true,
+    origin: "*",
+    //credentials: true,
   })
 );
 
@@ -101,11 +94,9 @@ app.listen(port, async () => {
 
 // WebSocket 서버 실행
 const WsServer = server.listen(wsPort, () => {
-
   console.log(`WebSocket server running on port ${wsPort}...`);
 });
 
 //socketIO(WsServer, app);
-
 
 //TODO : jwt 확인, 삭제된 유저인지 확인 + 유저 존재 유무 확인

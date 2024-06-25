@@ -1,6 +1,9 @@
 const jwt = require("jsonwebtoken");
 
 function verifyJWTToken(req, res, next) {
+  if (!req.headers.authorization) {
+    return res.status(401).send("No token provided.");
+  }
   // 1. 요청 헤더에서 토큰을 가져옵니다.
   const token = req.headers.authorization.split(" ")[1];
 
@@ -22,6 +25,11 @@ function verifyJWTToken(req, res, next) {
 
 function verifyTwoFA(req, res, next) {
   // 1. 요청 헤더에서 토큰을 가져옵니다.
+  const cookieInfo = req.signedCookies || {};
+  console.log(cookieInfo);
+  if (!req.headers.authorization) {
+    return res.status(401).send("No token provided.");
+  }
   const token = req.headers.authorization.split(" ")[1];
 
   if (!token) {
@@ -50,6 +58,9 @@ function verifyTwoFA(req, res, next) {
 }
 
 function verifyValid(req, res, next) {
+  if (!req.headers.authorization) {
+    return res.status(401).send("No token provided.");
+  }
   // 1. 요청 헤더에서 토큰을 가져옵니다.
   const token = req.headers.authorization.split(" ")[1];
 
@@ -61,10 +72,6 @@ function verifyValid(req, res, next) {
   try {
     // 2. JWT 토큰을 검증합니다.
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    if (decoded.twofaVerified === false) {
-      return res.status(401).send("Two Factor Authentication is not verified.");
-    }
 
     if (decoded.isValid === true) {
       return res.status(401).send("User already Verified.");
@@ -79,6 +86,9 @@ function verifyValid(req, res, next) {
 }
 
 function verifyAllprocess(req, res, next) {
+  if (!req.headers.authorization) {
+    return res.status(401).send("No token provided.");
+  }
   // 1. 요청 헤더에서 토큰을 가져옵니다.
   const token = req.headers.authorization.split(" ")[1];
 
@@ -109,13 +119,13 @@ function verifyAllprocess(req, res, next) {
 
 function checkOauthLogin(req, res, next) {
   try {
-    const token = req.headers.authorization.split(" ")[1];
-
-    if (!token) {
+    if (!req.headers.authorization) {
       req.jwtInfo = undefined;
+      console.log("No token provided");
       next();
     }
 
+    const token = req.headers.authorization.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     if (decoded.isOauth === false || decoded.accessToken === null) {
@@ -124,12 +134,15 @@ function checkOauthLogin(req, res, next) {
 
     req.jwtInfo = decoded;
     next();
-  } catch (error) { }
+  } catch (error) {}
 }
 
 function resetPasswordVerify(req, res, next) {
   try {
-    const token = req.cookies.resetPasswordJwt;
+    if (!req.headers.authorization) {
+      return res.status(401).send("No token provided.");
+    }
+    const token = req.headers.resetPasswordJwt.split(" ")[1];
 
     if (!token) {
       return res.status(400).send("Bad Access");
@@ -145,12 +158,12 @@ function resetPasswordVerify(req, res, next) {
 
     req.resetPasswordVerified = decoded;
     next();
-  } catch (error) { }
+  } catch (error) {}
 }
 
 function checkChangePassword(req, res, next) {
   try {
-    const token = req.cookies.resetPasswordJwt;
+    const token = req.headers.resetPasswordJwt.split(" ")[1];
 
     if (!token) {
       return res.status(400).send("Bad Access");
@@ -166,7 +179,27 @@ function checkChangePassword(req, res, next) {
 
     req.resetPasswordJwt = decoded;
     next();
-  } catch (error) { }
+  } catch (error) {}
+}
+
+function socketVerify(req, res, next) {
+  try {
+    //console.log(req.handshake.headers.authorization);
+    const token = req.handshake.headers.authorization.split(" ")[1];
+
+    if (!token) {
+      return res.status(400).send("Bad Access");
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    if (decoded.isValid === false) {
+      return res.status(400).send("Bad Access");
+    }
+
+    req.jwtInfo = decoded;
+    next();
+  } catch (error) {}
 }
 
 module.exports = {
@@ -174,8 +207,10 @@ module.exports = {
   verifyTwoFA,
   verifyValid,
   verifyAllprocess,
+  socketVerify,
 
   checkOauthLogin,
+  checkChangePassword,
 };
 
 /*
