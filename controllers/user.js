@@ -173,11 +173,19 @@ router.post("/create", checkOauthLogin, async function (req, res, next) {
     }
 
     console.log(jwtToken);
-    res.cookie("jwt", jwtToken, {
-      sameSite: "none",
-      secure: true,
-      httpOnly: true,
+    //res.cookie("jwt", jwtToken, {
+    //  sameSite: "none",
+    //  secure: true,
+    //  httpOnly: true,
+    //});
+
+    res.cookie('jwt', jwtToken, {
+      httpOnly: true, // 클라이언트 측 스크립트에서 접근할 수 없도록 설정
+      secure: true, // HTTPS 프로토콜에서만 전송되도록 설정
+      sameSite: 'none', // 크로스 사이트 요청 위험을 방지하기 위해 설정
+      maxAge: 24 * 60 * 60 * 1000, // 쿠키 만료 시간 (24시간)
     });
+
 
     console.log(res.cookie);
 

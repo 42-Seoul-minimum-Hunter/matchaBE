@@ -29,9 +29,9 @@ const io = socketIO(server);
 //cors 허용
 app.use(
   cors({
-    //origin: ["http://localhost:5173", "http://localhost:3000"],
-    origin: "*",
-    //credentials: true,
+    origin: ["http://localhost:5173", "http://localhost:3000"],
+    //origin: true,
+    credentials: true,
   })
 );
 
