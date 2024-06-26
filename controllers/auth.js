@@ -1,6 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const { verifyTwoFA, verifyValid, verifyResetPassword } = require("../configs/middleware.js");
+const {
+  verifyTwoFA,
+  verifyValid,
+  verifyResetPassword,
+} = require("../configs/middleware.js");
 const authService = require("../services/auth.service.js");
 
 const {
@@ -124,6 +128,10 @@ router.post("/login", async function (req, res, next) {
       password
     );
 
+    if (!user) {
+      return res.status(400).send("User not found.");
+    }
+
     const jwtToken = authService.generateJWT({
       id: user.id,
       email: user.email,
@@ -133,10 +141,7 @@ router.post("/login", async function (req, res, next) {
       twofaVerified: false,
     });
 
-    res.cookie("jwt", jwtToken, {
-      httpOnly: true,
-      secure: false,
-    });
+    res.cookie("jwt", jwtToken, {});
 
     res.set("Authorization", `Bearer ${jwtToken}`);
 
@@ -144,6 +149,8 @@ router.post("/login", async function (req, res, next) {
       return res.redirect(process.env.FE_TWOFACTOR_URL);
     } else {
       //return res.redirect(process.env.FE_EMAIL_VERIFY_URL);
+      //return res.redirect("");
+      return res.send();
     }
 
     //return res.send();
@@ -152,10 +159,10 @@ router.post("/login", async function (req, res, next) {
   }
 });
 
-/* POST /auth/logout
+/* DELETE/auth/logout
  */
 
-router.post("/logout", function (req, res, next) {
+router.delete("/logout", function (req, res, next) {
   try {
     res.clearCookie("jwt");
     res.send("로그아웃 되었습니다.");
@@ -228,7 +235,8 @@ router.get("/callback", async function (req, res, next) {
       if (user.isValid === true) {
         return res.redirect(process.env.FE_TWOFACTOR_URL);
       } else {
-        return res.redirect(process.env.FE_REGISTRATION_URL);
+        return res.send();
+        //return res.redirect(process.env.FE_REGISTRATION_URL);
       }
     }
   } catch (error) {
@@ -301,50 +309,60 @@ router.post("/twofactor/verify", verifyTwoFA, function (req, res, next) {
 /* POST /auth/register/email/send
  */
 //TODO : verifyValid 추가
-router.post("/register/email/send", verifyValid, async function (req, res, next) {
-  try {
-    //const email = req.body.email;
-    const email = req.jwtInfo.email;
-    console.log(email);
-    if (!email) {
-      return res.status(400).send("Email not found.");
+router.post(
+  "/register/email/send",
+  verifyValid,
+  async function (req, res, next) {
+    try {
+      //const email = req.body.email;
+      const email = req.jwtInfo.email;
+      console.log(email);
+      if (!email) {
+        return res.status(400).send("Email not found.");
+      }
+      await authService.createRegistURL(email);
+      return res.send();
+    } catch (error) {
+      next(error);
     }
-    await authService.createRegistURL(email);
-    return res.send();
-  } catch (error) {
-    next(error);
   }
-});
+);
 
 /* GET /auth/register/email/verify
 code : String 인증 코드
 */
 
 //TODO : verifyValid 추가
-router.get("/register/email/verify", verifyValid, function (req, res, next) {
+router.get("/register/email/verify", async function (req, res, next) {
   try {
     const code = req.query.code;
-    const email = req.jwtInfo.email;
 
-    if (!code || !email) {
+    if (!code) {
       return res.status(400).send("Code not found.");
     }
 
     //TODO : email 추가해서 isValid true로 변경
-    const result = authService.verifyRegistURL(code, email);
+    const result = await authService.verifyRegistURL(code);
 
     if (!result) {
       return res.status(400).send("Invalid code OR Code expired.");
     }
 
-    jwtToken = authService.generateJWT({
-      id: req.jwtInfo.id,
-      email: req.jwtInfo.email,
+    let jwtInfo = {
+      id: result.id,
+      email: result.email,
       isValid: true,
-      isOauth: req.jwtInfo.isOauth,
-      accessToken: req.jwtInfo.accessToken,
+      isOauth: result.is_oauth,
+      accessToken: null,
       twofaVerified: true,
-    });
+    };
+
+    if (result.is_oauth === true) {
+      const { oauthInfo } = await authService.getOauthInfo(result.email);
+      jwtInfo.accessToken = oauthInfo.accessToken;
+    }
+
+    const jwtToken = authService.generateJWT(jwtInfo);
 
     res.cookie("jwt", jwtToken, {
       httpOnly: true,
@@ -374,9 +392,7 @@ router.post("/reset/email/create", async function (req, res, next) {
     if (!email) {
       res.status(400).send("Email not found.");
     }
-    const resetPasswordJwt = await authService.createResetPasswordURL(
-      email
-    );
+    const resetPasswordJwt = await authService.createResetPasswordURL(email);
 
     res.cookie("jwt", resetPasswordJwt, {
       httpOnly: true,
@@ -397,41 +413,49 @@ code : String 인증 코드
 */
 
 //TODO: jwt cookie 추가해서 비밀번호 변경 페이지로 리다이렉트
-router.get("/reset/email/verify", verifyResetPassword, async function (req, res, next) {
-  try {
-    const code = req.query.code;
-    const email = req.jwtInfo.email;
-    if (!code || !email) {
-      res.status(400).send("Code not found.");
+router.get(
+  "/reset/email/verify",
+  verifyResetPassword,
+  async function (req, res, next) {
+    try {
+      const code = req.query.code;
+      const email = req.jwtInfo.email;
+      if (!code || !email) {
+        res.status(400).send("Code not found.");
+      }
+      const result = authService.verifyResetPasswordURL(code);
+
+      if (!result) {
+        return res.status(400).send("Invalid code OR Code expired.");
+      }
+
+      const jwtToken = authService.generateJWT({
+        email: email,
+        expirationDate: new Date(Date.now() + 30 * 60 * 1000), //30분 뒤에 만료
+        isPasswordResetVerified: true,
+      });
+
+      res.cookie("jwt", jwtToken, {
+        httpOnly: true,
+        secure: true, // HTTPS 프로토콜에서만 전송되도록 설정
+        sameSite: "none", // 크로스 사이트 요청 위험을 방지하기 위해 설정
+      });
+
+      res.set("Authorization", `Bearer ${jwtToken}`);
+
+      return res.send("redirect");
+
+      //res.redirect(FE_RESET_PASSWORD_URL);
+    } catch (error) {
+      next(error);
     }
-    const result = authService.verifyResetPasswordURL(
-      code,
-    );
-
-    if (!result) {
-      return res.status(400).send("Invalid code OR Code expired.");
-    }
-
-    const jwtToken = authService.generateJWT({
-      email: email,
-      expirationDate: new Date(Date.now() + 30 * 60 * 1000), //30분 뒤에 만료
-      isPasswordResetVerified: true,
-    });
-
-    res.cookie("jwt", jwtToken, {
-      httpOnly: true,
-      secure: true, // HTTPS 프로토콜에서만 전송되도록 설정
-      sameSite: 'none', // 크로스 사이트 요청 위험을 방지하기 위해 설정
-    });
-
-    res.set("Authorization", `Bearer ${jwtToken}`);
-
-    return res.send("redirect");
-
-    //res.redirect(FE_RESET_PASSWORD_URL);
-  } catch (error) {
-    next(error);
   }
-});
+);
 
 module.exports = router;
+
+//LOGIN
+//ISVALID 유무에 따라 달라짐 왜 달라지냐! 그냥 회원가하하고 나가는 경우가 다다고 판단함
+
+//LOGIN -> ISVALID == TRUE -> 이 사람은 이일일 인증 한사람이니까 2FA로 가라
+//LOGIN -> ISVALID == FALSE -> 이 쥐새끼 같은놈 하고 이메일 인증 페이지로 가라

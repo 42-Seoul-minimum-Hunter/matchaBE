@@ -130,7 +130,7 @@ function checkOauthLogin(req, res, next) {
 
     req.jwtInfo = decoded;
     next();
-  } catch (error) { }
+  } catch (error) {}
 }
 
 function verifyResetPassword(req, res, next) {
@@ -154,7 +154,7 @@ function verifyResetPassword(req, res, next) {
 
     req.jwtInfo = decoded;
     next();
-  } catch (error) { }
+  } catch (error) {}
 }
 
 function verifyChangePassword(req, res, next) {
@@ -176,7 +176,7 @@ function verifyChangePassword(req, res, next) {
 
     req.resetPasswordJwt = decoded;
     next();
-  } catch (error) { }
+  } catch (error) {}
 }
 
 function verifySocket(req, res, next) {
@@ -196,7 +196,6 @@ function verifySocket(req, res, next) {
     if (decoded.isValid === false) {
       return res.status(400).send("Bad Access");
     } else if (decoded.twofaVerified === false) {
-
       return res.status(400).send("Bad Access");
     }
 
@@ -205,7 +204,7 @@ function verifySocket(req, res, next) {
 
     req.jwtInfo = decoded;
     next();
-  } catch (error) { }
+  } catch (error) {}
 }
 
 module.exports = {

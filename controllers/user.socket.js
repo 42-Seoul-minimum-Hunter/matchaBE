@@ -9,7 +9,7 @@ const userViewService = require("../services/user.view.service");
 const userService = require("../services/user.service");
 const userAlarmRepository = require("../repositories/user.alarm.repository");
 
-const { verifyAllprocess, socketVerify } = require("../configs/middleware");
+const { verifyAllprocess, verifySocket } = require("../configs/middleware");
 
 /* 필요한 기능
 - 유저는 다음 알림들을 실시간으로 보내야 한다
@@ -32,7 +32,7 @@ module.exports = (server, app) => {
     },
   });
   // 소캣 연결
-  io.on("connection", socketVerify, (socket) => {
+  io.on("connection", verifySocket, (socket) => {
     // 클라이언트가 보낸 데이터 접근
 
     const { userId, email } = req.jwtInfo;

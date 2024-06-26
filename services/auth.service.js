@@ -128,15 +128,15 @@ const createRegistURL = async (email) => {
       text: emailContent,
     });
 
-    registerationCode[code] = expirationDate;
+    registerationCode[code] = { expirationDate, email };
   } catch (error) {
     return { error: error.message };
   }
 };
 
-const verifyRegistURL = async (code, email) => {
+const verifyRegistURL = async (code) => {
   try {
-    const expirationDate = registerationCode[code];
+    const { expirationDate, email } = registerationCode[code];
     if (!expirationDate) {
       return false;
     } else if (expirationDate < new Date()) {
@@ -145,7 +145,8 @@ const verifyRegistURL = async (code, email) => {
     } else {
       delete registerationCode[code];
       await userRepository.updateUserValidByEmail(email);
-      return true;
+      const userInfo = await userRepository.findUserByEmail(email);
+      return userInfo;
     }
   } catch (error) {
     return { error: error.message };
@@ -164,7 +165,10 @@ const createResetPasswordURL = async (email) => {
 
     const code = crypto.randomBytes(20).toString("hex");
     const userTimezone = "Asia/Seoul"; // 사용자의 시간대
-    const expirationDate = moment().tz(userTimezone).add(30, "minutes").toDate(); // 5분 후 만료
+    const expirationDate = moment()
+      .tz(userTimezone)
+      .add(30, "minutes")
+      .toDate(); // 5분 후 만료
 
     // 이메일 내용 구성
     const emailContent = `안녕하세요
@@ -184,13 +188,12 @@ const createResetPasswordURL = async (email) => {
     const resetPasswordInfo = {
       email,
       isPasswordResetVerified: false,
-      isValid: userInfo.isValid
+      isValid: userInfo.isValid,
     };
 
     resetPasswordCode[code] = expirationDate;
 
     return resetPasswordInfo;
-
   } catch (error) {
     return { error: error.message };
   }
@@ -198,7 +201,6 @@ const createResetPasswordURL = async (email) => {
 
 const verifyResetPasswordURL = (code) => {
   try {
-
     const expirationDate = resetPasswordCode[code];
     if (!expirationDate) {
       return false;
@@ -209,7 +211,6 @@ const verifyResetPasswordURL = (code) => {
       delete resetPasswordCode[code];
       return true;
     }
-
   } catch (error) {
     return { error: error.message };
   }

@@ -180,12 +180,9 @@ router.post("/create", checkOauthLogin, async function (req, res, next) {
     //  httpOnly: true,
     //});
 
-    res.cookie('jwt', jwtToken, {
-      httpOnly: true, // 클라이언트 측 스크립트에서 접근할 수 없도록 설정
-      secure: true, // HTTPS 프로토콜에서만 전송되도록 설정
-      sameSite: 'none', // 크로스 사이트 요청 위험을 방지하기 위해 설정
+    res.cookie("jwt", jwtToken, {
+      //sameSite: "none", // 크로스 사이트 요청 위험을 방지하기 위해 설정
     });
-
 
     console.log(res.cookie);
 
@@ -214,26 +211,30 @@ router.delete("/unregister", verifyAllprocess, async function (req, res, next) {
 /* POST /user/change/password
 password : String 사용자 비밀번호
 */
-router.post("/change/password", verifyChangePassword, async function (req, res, next) {
-  try {
-    let password = req.body.password;
-    const { email, expirationDate } = req.jwtInfo.email;
+router.post(
+  "/change/password",
+  verifyChangePassword,
+  async function (req, res, next) {
+    try {
+      let password = req.body.password;
+      const { email, expirationDate } = req.jwtInfo.email;
 
-    if (!password || !validatePassword(password)) {
-      return res.status(400).send("Please enter the password field.");
-    } else if (!email) {
-      return res.status(400).send("Please enter the email field.");
-    } else if (expirationDate < new Date()) {
-      return res.status(400).send("The link has expired. Please try again.");
+      if (!password || !validatePassword(password)) {
+        return res.status(400).send("Please enter the password field.");
+      } else if (!email) {
+        return res.status(400).send("Please enter the email field.");
+      } else if (expirationDate < new Date()) {
+        return res.status(400).send("The link has expired. Please try again.");
+      }
+
+      await userSerivce.changePassword(password, email);
+      res.clearCookie("jwt");
+      return res.send();
+    } catch (error) {
+      next(error);
     }
-
-    await userSerivce.changePassword(password, email);
-    res.clearCookie("jwt");
-    return res.send();
-  } catch (error) {
-    next(error);
   }
-});
+);
 
 /* GET /user/find
 username : String 사용자 닉네임
