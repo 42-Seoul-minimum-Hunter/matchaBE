@@ -286,6 +286,7 @@ router.get("/find", verifyChangePassword, async function (req, res, next) {
     }
 
     const { users, totalCount } = await userSerivce.findUserByFilter(
+      req.jwtInfo.id,
       filter,
       page,
       pageSize

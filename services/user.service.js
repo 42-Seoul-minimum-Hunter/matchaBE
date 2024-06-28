@@ -5,6 +5,7 @@ const userHashtagRepository = require("../repositories/user.hashtag.repository")
 const userRegionRepository = require("../repositories/user.region.repository");
 const userBlockRepository = require("../repositories/user.block.repository");
 const userProfileImageRepository = require("../repositories/user.profileImage.repository");
+const userRateRepository = require("../repositories/user.rate.repository");
 
 // TODO : username, password 정규표현식, email 형식 확인
 
@@ -72,13 +73,22 @@ const changePassword = async (password, email) => {
   }
 };
 
-const findUserByFilter = async (filter, page, pageSize) => {
+const findUserByFilter = async (id, filter, page, pageSize) => {
   try {
-    const { users, totalCount } = await userRepository.findUserByFilter(
-      filter,
-      page,
-      pageSize
-    );
+    let users, totalCount;
+    if (!filter){
+      const userInfo = await userRepository.findUserById(id);
+      const userRegionInfo = await userRegionRepository.findRegionById(id);
+      const userHashtagInfo = await userHashtagRepository.findHashtagById(id);
+
+      users, totalCount = await userRepository.findUserByDefaultFilter(userInfo.preference, userRegionInfo.si, userRegionInfo.gu, userHashtagInfo[0],page, pageSize);
+    } else {
+      users, totalCount = await userRepository.findUserByFilter(
+        filter,
+        page,
+        pageSize
+      );
+    }
     const filteredByBlock = await userBlockRepository.filterBlockedUser(
       filter.userId,
       users

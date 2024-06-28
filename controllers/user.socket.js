@@ -27,7 +27,7 @@ const userActivate = {};
 module.exports = (server, app) => {
   const io = socket(server, {
     cors: {
-      origin: "*",
+      origin: ["http://localhost:5173", "http://localhost:3000", "http://localhost:3001", "http://localhost:5173/email", "http://localhost:5173/twofactor"],
       credentials: true,
     },
   });

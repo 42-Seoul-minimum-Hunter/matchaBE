@@ -145,15 +145,15 @@ router.post("/login", async function (req, res, next) {
 
     res.set("Authorization", `Bearer ${jwtToken}`);
 
-    if (user.isValid === true) {
-      return res.redirect(process.env.FE_TWOFACTOR_URL);
-    } else {
-      //return res.redirect(process.env.FE_EMAIL_VERIFY_URL);
-      //return res.redirect("");
-      return res.send();
-    }
+    //if (user.isValid === true) {
+    //  return res.redirect(process.env.FE_TWOFACTOR_URL);
+    //} else {
+    //  //return res.redirect(process.env.FE_EMAIL_VERIFY_URL);
+    //  //return res.redirect("");
+    //  return res.send();
+    //}
 
-    //return res.send();
+    return res.send(user.isValid);
   } catch (error) {
     next(error);
   }
@@ -213,7 +213,7 @@ router.get("/callback", async function (req, res, next) {
       });
 
       res.set("Authorization", `Bearer ${jwtToken}`);
-      return res.redirect(process.env.OAUTH_USER_REGISTRATION_URL);
+      //return res.redirect(process.env.OAUTH_USER_REGISTRATION_URL);
     } else {
       console.log("here is already user");
       jwtToken = authService.generateJWT({
@@ -232,13 +232,14 @@ router.get("/callback", async function (req, res, next) {
 
       res.set("Authorization", `Bearer ${jwtToken}`);
       //TODO: 테스트 필요
-      if (user.isValid === true) {
-        return res.redirect(process.env.FE_TWOFACTOR_URL);
-      } else {
-        return res.send();
-        //return res.redirect(process.env.FE_REGISTRATION_URL);
-      }
+      //if (user.isValid === true) {
+      //  return res.redirect(process.env.FE_TWOFACTOR_URL);
+      //} else {
+      //  return res.send();
+      //  //return res.redirect(process.env.FE_REGISTRATION_URL);
+      //}
     }
+    return res.send(user);
   } catch (error) {
     next(error);
   }
@@ -373,8 +374,8 @@ router.get("/register/email/verify", async function (req, res, next) {
 
     console.log(process.env.FE_TWOFACTOR_URL);
 
-    return res.redirect(process.env.FE_SEARCH_URL);
-    //return res.send("redirect");
+    //return res.redirect(process.env.FE_SEARCH_URL);
+    return res.send();
   } catch (error) {
     next(error);
   }

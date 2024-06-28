@@ -103,6 +103,26 @@ const changePassword = async (hashedPassword, email) => {
   }
 };
 
+const findUserByDefaultFilter = async (preference, si, gu, hashtags, page, pageSize) => {
+  try {
+
+    const preference = userInfo.preference;
+
+    if (preference == 'none' || preference == 'both') {
+      const { rows } = await client.query(
+        `SELECT * FROM users
+        WHERE gender = male OR gender = female AND deleted_at IS NULL`
+      );      
+    } else {
+
+    }
+
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
+
 const findUserByFilter = async (filter, page, pageSize) => {
   try {
     //console.log(filter)
@@ -361,6 +381,7 @@ module.exports = {
   changePassword,
 
   findUserByFilter,
+  findUserByDefaultFilter,
 
   findUserByUsername,
   findUserByEmail,
