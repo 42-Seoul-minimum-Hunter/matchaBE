@@ -179,13 +179,14 @@ function verifyChangePassword(req, res, next) {
   } catch (error) {}
 }
 
-function verifySocket(req, res, next) {
+function verifySocket(socket) {
   try {
-    //console.log(req.handshake.headers.authorization);
-    if (!req.handshake.headers.authorization) {
+    console.log(socket.handshake.auth.authorization);
+    //console.log(socket.handshake.auth.authorizationn);
+    if (!socket.handshake.auth.authorization) {
       return res.status(400).send("Bad Access");
     }
-    const token = req.handshake.headers.authorization.split(" ")[1];
+    const token = socket.handshake.auth.authorization;
 
     if (!token) {
       return res.status(400).send("Bad Access");
@@ -199,12 +200,11 @@ function verifySocket(req, res, next) {
       return res.status(400).send("Bad Access");
     }
 
-    req.resetPasswordJwt = decoded;
-    next();
-
-    req.jwtInfo = decoded;
-    next();
-  } catch (error) {}
+    socket.jwtInfo = decoded;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
 }
 
 module.exports = {
