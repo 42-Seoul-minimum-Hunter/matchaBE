@@ -187,7 +187,7 @@ router.post("/create", checkOauthLogin, async function (req, res, next) {
     console.log(res.cookie);
 
     res.set("Authorization", `Bearer ${jwtToken}`);
-    return res.send();
+    return res.send(user);
   } catch (error) {
     next(error);
   }

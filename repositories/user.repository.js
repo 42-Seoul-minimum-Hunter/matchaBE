@@ -96,7 +96,6 @@ const changePassword = async (hashedPassword, email) => {
              WHERE email = $2 AND deleted_at IS NULL`,
       [hashedPassword, email]
     );
-
   } catch (error) {
     console.log(error);
     throw error;
@@ -127,8 +126,7 @@ const findUserByFilter = async (filter, page, pageSize) => {
   try {
     //console.log(filter)
 
-    var { hashtags, username, minAge, maxAge, minRate, maxRate, si, gu } =
-      filter;
+    var { hashtags, minAge, maxAge, minRate, maxRate, si, gu } = filter;
 
     let query = "SELECT u.* FROM users u";
     const params = [];
@@ -156,16 +154,6 @@ const findUserByFilter = async (filter, page, pageSize) => {
         query += " AND ur.gu = $" + (params.length + 1);
         params.push(gu);
       }
-    }
-
-    // username 조건 추가
-    if (username) {
-      if (hashtags || si) {
-        query += " AND u.username LIKE $" + (params.length + 1);
-      } else {
-        query += " WHERE u.username LIKE $" + (params.length + 1);
-      }
-      params.push(`%${username}%`);
     }
 
     // minAge, maxAge 조건 추가

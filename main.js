@@ -10,6 +10,8 @@ const { Client } = require("pg");
 const fs = require("fs");
 const path = require("path");
 
+const verifySocket = require("./configs/middleware.js");
+
 require("dotenv").config();
 
 const client = new Client({
@@ -93,8 +95,13 @@ app.listen(port, async () => {
 });
 
 // WebSocket 서버 실행
-const WsServer = server.listen(wsPort, () => {
+server.listen(wsPort, () => {
   console.log(`WebSocket server running on port ${wsPort}...`);
+});
+
+io.use((socket, res, next) => {
+  const status = err.status || 500;
+  res.status(status).json({ error: err.message });
 });
 
 //socketIO(WsServer, app);

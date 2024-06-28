@@ -1,12 +1,15 @@
 const express = require("express");
 const router = express.Router();
 const socket = require("socket.io");
+const jwt = require("jsonwebtoken");
 
 const userReposiotry = require("../repositories/user.repository");
 const userChatService = require("../services/user.chat.service");
 const userLikeService = require("../services/user.like.service");
 const userViewService = require("../services/user.view.service");
 const userService = require("../services/user.service");
+const userAlarmService = require("../services/user.alarm.service");
+
 const userAlarmRepository = require("../repositories/user.alarm.repository");
 
 const { verifyAllprocess, verifySocket } = require("../configs/middleware");
@@ -32,105 +35,134 @@ module.exports = (server, app) => {
     },
   });
   // 소캣 연결
-  io.on("connection", verifySocket, (socket) => {
-    // 클라이언트가 보낸 데이터 접근
+  io.on("connection", async (socket) => {
+    try {
+      // 클라이언트가 보낸 데이터 접근
+      //await io.use(verifySocket(socket));
 
-    const { userId, email } = req.jwtInfo;
-    //const jwt = socket.handshake.headers.authorization.split(" ")[1];
-
-    // 유저 아이디
-    //const userId = socket.handshake.header["userId"];
-    //const userId = socket.handshake.auth["userId"];
-
-    if (!userId) {
-      socket.disconnect();
-      return;
-    }
-
-    console.log("유저아이디", userId);
-
-    // 유저 접속 상태
-    userActivate[userId] = socket.id;
-    socket.join(socket.id);
-
-    console.log("소켓 연결됨", socket.id);
-
-    // 채팅 입장
-    // TODO: username이 올바른 지
-    // TODO: 채팅방이 만들어 질 수 있는지
-    // TODO: 채팅이력이 있는지 확인
-    socket.on("joinChatRoom", async (data) => {
-      try {
-        var rooms = io.sockets.adapter.sids[socket.id];
-        for (var room in rooms) {
-          if (room !== socket.id) socket.leave(room);
-        }
-
-        const { username } = data;
-
-        console.log("username", username);
-        console.log("userId", userId);
-
-        if (!userId || !username) {
-          return;
-        }
-
-        const chatedInfo = await userService.findOneUserByUsername(username);
-        console.log("chatedInfo", chatedInfo);
-
-        const userInfo = await userService.findOneUserById(userId);
-        console.log("userInfo", userInfo);
-
-        if (!chatedInfo) {
-          const Error = new Error("User not found");
-          Error.status = 404;
-          throw Error;
-        }
-
-        const chatRoomInfo = await userChatService.findOneChatRoomById(
-          userId,
-          chatedInfo.id
-        );
-
-        console.log("chatRoomInfo", chatRoomInfo);
-
-        if (!chatRoomInfo) {
-          const Error = new Error("Chat room not found");
-          Error.status = 404;
-          throw Error;
-        }
-
-        const chatHistories =
-          await userChatService.findAllChatHistoriesByRoomId(chatRoomInfo.id);
-
-        console.log("chatHistories", chatHistories);
-
-        let chatInfos = [];
-
-        if (chatHistories) {
-          chatHistories.forEach((chat) => {
-            let param = {
-              message: chat.content,
-              username:
-                chat.user_id === userId
-                  ? userInfo.username
-                  : chatedInfo.username,
-              time: chat.created_at, // (9시간 차이나는 시간)
-            };
-            console.log("param", param);
-            chatInfos.push(param);
-          });
-
-          io.to(socket.id).emit("sendHistories", chatInfos);
-        } else {
-          io.to(socket.id).emit("sendHistories", null);
-        }
-        socket.join(chatRoomInfo.id);
-      } catch (error) {
-        console.log(error);
-        throw error;
+      if (!socket.handshake.auth.authorization) {
+        //return res.status(400).send("Bad Access");
+        await socket.disconnect();
+        return;
       }
-    });
+      const token = socket.handshake.auth.authorization;
+
+      if (!token) {
+        //return res.status(400).send("Bad Access");
+        await socket.disconnect();
+        return;
+      }
+
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+      if (decoded.isValid === false) {
+        //return res.status(400).send("Bad Access");
+        await socket.disconnect();
+        return;
+      } else if (decoded.twofaVerified === false) {
+        //return res.status(400).send("Bad Access");
+        await socket.disconnect();
+        return;
+      }
+
+      socket.jwtInfo = decoded;
+
+      console.log("소켓 연결됨", socket.id);
+
+      const { id, email } = socket.jwtInfo;
+      //const jwt = socket.handshake.headers.authorization.split(" ")[1];
+
+      // 유저 아이디
+      //const userId = socket.handshake.header["userId"];
+      //const userId = socket.handshake.auth["userId"];
+
+      if (!id) {
+        await socket.disconnect();
+        return;
+      }
+
+      // 유저 접속 상태
+      await (userActivate[id] = socket.id);
+      await socket.join(socket.id);
+
+      // 채팅 입장
+      // TODO: username이 올바른 지
+      // TODO: 채팅방이 만들어 질 수 있는지
+      // TODO: 채팅이력이 있는지 확인
+      socket.on("joinChatRoom", async (data) => {
+        try {
+          var rooms = io.sockets.adapter.sids[socket.id];
+          for (var room in rooms) {
+            if (room !== socket.id) socket.leave(room);
+          }
+
+          const { username } = data;
+
+          console.log("username", username);
+          console.log("id", id);
+
+          if (!id || !username) {
+            return;
+          }
+
+          const chatedInfo = await userService.findOneUserByUsername(username);
+          console.log("chatedInfo", chatedInfo);
+
+          const userInfo = await userService.findOneUserById(id);
+          console.log("userInfo", userInfo);
+
+          if (!chatedInfo) {
+            const Error = new Error("User not found");
+            Error.status = 404;
+            throw Error;
+          }
+
+          const chatRoomInfo = await userChatService.findOneChatRoomById(
+            id,
+            chatedInfo.id
+          );
+          id;
+          console.log("chatRoomInfo", chatRoomInfo);
+
+          if (!chatRoomInfo) {
+            const Error = new Error("Chat room not found");
+            Error.status = 404;
+            throw Error;
+          }
+
+          const chatHistories =
+            await userChatService.findAllChatHistoriesByRoomId(chatRoomInfo.id);
+
+          console.log("chatHistories", chatHistories);
+
+          let chatInfos = [];
+
+          if (chatHistories) {
+            chatHistories.forEach((chat) => {
+              let param = {
+                message: chat.content,
+                username:
+                  chat.user_id === id ? userInfo.username : chatedInfo.username,
+                time: chat.created_at, // (9시간 차이나는 시간)
+              };
+              console.log("param", param);
+              chatInfos.push(param);
+            });
+
+            io.to(socket.id).emit("sendHistories", chatInfos);
+          } else {
+            io.to(socket.id).emit("sendHistories", null);
+          }
+          socket.join(chatRoomInfo.id);
+        } catch (error) {
+          console.log(error);
+          throw error;
+        }
+      });
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
 
     // 채팅 받아서 저장하고, 그 채팅 보내서 보여주기
     socket.on("sendMessage", async (data) => {
@@ -152,7 +184,7 @@ module.exports = (server, app) => {
         }
 
         const chatRoomInfo = await userChatService.findOneChatRoomById(
-          userId,
+          id,
           userInfo.id
         );
 
@@ -174,11 +206,7 @@ module.exports = (server, app) => {
           AlarmType: "MESSAGED",
           username,
         });
-        await userAlarmRepository.saveAlarmById(
-          userId,
-          userInfo.id,
-          "MESSAGED"
-        );
+        await userAlarmRepository.saveAlarmById(id, userInfo.id, "MESSAGED");
       } catch (error) {
         console.log(error);
         throw error;
@@ -220,14 +248,11 @@ module.exports = (server, app) => {
           Error.status = 404;
           throw Error;
         }
-        const result = await userLikeService.likeUserByUsername(
-          username,
-          userId
-        );
+        const result = await userLikeService.likeUserByUsername(username, id);
         io.emit("alarm"); //유저가 좋아요를 받았을때
         if (result) {
           io.emit("alarm"); //좋아요를 눌렀던 유저에게 좋아요를 받았을때
-          const userInfo = await userReposiotry.findUserById(userId); // 본인
+          const userInfo = await userReposiotry.findUserById(id); // 본인
           if (userActivate[userInfo.id])
             io.to(userActivate[userInfo.id]).emit("alarm", {
               alarmType: "MATCHED",
@@ -252,7 +277,7 @@ module.exports = (server, app) => {
 
         const result = await userLikeService.dislikeUserByUsername(
           username,
-          userId
+          id
         );
 
         if (result) {
@@ -282,29 +307,61 @@ module.exports = (server, app) => {
           throw Error;
         }
 
-        io.to(userActivate[userId]).emit("alarm", {
+        io.to(userActivate[id]).emit("alarm", {
           alarmType: "VISITED",
           username,
         }); //유저의 프로필을 방문했을때
 
-        await userViewService.saveVisitHistoryById(username, userId);
+        await userViewService.saveVisitHistoryById(username, id);
       } catch (error) {
         console.log(error);
         return false;
       }
     });
 
-    socket.on("disconnect", () => {
-      console.log("소켓 연결 해제됨", socket.id);
+    socket.on("getAlarms", async () => {
+      try {
+        console.log("getAlarms");
 
-      //이 코드는 현재 클라이언트 소켓이 참여하고 있는 모든 방(room)에서 해당 소켓을 제외시키는 역할을 합니다.
-      var rooms = io.sockets.adapter.sids[socket.id];
-      for (var room in rooms) {
-        socket.leave(room);
+        const alarms = await userAlarmService.findAllAlarmsById(id);
+        await userAlarmService.deleteAllAlarmsById(id);
+        return alarms;
+      } catch (error) {
+        console.log(error);
+        return false;
       }
+    });
 
-      // 유저 접속 상태
-      delete userActivate[userId];
+    socket.on("disconnect", async () => {
+      try {
+        console.log("소켓 연결 해제됨", socket.id);
+
+        // 유저 접속 상태
+        const userKey = Object.keys(userActivate).find(
+          (key) => userActivate[key] === socket.id
+        );
+        if (userKey) {
+          delete userActivate[userKey];
+        } else {
+          console.log(`Could not find user key for socket ${socket.id}`);
+        }
+        //delete userActivate[id];
+
+        ////이 코드는 현재 클라이언트 소켓이 참여하고 있는 모든 방(room)에서 해당 소켓을 제외시키는 역할을 합니다.
+        //var rooms = io.sockets.adapter.sids[socket.id];
+        //for (var room in rooms) {
+        //  socket.leave(room);
+        //}
+        console.log("success leave room");
+
+        for (const room of socket.rooms) {
+          if (room !== socket.id) {
+            await socket.leave(room);
+          }
+        }
+      } catch (error) {
+        console.log(error);
+      }
     });
 
     // 채팅방 나가기(채팅방에서 아에 퇴장)
