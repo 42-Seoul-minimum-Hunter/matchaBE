@@ -14,7 +14,7 @@ const client = new Client({
 
 client.connect();
 
-const likeUserByUsername = async (likeUserId, userId) => {
+const likeUserById = async (userId, likedUserId) => {
   try {
     const existingLikeHistory = await client.query(
       `
@@ -22,7 +22,7 @@ const likeUserByUsername = async (likeUserId, userId) => {
             FROM user_like_histories
             WHERE user_id = $1 AND liked_id = $2 AND deleted_at IS NULL
         `,
-      [userId, likeUserId]
+      [userId, likedUserId]
     );
 
     if (existingLikeHistory.rows.length > 0) {
@@ -43,7 +43,7 @@ const likeUserByUsername = async (likeUserId, userId) => {
                 now()
             )
         `,
-      [userId, likeUserId]
+      [userId, likedUserId]
     );
   } catch (error) {
     console.log(error.message);
@@ -139,7 +139,7 @@ const checkUserLikeBoth = async (userId, likeUserId) => {
 };
 
 module.exports = {
-  likeUserByUsername,
+  likeUserById,
   dislikeUserByUsername,
 
   getLikeUserHistoriesById,

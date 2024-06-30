@@ -25,30 +25,27 @@ const { verifyAllprocess, verifySocket } = require("../configs/middleware");
 - 유저간 연결 (채팅), 알림은 10초 이내에 이루어져야 한다
 */
 
-const userActivate = {};
+const userActivate = new Map();
 
 module.exports = (server, app) => {
   const io = socket(server, {
     cors: {
-      origin: ["http://localhost:5173", "http://localhost:3000", "http://localhost:3001", "http://localhost:5173/email", "http://localhost:5173/twofactor"],
+      origin: ["http://localhost:5173", "http://localhost:3000", "http://localhost:3001", "http://localhost:5173/email", "http://localhost:5173/twofactor",
+        "http://127.0.0.1:3000"
+      ],
       credentials: true,
     },
   });
   // 소캣 연결
   io.on("connection", async (socket) => {
     try {
-      // 클라이언트가 보낸 데이터 접근
-      //await io.use(verifySocket(socket));
-
       if (!socket.handshake.auth.authorization) {
-        //return res.status(400).send("Bad Access");
         await socket.disconnect();
         return;
       }
       const token = socket.handshake.auth.authorization;
 
       if (!token) {
-        //return res.status(400).send("Bad Access");
         await socket.disconnect();
         return;
       }
@@ -56,11 +53,9 @@ module.exports = (server, app) => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
       if (decoded.isValid === false) {
-        //return res.status(400).send("Bad Access");
         await socket.disconnect();
         return;
       } else if (decoded.twofaVerified === false) {
-        //return res.status(400).send("Bad Access");
         await socket.disconnect();
         return;
       }
@@ -82,7 +77,16 @@ module.exports = (server, app) => {
       }
 
       // 유저 접속 상태
-      await (userActivate[id] = socket.id);
+      //await (userActivate[id] = socket.id);
+      const userActivateSize = userActivate.size;
+      
+      userActivate.set(userActivateSize, socket.id);
+      //userActivate[
+      //  userActivateSize
+      //] = socket.id;
+
+      console.log("userActivate", userActivate);
+      console.log("size", userActivateSize);
       await socket.join(socket.id);
 
       // 채팅 입장
@@ -98,42 +102,38 @@ module.exports = (server, app) => {
 
           const { username } = data;
 
-          console.log("username", username);
-          console.log("id", id);
+          //console.log("username", username);
+          //console.log("id", id);
 
           if (!id || !username) {
             return;
           }
 
           const chatedInfo = await userService.findOneUserByUsername(username);
-          console.log("chatedInfo", chatedInfo);
+          //console.log("chatedInfo", chatedInfo);
 
           const userInfo = await userService.findOneUserById(id);
-          console.log("userInfo", userInfo);
+          //console.log("userInfo", userInfo);
 
           if (!chatedInfo) {
-            const Error = new Error("User not found");
-            Error.status = 404;
-            throw Error;
+            return ;
           }
 
           const chatRoomInfo = await userChatService.findOneChatRoomById(
             id,
             chatedInfo.id
           );
-          id;
-          console.log("chatRoomInfo", chatRoomInfo);
-
+          
           if (!chatRoomInfo) {
-            const Error = new Error("Chat room not found");
-            Error.status = 404;
-            throw Error;
+            return ;
           }
+
+          //console.log("chatRoomInfo", chatRoomInfo);
 
           const chatHistories =
             await userChatService.findAllChatHistoriesByRoomId(chatRoomInfo.id);
 
-          console.log("chatHistories", chatHistories);
+          //console.log("chatHistories", chatHistories);
 
           let chatInfos = [];
 
@@ -170,23 +170,23 @@ module.exports = (server, app) => {
         const { message, username } = data;
 
         if (!message || !username) {
-          const Error = new Error("Message or Username not found");
-          Error.status = 404;
-          throw Error;
+          return ;
         }
 
         const userInfo = await userReposiotry.findUserByUsername(username);
 
         if (!userInfo) {
-          const Error = new Error("User not found");
-          Error.status = 404;
-          throw Error;
+          return ;
         }
 
         const chatRoomInfo = await userChatService.findOneChatRoomById(
           id,
           userInfo.id
         );
+
+        if (!chatRoomInfo) {
+          return ;
+        }
 
         const param = {
           message,
@@ -202,7 +202,7 @@ module.exports = (server, app) => {
         io.to(chatRoomInfo.id).emit("message", param);
 
         //유저가 메세지를 받았을때
-        io.to(userActivate[userInfo.id]).emit("alarm", {
+        io.to(userActivate.get(userInfo.id)).emit("alarm", {
           AlarmType: "MESSAGED",
           username,
         });
@@ -220,10 +220,8 @@ module.exports = (server, app) => {
         const userInfo = await userReposiotry.findUserByUsername(username);
 
         if (!userInfo) {
-          const Error = new Error("User not found");
-          Error.status = 404;
-          throw Error;
-        } else if (userActivate[userInfo.id]) {
+          socket.emit("onlineStatus", false);
+        } else if (userActivate.get(userInfo.id)) {
           console.log("user online");
           //return socket.to(userActivate[userId]).emit("onlineStatus", true);
           socket.emit("onlineStatus", true);
@@ -244,24 +242,31 @@ module.exports = (server, app) => {
         const { username } = data;
 
         if (!username) {
-          const Error = new Error("Username not found");
-          Error.status = 404;
-          throw Error;
+          return;
+        } 
+        const userInfo = await userReposiotry.findUserByUsername(username);
+
+        if (!userInfo) {
+          return;
         }
+
         const result = await userLikeService.likeUserByUsername(username, id);
-        io.emit("alarm"); //유저가 좋아요를 받았을때
+
+        io.to()
+        await io.to(userActivate.get(userInfo.id)).emit("alarm", {
+          AlarmType: "LIKED",
+          username,
+        }); //유저가 좋아요를 받았을때
+
         if (result) {
-          io.emit("alarm"); //좋아요를 눌렀던 유저에게 좋아요를 받았을때
-          const userInfo = await userReposiotry.findUserById(id); // 본인
-          if (userActivate[userInfo.id])
-            io.to(userActivate[userInfo.id]).emit("alarm", {
-              alarmType: "MATCHED",
-              username: userInfo.username,
-            });
+          await io.to(userActivate.get(userInfo.id)).emit("alarm", {
+            alarmType: "MATCHED",
+            username: userInfo.username,
+          });
         }
       } catch (error) {
         console.log(error);
-        return false;
+        return;
       }
     });
 
@@ -270,9 +275,12 @@ module.exports = (server, app) => {
         const { username } = data;
 
         if (!username) {
-          const Error = new Error("Username not found");
-          Error.status = 404;
-          throw Error;
+          return;
+        }
+
+        const userInfo = await userReposiotry.findUserByUsername(username);
+        if (!userInfo) {
+          return;
         }
 
         const result = await userLikeService.dislikeUserByUsername(
@@ -282,14 +290,10 @@ module.exports = (server, app) => {
 
         if (result) {
           //연결된 유저가 좋아요를 취소했을때
-          const dislikedUserInfo = await userReposiotry.findUserByUsername(
-            username
-          );
-          if (userActivate[dislikedUserInfo.id])
-            io.to(userActivate[dislikedUserInfo.id]).emit("alarm", {
-              alarmType: "DISLIKED",
-              username,
-            });
+          await io.to(userActivate.get(userInfo.id)).emit("alarm", {
+            alarmType: "DISLIKED",
+            username,
+          });
         }
       } catch (error) {
         console.log(error);
@@ -302,12 +306,16 @@ module.exports = (server, app) => {
         const { username } = data;
 
         if (!username) {
-          const Error = new Error("Username not found");
-          Error.status = 404;
-          throw Error;
+          return;
         }
 
-        io.to(userActivate[id]).emit("alarm", {
+        const userInfo = await userReposiotry.findUserByUsername(username);
+
+        if (!userInfo) {
+          return;
+        }
+
+        await io.to(userActivate.get(userInfo.id)).emit("alarm", {
           alarmType: "VISITED",
           username,
         }); //유저의 프로필을 방문했을때
@@ -332,6 +340,19 @@ module.exports = (server, app) => {
       }
     });
 
+    //socket.on("sendAlarm", async (date) => {
+    //  try {
+    //    console.log(`sendAlarm : ${date.message}`)
+    //    io.to(userActivate[0]).emit("alarm", {
+    //      AlarmType: "LIKED",
+    //      username: "test",
+    //    });
+    //  } catch (error) {
+    //    console.log(error);
+    //    return false;
+    //  }
+    //});
+
     socket.on("disconnect", async () => {
       try {
         console.log("소켓 연결 해제됨", socket.id);
@@ -340,19 +361,22 @@ module.exports = (server, app) => {
         const userKey = Object.keys(userActivate).find(
           (key) => userActivate[key] === socket.id
         );
+
+        console.log("userKey", userKey);
         if (userKey) {
-          delete userActivate[userKey];
+          userActivate.delete(userKey);
+          //delete userActivate[userKey];
         } else {
           console.log(`Could not find user key for socket ${socket.id}`);
         }
-        //delete userActivate[id];
+        delete userActivate[id];
 
         ////이 코드는 현재 클라이언트 소켓이 참여하고 있는 모든 방(room)에서 해당 소켓을 제외시키는 역할을 합니다.
         //var rooms = io.sockets.adapter.sids[socket.id];
         //for (var room in rooms) {
         //  socket.leave(room);
         //}
-        console.log("success leave room");
+        console.log("success leave room ${socket.id}");
 
         for (const room of socket.rooms) {
           if (room !== socket.id) {

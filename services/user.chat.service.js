@@ -70,11 +70,7 @@ const findOneChatRoomById = async (userId, chatedId) => {
       userId,
       chatedId
     );
-
-    if (!chatRoom) {
-      return null;
-    }
-
+    
     return chatRoom;
   } catch (error) {
     console.log(error);

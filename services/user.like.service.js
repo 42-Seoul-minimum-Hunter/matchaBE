@@ -13,12 +13,13 @@ const likeUserByUsername = async (likedUsername, userId) => {
       error.status = 404;
       throw error;
     }
-    await userLikeRepository.likeUserByUsername(likedUserInfo.id, userId);
-    await userAlarmRepository.saveAlarmById(userId, likedUserInfo.id, "LIKE");
+    await userLikeRepository.likeUserById(userId, likedUserInfo.id);
+    await userAlarmRepository.saveAlarmById(userId, likedUserInfo.id, "LIKED");
 
     if (await userLikeRepository.checkUserLikeBoth(likedUserInfo.id, userId)) {
-      await userAlarmRepository.saveAlarmById(userId, likedUserInfo.id, "MATCHED");
       await userChatRepository.generateChatRoom(likedUserInfo.id, userId);
+      await userAlarmRepository.saveAlarmById(userId, likedUserInfo.id, "MATCHED");
+      await userAlarmRepository.saveAlarmById(likedUserInfo.id, userId, "MATCHED");
       return true;
     } else {
       return false;
