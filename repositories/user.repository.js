@@ -194,8 +194,8 @@ const findUserByDefaultFilter = async (preference, si, gu, hashtags, page, pageS
       const UserInfo = await Promise.all(
         filteredUserInfos
           .sort((a, b) => {
-            if (a.connected_at < b.connected_at) return -1;
-            if (a.connected_at > b.connected_at) return 1;
+            if (a.rate < b.rate) return 1;
+            if (a.rate > b.rate) return -1;
             return 0;
           })
           .map(async (userInfo) => {
@@ -301,7 +301,6 @@ const findUserByFilter = async (filter, page, pageSize) => {
       let rate;
       if (ratingInfo.rows.length === 0) {
         rate = parseFloat(0);
-        console.log("rate: " + rate);
       } else {
         const ratingScores = ratingInfo.rows.map((row) => row.rate_score);
         const totalScore = ratingScores.reduce((acc, score) => acc + score, 0);
@@ -319,8 +318,8 @@ const findUserByFilter = async (filter, page, pageSize) => {
     const UserInfo = await Promise.all(
       filteredUserInfos
         .sort((a, b) => {
-          if (a.connected_at < b.connected_at) return -1;
-          if (a.connected_at > b.connected_at) return 1;
+          if (a.rate < b.rate) return 1;
+          if (a.rate > b.rate) return -1;
           return 0;
         })
         .map(async (userInfo) => {
