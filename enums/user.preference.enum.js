@@ -1,6 +1,6 @@
 const UserPreference = {
-    MALE: 'male',
-    FEMALE: 'female',
+    MALE: 'Male',
+    FEMALE: 'Female',
     BOTH: 'biosexual',
     NONE: 'none'
 };

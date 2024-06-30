@@ -75,21 +75,31 @@ const changePassword = async (password, email) => {
 
 const findUserByFilter = async (id, filter, page, pageSize) => {
   try {
-    let users, totalCount;
-    if (!filter){
-      const userInfo = await userRepository.findUserById(id);
-      const userRegionInfo = await userRegionRepository.findRegionById(id);
-      const userHashtagInfo = await userHashtagRepository.findHashtagById(id);
+    console.log(id, filter, page, pageSize)
 
-      users, totalCount = await userRepository.findUserByDefaultFilter(userInfo.preference, userRegionInfo.si, userRegionInfo.gu, userHashtagInfo[0],page, pageSize);
+    const isFilterNull = Object.values(filter).every((value) => !value);
+    //console.log(isFilterNull)
+    
+    let users, totalCount, filteredByBlock, filteredInfo;
+    if (isFilterNull === true) {
+      const userInfo = await userRepository.findUserById(id);
+      console.log(userInfo)
+      const userRegionInfo = await userRegionRepository.findRegionById(id);
+      console.log(userRegionInfo)
+      const userHashtagInfo = await userHashtagRepository.findHashtagById(id);
+      console.log(userHashtagInfo)
+
+      filteredInfo = await userRepository.findUserByDefaultFilter(userInfo.preference, userRegionInfo[0].si, userRegionInfo[0].gu, userHashtagInfo[0],page, pageSize);
     } else {
-      users, totalCount = await userRepository.findUserByFilter(
+      filteredInfo = await userRepository.findUserByFilter(
         filter,
         page,
         pageSize
       );
     }
-    const filteredByBlock = await userBlockRepository.filterBlockedUser(
+    users = filteredInfo.users;
+    totalCount = filteredInfo.totalCount;
+    filteredByBlock = await userBlockRepository.filterBlockedUser(
       filter.userId,
       users
     );
@@ -98,7 +108,8 @@ const findUserByFilter = async (id, filter, page, pageSize) => {
       totalCount: totalCount,
     };
   } catch (error) {
-    return { error: error.message };
+    console.log(error)
+    throw error;
   }
 };
 

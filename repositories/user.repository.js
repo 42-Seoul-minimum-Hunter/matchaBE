@@ -105,22 +105,125 @@ const changePassword = async (hashedPassword, email) => {
 const findUserByDefaultFilter = async (preference, si, gu, hashtags, page, pageSize) => {
   try {
 
-    const preference = userInfo.preference;
+    console.log(preference, si, gu, hashtags, page, pageSize);
 
-    if (preference == 'none' || preference == 'both') {
-      const { rows } = await client.query(
-        `SELECT * FROM users
-        WHERE gender = male OR gender = female AND deleted_at IS NULL`
-      );      
+    // 유저의 성향에 따른 쿼리 조건 설정
+    let genderCondition;
+    if (preference === 'none' || preference === 'both') {
+      genderCondition = 'u.gender IN (\'Male\', \'Female\')';
     } else {
-
+      genderCondition = 'u.gender = $1';
     }
 
+    // 공통 해시태그 수 계산을 위한 서브쿼리
+    const subQuery = `
+      SELECT u.id, COUNT(uh.hashtags) AS common_hashtags
+      FROM users u
+      JOIN user_hashtags uh ON u.id = uh.user_id
+      WHERE $2 <@ uh.hashtags
+      GROUP BY u.id
+    `;
+
+    const mainQuery = `
+    SELECT u.*, ur.si, ur.gu, s.common_hashtags
+    FROM users u
+    JOIN user_regions ur ON u.id = ur.user_id
+    JOIN (
+      SELECT u.id, COUNT(uh.hashtags) AS common_hashtags
+      FROM users u
+      JOIN user_hashtags uh ON u.id = uh.user_id
+      WHERE $2 <@ uh.hashtags
+      GROUP BY u.id
+    ) s ON u.id = s.id
+    WHERE ${genderCondition} AND u.deleted_at IS NULL
+      AND ur.si = $3 AND ur.gu = $4
+    LIMIT $5 OFFSET $6
+  `;
+
+  // Fetch the user data
+  const preferenceUsers = await client.query(mainQuery, [
+    preference,
+    hashtags,
+    si,
+    gu,
+    pageSize,
+    (page - 1) * pageSize,
+  ]);
+
+  console.log(preferenceUsers.rows);
+
+  // Calculate the total count
+  const totalCountQuery = `
+    SELECT COUNT(*) AS total_count
+    FROM (
+      ${mainQuery}
+    ) AS subquery
+  `;
+  const totalCountResult = await client.query(totalCountQuery, [
+    preference,
+    hashtags,
+    si,
+    gu,
+    pageSize,
+    (page - 1) * pageSize,
+  ]);
+  const totalCount = totalCountResult.rows[0].total_count;
+
+  // 사용자 평균 평점 계산 및 필터링
+  const filteredUserInfos = [];
+  for (const userInfo of preferenceUsers.rows) {
+    const ratingInfo = await client.query(
+      "SELECT rate_score FROM user_ratings WHERE rated_id = $1",
+      [userInfo.id]
+    );
+    let rate;
+    if (ratingInfo.rows.length === 0) {
+      rate = parseFloat(0);
+      console.log("rate: " + rate);
+    } else {
+      const ratingScores = ratingInfo.rows.map((row) => row.rate_score);
+      const totalScore = ratingScores.reduce((acc, score) => acc + score, 0);
+      rate = totalScore / ratingInfo.rows.length;
+    }
+    userInfo.rate = rate;
+    filteredUserInfos.push(userInfo);
+  }
+  
+      //console.log('infologs: ' + filteredUserInfos);
+  
+      const UserInfo = await Promise.all(
+        filteredUserInfos
+          .sort((a, b) => {
+            if (a.connected_at < b.connected_at) return -1;
+            if (a.connected_at > b.connected_at) return 1;
+            return 0;
+          })
+          .map(async (userInfo) => {
+            const { rows } = await client.query(
+              "SELECT profile_images FROM user_profile_images WHERE user_id = $1",
+              [userInfo.id]
+            );
+            const profileImages = rows.length > 0 ? rows[0].profile_images : null;
+  
+            return {
+              username: userInfo.username,
+              age: userInfo.age,
+              profileImages: profileImages ? profileImages[0] : null,
+              rate: userInfo.rate,
+            };
+          })
+      );
+
+  return {
+    users: UserInfo,
+    totalCount: totalCount,
+  };
   } catch (error) {
     console.log(error);
     throw error;
   }
 };
+
 
 const findUserByFilter = async (filter, page, pageSize) => {
   try {

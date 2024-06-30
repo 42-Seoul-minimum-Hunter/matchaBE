@@ -92,41 +92,50 @@ app.listen(port, async () => {
 
 
     // mock 데이터 삽입
-     const mockQuery = fs.readFileSync(
+     const usersMockQuery = fs.readFileSync(
        path.join(__dirname, "mocks", "users.mock.sql"),
        "utf8"
      );
 
-     await client.query(mockQuery);
+     await client.query(usersMockQuery);
 
      console.log("users mock data inserted successfully!");
 
-     const mockQuery2 = fs.readFileSync(
-       path.join(__dirname, "mocks", "user_profile_images.mock.sql"),
+     const profileMockQuery = fs.readFileSync(
+       path.join(__dirname, "mocks", "user.profileImages.mock.sql"),
        "utf8"
      );
 
-      await client.query(mockQuery2);
+      await client.query(profileMockQuery);
 
       console.log("user_profile_images mock data inserted successfully!");
 
-      const mockQuery3 = fs.readFileSync(
-        path.join(__dirname, "mocks", "user_hashtags.mock.sql"),
+      const hashtagMockQuery = fs.readFileSync(
+        path.join(__dirname, "mocks", "user.hashtags.mock.sql"),
         "utf8"
       );
 
-      await client.query(mockQuery3);
+      await client.query(hashtagMockQuery);
 
       console.log("user_hashtags mock data inserted successfully!");
 
-      const mockQuery4 = fs.readFileSync(
-        path.join(__dirname, "mocks", "user_regions.mock.sql"),
+      const regionMockQuery = fs.readFileSync(
+        path.join(__dirname, "mocks", "user.regions.mock.sql"),
         "utf8"
       );
 
-      await client.query(mockQuery4);
+      await client.query(regionMockQuery);
 
       console.log("user_regions mock data inserted successfully!");
+
+      const playableMockQuery = fs.readFileSync(
+        path.join(__dirname, "mocks", "playable.mock.sql"),
+        "utf8"
+      );
+
+      await client.query(playableMockQuery);
+
+      console.log("playable mock data inserted successfully!");
 
   } catch (err) {
     console.error("Error creating tables:", err);

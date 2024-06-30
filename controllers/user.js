@@ -237,7 +237,6 @@ router.post(
 );
 
 /* GET /user/find
-username : String 사용자 닉네임
 hashtags : String 사용자 해시태그
 minAge : Number 사용자 최소 나이
 maxAge : Number 사용자 최대 나이
@@ -250,10 +249,9 @@ gu : String 사용자 구
 //TODO: si, gu 올바른 형식인지 확인
 //TODO: user preference 필터 추가
 //TODO: gu 기준으로 정렬, si 기준으로 정렬 추가
-router.get("/find", verifyChangePassword, async function (req, res, next) {
+router.get("/find", verifyAllprocess, async function (req, res, next) {
   try {
     let {
-      username,
       hashtags,
       minAge,
       maxAge,
@@ -266,7 +264,6 @@ router.get("/find", verifyChangePassword, async function (req, res, next) {
     } = req.query;
 
     const filter = {
-      username: username || undefined,
       hashtags: hashtags || undefined,
       minAge: minAge ? Number(minAge) : undefined,
       maxAge: maxAge ? Number(maxAge) : undefined,
@@ -286,7 +283,8 @@ router.get("/find", verifyChangePassword, async function (req, res, next) {
     }
 
     const { users, totalCount } = await userSerivce.findUserByFilter(
-      req.jwtInfo.id,
+      //req.jwtInfo.id,
+      703,
       filter,
       page,
       pageSize

@@ -129,6 +129,8 @@ function checkOauthLogin(req, res, next) {
     }
 
     req.jwtInfo = decoded;
+
+    console.log(req.jwtInfo);
     next();
   } catch (error) {}
 }
