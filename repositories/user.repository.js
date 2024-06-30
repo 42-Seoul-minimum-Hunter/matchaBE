@@ -120,7 +120,7 @@ const findUserByDefaultFilter = async (preference, si, gu, hashtags, page, pageS
       SELECT u.id, COUNT(uh.hashtags) AS common_hashtags
       FROM users u
       JOIN user_hashtags uh ON u.id = uh.user_id
-      WHERE $2 <@ uh.hashtags
+      WHERE $2 && uh.hashtags
       GROUP BY u.id
     `;
 
@@ -129,11 +129,7 @@ const findUserByDefaultFilter = async (preference, si, gu, hashtags, page, pageS
     FROM users u
     JOIN user_regions ur ON u.id = ur.user_id
     JOIN (
-      SELECT u.id, COUNT(uh.hashtags) AS common_hashtags
-      FROM users u
-      JOIN user_hashtags uh ON u.id = uh.user_id
-      WHERE $2 <@ uh.hashtags
-      GROUP BY u.id
+      ${subQuery}
     ) s ON u.id = s.id
     WHERE ${genderCondition} AND u.deleted_at IS NULL
       AND ur.si = $3 AND ur.gu = $4
@@ -204,12 +200,24 @@ const findUserByDefaultFilter = async (preference, si, gu, hashtags, page, pageS
               [userInfo.id]
             );
             const profileImages = rows.length > 0 ? rows[0].profile_images : null;
+
+            const userHashtags = await client.query(
+              `SELECT hashtags FROM user_hashtags WHERE user_id = $1`,
+              [userInfo.id]
+            );
+
+            console.log("hashtag: " + userHashtags.rows[0].hashtags)
+
+            const commonHashtags = userHashtags.rows[0].hashtags.filter((value) => hashtags.includes(value)).length;
+
+            console.log(commonHashtags);
   
             return {
               username: userInfo.username,
               age: userInfo.age,
               profileImages: profileImages ? profileImages[0] : null,
               rate: userInfo.rate,
+              commonHashtags: commonHashtags,
             };
           })
       );
