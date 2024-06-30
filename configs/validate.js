@@ -54,20 +54,40 @@ function validatePreference(preference) {
 function validateHashtags(hashtags) {
   for (let hashtag of hashtags) {
     if (
-      !hashtag === "shopping" ||
-      !hashtag === "traveling" ||
-      !hashtag === "karaoke" ||
-      !hashtag === "yoga" ||
-      !hashtag === "music" ||
-      !hashtag === "cooking" ||
-      !hashtag === "extreme" ||
-      !hashtag === "tennis" ||
-      !hashtag === "video_games" ||
-      !hashtag === "run" ||
-      !hashtag === "drink" ||
-      !hashtag === "swimming" ||
-      !hashtag === "photography" ||
-      !hashtag === "art"
+      !hashtag === "동물" ||
+      !hashtag === "미술" ||
+      !hashtag === "책" ||
+      !hashtag === "패션" ||
+      !hashtag === "피트니스" ||
+      !hashtag === "음식" ||
+      !hashtag === "영화" ||
+      !hashtag === "스포츠" ||
+      !hashtag === "음악" ||
+      !hashtag === "게임" ||
+      !hashtag === "여행" ||
+      !hashtag === "사진" ||
+      !hashtag === "자연" ||
+      !hashtag === "과학" ||
+      !hashtag === "기술" ||
+      !hashtag === "정치" ||
+      !hashtag === "건강" ||
+      !hashtag === "교육" ||
+      !hashtag === "사업" ||
+      !hashtag === "금융" ||
+      !hashtag === "마케팅" ||
+      !hashtag === "기업가정신" ||
+      !hashtag === "사회" ||
+      !hashtag === "자선" ||
+      !hashtag === "자원봉사" ||
+      !hashtag === "종교" ||
+      !hashtag === "영성" ||
+      !hashtag === "가족" ||
+      !hashtag === "친구" ||
+      !hashtag === "사랑" ||
+      !hashtag === "관계" ||
+      !hashtag === "데이트" ||
+      !hashtag === "결혼" ||
+      !hashtag === "달리기"
     ) {
       return false;
     }

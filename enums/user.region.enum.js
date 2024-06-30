@@ -278,5 +278,9 @@ const jeju = {
     제주시: "제주시",
 }
 
+const sejong = {
+    세종시: "세종시",
+}
+
 
 module.exports = { si, seoul, gyeonggi, incheon, daejeon, daegu, busan, ulsan, gwangju, gangwon, chungbuk, chungnam, gyeongbuk, gyeongnam, jeonbuk, jeonnam, jeju };

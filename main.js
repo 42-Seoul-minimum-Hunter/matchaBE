@@ -89,6 +89,45 @@ app.listen(port, async () => {
     // 쿼리 실행
     await client.query(schemaQuery);
     console.log("Tables created successfully!");
+
+
+    // mock 데이터 삽입
+     const mockQuery = fs.readFileSync(
+       path.join(__dirname, "mocks", "users.mock.sql"),
+       "utf8"
+     );
+
+     await client.query(mockQuery);
+
+     console.log("users mock data inserted successfully!");
+
+     const mockQuery2 = fs.readFileSync(
+       path.join(__dirname, "mocks", "user_profile_images.mock.sql"),
+       "utf8"
+     );
+
+      await client.query(mockQuery2);
+
+      console.log("user_profile_images mock data inserted successfully!");
+
+      const mockQuery3 = fs.readFileSync(
+        path.join(__dirname, "mocks", "user_hashtags.mock.sql"),
+        "utf8"
+      );
+
+      await client.query(mockQuery3);
+
+      console.log("user_hashtags mock data inserted successfully!");
+
+      const mockQuery4 = fs.readFileSync(
+        path.join(__dirname, "mocks", "user_regions.mock.sql"),
+        "utf8"
+      );
+
+      await client.query(mockQuery4);
+
+      console.log("user_regions mock data inserted successfully!");
+
   } catch (err) {
     console.error("Error creating tables:", err);
   }

@@ -3,8 +3,8 @@
 
 CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY,
-  email VARCHAR(30) UNIQUE NOT NULL,
-  username VARCHAR(15) UNIQUE NOT NULL,
+  email VARCHAR(50) UNIQUE NOT NULL,
+  username VARCHAR(20) UNIQUE NOT NULL,
   password VARCHAR(255) NOT NULL,
   last_name VARCHAR(30) NOT NULL,
   first_name VARCHAR(30) NOT NULL,
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS user_block_histories (
 CREATE TABLE IF NOT EXISTS user_hashtags (
   id SERIAL PRIMARY KEY,
   user_id INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
-  hashtags VARCHAR[] NOT NULL,
+  hashtags text[] NOT NULL,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
@@ -108,98 +108,98 @@ CREATE TABLE IF NOT EXISTS user_alarm_histories (
   deleted_at TIMESTAMP
 );
 
-INSERT INTO users 
-(email, username, password, last_name, first_name,
-gender, preference, biography, age, is_oauth, is_valid, is_gps_allowed, connected_at,
-updated_at, created_at, deleted_at)
-VALUES 
-('email@gmail.com', 'User1', 'password', 'min', 'yeomin', 'male', 'female',
-'hello, world!', '22', 'false', 'true', 'true', '2020-01-01 00:00:00', '2020-01-01 00:00:00', '2020-01-01 00:00:00', NULL);
+--INSERT INTO users 
+--(email, username, password, last_name, first_name,
+--gender, preference, biography, age, is_oauth, is_valid, is_gps_allowed, connected_at,
+--updated_at, created_at, deleted_at)
+--VALUES 
+--('email@gmail.com', 'User1', 'password', 'min', 'yeomin', 'male', 'female',
+--'hello, world!', '22', 'false', 'true', 'true', '2020-01-01 00:00:00', '2020-01-01 00:00:00', '2020-01-01 00:00:00', NULL);
 
-INSERT INTO user_hashtags
-(user_id, hashtags, updated_at)
-VALUES
-(1, ARRAY['running', 'game'], '2020-01-01 00:00:00');
+--INSERT INTO user_hashtags
+--(user_id, hashtags, updated_at)
+--VALUES
+--(1, ARRAY['running', 'game'], '2020-01-01 00:00:00');
 
-INSERT INTO user_profile_images
-(user_id, profile_images, updated_at)
-VALUES
-(1, ARRAY['https://naver.com'], '2020-01-01 00:00:00');
+--INSERT INTO user_profile_images
+--(user_id, profile_images, updated_at)
+--VALUES
+--(1, ARRAY['https://naver.com'], '2020-01-01 00:00:00');
 
-INSERT INTO user_regions
-(user_id, si, gu, updated_at)
-VALUES
-(1, '서울', '강남구', '2020-01-01 00:00:00');
-
-
-INSERT INTO users 
-(email, username, password, last_name, first_name,
-gender, preference, biography, age, is_oauth, is_valid, is_gps_allowed, connected_at,
-updated_at, created_at, deleted_at)
-VALUES 
-('email@naver.com', 'User2', 'password', 'min', 'yeomin', 'male', 'female',
-'hello, world!', '22', 'false', 'true', 'true', '2020-01-01 00:00:00', '2020-01-01 00:00:00', '2020-01-01 00:00:00', NULL);
-
-INSERT INTO users 
-(email, username, password, last_name, first_name,
-gender, preference, biography, age, is_oauth, is_valid, is_gps_allowed, connected_at,
-updated_at, created_at, deleted_at)
-VALUES 
-('email@yahoo.com', 'User3', 'password', 'min', 'yeomin', 'male', 'female',
-'hello, world!', '22', 'false', 'true', 'true', '2020-01-01 00:00:00', '2020-01-01 00:00:00', '2020-01-01 00:00:00', NULL);
+--INSERT INTO user_regions
+--(user_id, si, gu, updated_at)
+--VALUES
+--(1, '서울', '강남구', '2020-01-01 00:00:00');
 
 
-INSERT INTO user_hashtags
-(user_id, hashtags, updated_at)
-VALUES
-(2, ARRAY['running', 'game'], '2020-01-01 00:00:00');
+--INSERT INTO users 
+--(email, username, password, last_name, first_name,
+--gender, preference, biography, age, is_oauth, is_valid, is_gps_allowed, connected_at,
+--updated_at, created_at, deleted_at)
+--VALUES 
+--('email@naver.com', 'User2', 'password', 'min', 'yeomin', 'male', 'female',
+--'hello, world!', '22', 'false', 'true', 'true', '2020-01-01 00:00:00', '2020-01-01 00:00:00', '2020-01-01 00:00:00', NULL);
 
-INSERT INTO user_profile_images
-(user_id, profile_images, updated_at)
-VALUES
-(2, ARRAY['https://naver.com'], '2020-01-01 00:00:00');
+--INSERT INTO users 
+--(email, username, password, last_name, first_name,
+--gender, preference, biography, age, is_oauth, is_valid, is_gps_allowed, connected_at,
+--updated_at, created_at, deleted_at)
+--VALUES 
+--('email@yahoo.com', 'User3', 'password', 'min', 'yeomin', 'male', 'female',
+--'hello, world!', '22', 'false', 'true', 'true', '2020-01-01 00:00:00', '2020-01-01 00:00:00', '2020-01-01 00:00:00', NULL);
 
-INSERT INTO user_hashtags
-(user_id, hashtags, updated_at)
-VALUES
-(3, ARRAY['running', 'game'], '2020-01-01 00:00:00');
 
-INSERT INTO user_profile_images
-(user_id, profile_images, updated_at)
-VALUES
-(3, ARRAY['https://naver.com'], '2020-01-01 00:00:00');
+--INSERT INTO user_hashtags
+--(user_id, hashtags, updated_at)
+--VALUES
+--(2, ARRAY['running', 'game'], '2020-01-01 00:00:00');
 
-INSERT INTO user_regions
-(user_id, si, gu, updated_at)
-VALUES
-(2, '서울', '강남구', '2020-01-01 00:00:00');
+--INSERT INTO user_profile_images
+--(user_id, profile_images, updated_at)
+--VALUES
+--(2, ARRAY['https://naver.com'], '2020-01-01 00:00:00');
 
-INSERT INTO user_like_histories
-(user_id, liked_id, created_at)
-VALUES
-(1, 2, '2020-01-01 00:00:00');
+--INSERT INTO user_hashtags
+--(user_id, hashtags, updated_at)
+--VALUES
+--(3, ARRAY['running', 'game'], '2020-01-01 00:00:00');
 
-INSERT INTO user_like_histories
-(user_id, liked_id, created_at)
-VALUES
-(2, 1, '2020-01-01 00:00:00');
+--INSERT INTO user_profile_images
+--(user_id, profile_images, updated_at)
+--VALUES
+--(3, ARRAY['https://naver.com'], '2020-01-01 00:00:00');
 
-INSERT INTO user_chat_rooms
-(user_id, chated_id, created_at, deleted_at)
-VALUES
-(1, 2, '2020-01-01 00:00:00', NULL);
+--INSERT INTO user_regions
+--(user_id, si, gu, updated_at)
+--VALUES
+--(2, '서울', '강남구', '2020-01-01 00:00:00');
 
-INSERT INTO user_chat_rooms
-(user_id, chated_id, created_at, deleted_at)
-VALUES
-(1, 3, '2020-01-01 00:00:00', NULL);
+--INSERT INTO user_like_histories
+--(user_id, liked_id, created_at)
+--VALUES
+--(1, 2, '2020-01-01 00:00:00');
 
-INSERT INTO user_chat_histories
-(room_id, sender_id, content, created_at)
-VALUES
-(1, 2, 'hello', '2020-01-01 00:00:00');
+--INSERT INTO user_like_histories
+--(user_id, liked_id, created_at)
+--VALUES
+--(2, 1, '2020-01-01 00:00:00');
 
-INSERT INTO user_chat_histories
-(room_id, sender_id, content, created_at)
-VALUES
-(2, 1, 'world', '2020-01-01 00:00:00');
+--INSERT INTO user_chat_rooms
+--(user_id, chated_id, created_at, deleted_at)
+--VALUES
+--(1, 2, '2020-01-01 00:00:00', NULL);
+
+--INSERT INTO user_chat_rooms
+--(user_id, chated_id, created_at, deleted_at)
+--VALUES
+--(1, 3, '2020-01-01 00:00:00', NULL);
+
+--INSERT INTO user_chat_histories
+--(room_id, sender_id, content, created_at)
+--VALUES
+--(1, 2, 'hello', '2020-01-01 00:00:00');
+
+--INSERT INTO user_chat_histories
+--(room_id, sender_id, content, created_at)
+--VALUES
+--(2, 1, 'world', '2020-01-01 00:00:00');
