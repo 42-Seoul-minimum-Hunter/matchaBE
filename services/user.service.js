@@ -59,7 +59,8 @@ const unregister = async (id) => {
   try {
     await userRepository.deleteUserById(id);
   } catch (error) {
-    return { error: error.message };
+        console.log(error);
+    throw error;
   }
 };
 
@@ -69,13 +70,14 @@ const changePassword = async (password, email) => {
 
     await userRepository.changePassword(hashed, email);
   } catch (error) {
-    return { error: error.message };
+        console.log(error);
+    throw error;
   }
 };
 
 const findUserByFilter = async (id, filter, page, pageSize) => {
   try {
-    console.log(id, filter, page, pageSize)
+    //console.log(id, filter, page, pageSize)
 
     const isFilterNull = Object.values(filter).every((value) => !value);
     //console.log(isFilterNull)
@@ -118,7 +120,8 @@ const checkRightRegion = async (si, gu) => {
     switch (si) {
     }
   } catch (error) {
-    return { error: error.message };
+        console.log(error);
+    throw error;
   }
 };
 
@@ -126,7 +129,8 @@ const findOneUserByUsername = async (username) => {
   try {
     return await userRepository.findUserByUsername(username);
   } catch (error) {
-    return { error: error.message };
+        console.log(error);
+    throw error;
   }
 };
 
@@ -134,7 +138,8 @@ const findOneUserById = async (id) => {
   try {
     return await userRepository.findUserById(id);
   } catch (error) {
-    return { error: error.message };
+        console.log(error);
+    throw error;
   }
 };
 

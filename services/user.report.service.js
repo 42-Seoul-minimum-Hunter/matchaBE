@@ -14,7 +14,8 @@ const reportUser = async (reportedUsername, reason, userId) => {
         await userReportRepository.reportUser(reportedUserInfo.id, reason, userId);
         //TODO: 유저 신고 시 차단 기능 추가 논의
     } catch (error) {
-        return { error: error.message };
+            console.log(error);
+    throw error;
     }
 }
 

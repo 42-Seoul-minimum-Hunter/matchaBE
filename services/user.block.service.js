@@ -12,7 +12,8 @@ const addBlockUser = async (blockedUsername, userId) => {
         }
         await userBlockRepository.addBlockUser(blockedUserInfo.id, userId);
     } catch (error) {
-        return { error: error.message };
+            console.log(error);
+    throw error;
     }
 }
 
@@ -27,7 +28,8 @@ const deleteBlockUser = async (blockedUsername, userId) => {
         }
         await userBlockRepository.deleteBlockUser(blockedUserInfo.id, userId);
     } catch (error) {
-        return { error: error.message };
+            console.log(error);
+    throw error;
     }
 }
 

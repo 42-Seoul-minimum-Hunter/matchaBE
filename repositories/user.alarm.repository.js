@@ -25,7 +25,8 @@ const saveAlarmById = async (userId, alarmedId, alarmType) => {
             [userId, alarmedId, alarmType]
         )
     } catch (error) {
-        return { error: error.message };
+            console.log(error);
+    throw error;
     }
 }
 
@@ -41,7 +42,8 @@ const findAllAlarmsById = async (id) => {
 
         return result.rows;
     } catch (error) {
-        return { error: error.message };
+            console.log(error);
+    throw error;
     }
 }
 
@@ -56,7 +58,8 @@ const deleteAllAlarmsById = async (id) => {
             [id]
         );
     } catch (error) {
-        return { error: error.message };
+            console.log(error);
+    throw error;
     }
 }
 

@@ -22,7 +22,8 @@ const findRegionById = async (id) => {
     );
     return regionInfo.rows;
   } catch (error) {
-    return { error: error.message };
+        console.log(error);
+    throw error;
   }
 };
 
@@ -33,7 +34,8 @@ const updateRegionById = async (si, gu, userId) => {
       [si, gu, userId]
     );
   } catch (error) {
-    return { error: error.message };
+        console.log(error);
+    throw error;
   }
 };
 

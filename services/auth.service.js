@@ -33,7 +33,8 @@ const loginByUsernameAndPassword = async (username, password) => {
 
     return userInfo;
   } catch (error) {
-    return { error: error.message };
+    console.log(error);
+    throw error;
   }
 };
 
@@ -57,7 +58,8 @@ const getOauthInfo = async (code) => {
       return { user: user, oauthInfo: oauthInfo };
     }
   } catch (error) {
-    return { error: error.message };
+    console.log(error);
+    throw error;
   }
 };
 
@@ -85,7 +87,8 @@ const createTwofactorCode = async (email) => {
 
     twoFactorCode[code] = expirationDate;
   } catch (error) {
-    return { error: error.message };
+        console.log(error);
+    throw error;
   }
 };
 
@@ -103,7 +106,8 @@ const verifyTwoFactorCode = (expirationDate, code) => {
       return true;
     }
   } catch (error) {
-    return { error: error.message };
+    console.log(error);
+    throw error;
   }
 };
 
@@ -130,7 +134,8 @@ const createRegistURL = async (email) => {
 
     registerationCode[code] = { expirationDate, email };
   } catch (error) {
-    return { error: error.message };
+        console.log(error);
+    throw error;
   }
 };
 
@@ -149,7 +154,8 @@ const verifyRegistURL = async (code) => {
       return userInfo;
     }
   } catch (error) {
-    return { error: error.message };
+        console.log(error);
+    throw error;
   }
 };
 
@@ -195,7 +201,8 @@ const createResetPasswordURL = async (email) => {
 
     return resetPasswordInfo;
   } catch (error) {
-    return { error: error.message };
+        console.log(error);
+    throw error;
   }
 };
 
@@ -212,7 +219,8 @@ const verifyResetPasswordURL = (code) => {
       return true;
     }
   } catch (error) {
-    return { error: error.message };
+        console.log(error);
+    throw error;
   }
 };
 
@@ -223,7 +231,8 @@ const generateJWT = (obj) => {
     });
     return jwtToken;
   } catch (error) {
-    return { error: error.message };
+        console.log(error);
+    throw error;
   }
 };
 

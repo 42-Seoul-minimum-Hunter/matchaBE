@@ -70,7 +70,8 @@ const getUserProfile = async (username, userId) => {
     await userAlarmRepository.saveAlarmById(userId, userInfo.id, "VISITED");
     return user;
   } catch (error) {
-    return { error: error.message };
+        console.log(error);
+    throw error;
   }
 };
 
@@ -112,7 +113,8 @@ const getMyInfo = async (userId) => {
 
     return user;
   } catch (error) {
-    return { error: error.message };
+        console.log(error);
+    throw error;
   }
 };
 
@@ -140,7 +142,8 @@ const updateUser = async (UserUpdateDto, userId) => {
       UserUpdateDto.userId
     );
   } catch (error) {
-    return { error: error.message };
+        console.log(error);
+    throw error;
   }
 };
 

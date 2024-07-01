@@ -22,7 +22,8 @@ const findHashtagById = async (id) => {
     );
     return hashtagInfo.rows.map((row) => row.hashtags);
   } catch (error) {
-    return { error: error.message };
+        console.log(error);
+    throw error;
   }
 };
 
@@ -33,7 +34,8 @@ const updateHashtagById = async (hashtags, userId) => {
       [hashtags, userId]
     );
   } catch (error) {
-    return { error: error.message };
+        console.log(error);
+    throw error;
   }
 };
 

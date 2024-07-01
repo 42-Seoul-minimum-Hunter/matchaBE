@@ -71,7 +71,7 @@ app.use("/auth", authRouter);
 
 app.use((err, req, res, next) => {
   const status = err.status || 500;
-  res.status(status).json({ error: err.message });
+  res.status(status).send(err.message);
 });
 
 // 서버 실행

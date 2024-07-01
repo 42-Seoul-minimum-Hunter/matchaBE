@@ -12,7 +12,8 @@ const saveAlarmById = async (id, alarmedId, alarmType) => {
         await userAlarmRepository.addAlarm(id, alarmedId, alarmType);
 
     } catch (error) {
-        return { error: error.message };
+            console.log(error);
+    throw error;
     }
 }
 
@@ -36,7 +37,8 @@ const findAllAlarmsById = async (id) => {
         return alarmedUserInfo;
     }
     catch (error) {
-        return { error: error.message };
+            console.log(error);
+    throw error;
     }
 };
 
@@ -44,7 +46,8 @@ const deleteAllAlarmsById = async (id) => {
     try {
         await userAlarmRepository.deleteAllAlarmsById(id);
     } catch (error) {
-        return { error: error.message };
+            console.log(error);
+    throw error;
     }
 }
 

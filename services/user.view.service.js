@@ -11,7 +11,8 @@ const saveVisitHistoryById = async (username, id) => {
         }
         await userViewRepository.saveVisitHistoryById(id, visitedUserInfo.id);
     } catch (error) {
-        return { error: error.message };
+            console.log(error);
+    throw error;
     }
 };
 

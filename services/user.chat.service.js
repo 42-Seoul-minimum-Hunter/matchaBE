@@ -49,7 +49,8 @@ const getChatInfo = async (userId) => {
     }
     return AllChatRoomInfos;
   } catch (error) {
-    return { error: error.message };
+        console.log(error);
+    throw error;
   }
 };
 

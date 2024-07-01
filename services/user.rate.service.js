@@ -12,7 +12,8 @@ const rateUser = async (ratedUsername, rateScore, userId) => {
     }
     await userRateRepository.rateUser(ratedUserInfo.id, rateScore, userId);
   } catch (error) {
-    return { error: error.message };
+        console.log(error);
+    throw error;
   }
 };
 

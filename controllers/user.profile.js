@@ -118,8 +118,8 @@ router.put("/update", verifyAllprocess, async function (req, res, next) {
       });
 
       res.cookie("jwt", jwtToken, {
-        httpOnly: true,
-        secure: false,
+        //httpOnly: true,
+        //secure: false,
       });
 
       res.set("Authorization", `Bearer ${jwtToken}`);

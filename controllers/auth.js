@@ -208,8 +208,8 @@ router.get("/callback", async function (req, res, next) {
       });
 
       res.cookie("jwt", jwtToken, {
-        httpOnly: true,
-        secure: false,
+        //httpOnly: true,
+        //secure: false,
       });
 
       res.set("Authorization", `Bearer ${jwtToken}`);
@@ -227,8 +227,8 @@ router.get("/callback", async function (req, res, next) {
       });
 
       res.cookie("jwt", jwtToken, {
-        httpOnly: true,
-        secure: false,
+        //httpOnly: true,
+        //secure: false,
       });
 
       res.set("Authorization", `Bearer ${jwtToken}`);
@@ -294,8 +294,8 @@ router.post("/twofactor/verify", verifyTwoFA, function (req, res, next) {
       });
 
       res.cookie("jwt", jwtToken, {
-        httpOnly: true,
-        secure: false,
+        //httpOnly: true,
+        //secure: false,
       });
 
       res.set("Authorization", `Bearer ${jwtToken}`);
@@ -370,8 +370,8 @@ router.get("/register/email/verify", async function (req, res, next) {
     const jwtToken = authService.generateJWT(jwtInfo);
 
     res.cookie("jwt", jwtToken, {
-      httpOnly: true,
-      secure: false,
+      //httpOnly: true,
+      //secure: false,
     });
 
     //res.set("Authorization", `Bearer ${jwtToken}`);
@@ -401,8 +401,8 @@ router.post("/reset/email/create", async function (req, res, next) {
     const resetPasswordJwt = await authService.createResetPasswordURL(email);
 
     res.cookie("jwt", resetPasswordJwt, {
-      httpOnly: true,
-      secure: false,
+      //httpOnly: true,
+      //secure: false,
     });
 
     res.set("Authorization", `Bearer ${resetPasswordJwt}`);
@@ -442,9 +442,9 @@ router.get(
       });
 
       res.cookie("jwt", jwtToken, {
-        httpOnly: true,
-        secure: true, // HTTPS 프로토콜에서만 전송되도록 설정
-        sameSite: "none", // 크로스 사이트 요청 위험을 방지하기 위해 설정
+        //httpOnly: true,
+        //secure: true, // HTTPS 프로토콜에서만 전송되도록 설정
+        //sameSite: "none", // 크로스 사이트 요청 위험을 방지하기 위해 설정
       });
 
       res.set("Authorization", `Bearer ${jwtToken}`);

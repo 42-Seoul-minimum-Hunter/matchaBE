@@ -25,7 +25,8 @@ const likeUserByUsername = async (likedUsername, userId) => {
       return false;
     }
   } catch (error) {
-    return { error: error.message };
+        console.log(error);
+    throw error;
   }
 };
 
@@ -48,7 +49,8 @@ const dislikeUserByUsername = async (likedUsername, userId) => {
       return false;
     }
   } catch (error) {
-    return { error: error.message };
+        console.log(error);
+    throw error;
   }
 };
 
