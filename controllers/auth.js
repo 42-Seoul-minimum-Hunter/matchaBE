@@ -135,7 +135,7 @@ router.post("/login", async function (req, res, next) {
     const jwtToken = authService.generateJWT({
       id: user.id,
       email: user.email,
-      isValid: user.isValid,
+      isValid: user.is_valid,
       isOauth: false,
       accessToken: null,
       twofaVerified: false,
@@ -234,10 +234,10 @@ router.get("/callback", async function (req, res, next) {
       res.set("Authorization", `Bearer ${jwtToken}`);
       //TODO: 테스트 필요
       if (user.isValid === true) {
-      return res.redirect(process.env.FE_TWOFACTOR_URL);
+        return res.redirect(process.env.FE_TWOFACTOR_URL);
       } else {
-      //return res.send();
-      return res.redirect('http://localhost:5173/email');
+        //return res.send();
+        return res.redirect("http://localhost:5173/email");
       }
       //return res.send(user);
     }
@@ -258,7 +258,7 @@ router.post("/twofactor/create", verifyTwoFA, async function (req, res, next) {
       res.status(400).send("Email not found.");
     }
     await authService.createTwofactorCode(email);
-    res.send();
+    return res.send();
   } catch (error) {
     next(error);
   }
@@ -279,7 +279,7 @@ router.post("/twofactor/verify", verifyTwoFA, function (req, res, next) {
       return res.status(400).send("Email not found.");
     }
 
-    const result = authService.verifyTwoFactorCode(expirationDate, code);
+    const result = authService.verifyTwoFactorCode(code);
 
     if (result === false) {
       return res.status(400).send("Invalid code.");

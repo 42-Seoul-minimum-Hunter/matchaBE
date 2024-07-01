@@ -24,13 +24,14 @@ function verifyJWTToken(req, res, next) {
 }
 
 function verifyTwoFA(req, res, next) {
+  console.log("hello");
   // 1. 요청 헤더에서 토큰을 가져옵니다.
-  const cookieInfo = req.signedCookies || {};
-  console.log(cookieInfo);
   if (!req.headers.authorization) {
     return res.status(401).send("No token provided.");
   }
   const token = req.headers.authorization.split(" ")[1];
+
+  console.log(token);
 
   if (!token) {
     // 토큰이 없는 경우 401 Unauthorized 응답을 보냅니다.
@@ -115,6 +116,7 @@ function verifyAllprocess(req, res, next) {
 
 function checkOauthLogin(req, res, next) {
   try {
+    console.log(req.headers);
     if (!req.headers.authorization) {
       req.jwtInfo = undefined;
       console.log("No token provided");

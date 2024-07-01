@@ -9,12 +9,15 @@ const userRepository = require("../repositories/user.repository");
 
 const getUserProfile = async (username, userId) => {
   try {
+    console.log("username", username);
+    console.log("userId", userId);
     const userInfo = await userRepository.findUserByUsername(username);
     if (!userInfo) {
       const error = new Error("User not found");
       error.status = 404;
       throw error;
-    } else if (userInfo.id === userId) { //TODO: 논의 필요
+    } else if (userInfo.id === userId) {
+      //TODO: 논의 필요
       const error = new Error("You cannot see your own profile");
       error.status = 403;
       throw error;
@@ -70,17 +73,15 @@ const getUserProfile = async (username, userId) => {
     await userAlarmRepository.saveAlarmById(userId, userInfo.id, "VISITED");
     return user;
   } catch (error) {
-        console.log(error);
+    console.log(error);
     throw error;
   }
 };
 
 const getMyInfo = async (userId) => {
   try {
-
-    const hashtagInfo = await userHashtagRepository.findHashtagById(
-      userId
-    );
+    const userInfo = await userRepository.findUserById(userId);
+    const hashtagInfo = await userHashtagRepository.findHashtagById(userId);
     const regionInfo = await userRegionRepository.findRegionById(userId);
     const profileImageInfo =
       await userProfileImageRepository.findProfileImagesById(userId);
@@ -113,7 +114,7 @@ const getMyInfo = async (userId) => {
 
     return user;
   } catch (error) {
-        console.log(error);
+    console.log(error);
     throw error;
   }
 };
@@ -142,7 +143,7 @@ const updateUser = async (UserUpdateDto, userId) => {
       UserUpdateDto.userId
     );
   } catch (error) {
-        console.log(error);
+    console.log(error);
     throw error;
   }
 };

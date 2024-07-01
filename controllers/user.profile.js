@@ -19,8 +19,8 @@ router.get("/", verifyAllprocess, async function (req, res, next) {
     }
     const user = await userProfileService.getUserProfile(
       username,
-      //req.jwtInfo.id
-      userId
+      req.jwtInfo.id
+      // userId
     );
     return res.send(user);
   } catch (error) {

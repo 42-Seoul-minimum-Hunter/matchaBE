@@ -102,17 +102,23 @@ const changePassword = async (hashedPassword, email) => {
   }
 };
 
-const findUserByDefaultFilter = async (preference, si, gu, hashtags, page, pageSize) => {
+const findUserByDefaultFilter = async (
+  preference,
+  si,
+  gu,
+  hashtags,
+  page,
+  pageSize
+) => {
   try {
-
     console.log(preference, si, gu, hashtags, page, pageSize);
 
     // 유저의 성향에 따른 쿼리 조건 설정
     let genderCondition;
-    if (preference === 'none' || preference === 'both') {
-      genderCondition = 'u.gender IN (\'Male\', \'Female\')';
+    if (preference === "none" || preference === "both") {
+      genderCondition = "u.gender IN ('Male', 'Female')";
     } else {
-      genderCondition = 'u.gender = $1';
+      genderCondition = "u.gender = $1";
     }
 
     // 공통 해시태그 수 계산을 위한 서브쿼리
@@ -136,161 +142,150 @@ const findUserByDefaultFilter = async (preference, si, gu, hashtags, page, pageS
     LIMIT $5 OFFSET $6
   `;
 
-  // Fetch the user data
-  const preferenceUsers = await client.query(mainQuery, [
-    preference,
-    hashtags,
-    si,
-    gu,
-    pageSize,
-    (page - 1) * pageSize,
-  ]);
+    // Fetch the user data
+    const preferenceUsers = await client.query(mainQuery, [
+      preference,
+      hashtags,
+      si,
+      gu,
+      pageSize,
+      (page - 1) * pageSize,
+    ]);
 
-  console.log(preferenceUsers.rows);
+    console.log(preferenceUsers.rows);
 
-  // Calculate the total count
-  const totalCountQuery = `
+    // Calculate the total count
+    const totalCountQuery = `
     SELECT COUNT(*) AS total_count
     FROM (
       ${mainQuery}
     ) AS subquery
   `;
-  const totalCountResult = await client.query(totalCountQuery, [
-    preference,
-    hashtags,
-    si,
-    gu,
-    pageSize,
-    (page - 1) * pageSize,
-  ]);
-  const totalCount = totalCountResult.rows[0].total_count;
+    const totalCountResult = await client.query(totalCountQuery, [
+      preference,
+      hashtags,
+      si,
+      gu,
+      pageSize,
+      (page - 1) * pageSize,
+    ]);
+    const totalCount = totalCountResult.rows[0].total_count;
 
-  // 사용자 평균 평점 계산 및 필터링
-  const filteredUserInfos = [];
-  for (const userInfo of preferenceUsers.rows) {
-    const ratingInfo = await client.query(
-      "SELECT rate_score FROM user_ratings WHERE rated_id = $1",
-      [userInfo.id]
-    );
-    let rate;
-    if (ratingInfo.rows.length === 0) {
-      rate = parseFloat(0);
-      console.log("rate: " + rate);
-    } else {
-      const ratingScores = ratingInfo.rows.map((row) => row.rate_score);
-      const totalScore = ratingScores.reduce((acc, score) => acc + score, 0);
-      rate = totalScore / ratingInfo.rows.length;
-    }
-    userInfo.rate = rate;
-    filteredUserInfos.push(userInfo);
-  }
-  
-      //console.log('infologs: ' + filteredUserInfos);
-  
-      const UserInfo = await Promise.all(
-        filteredUserInfos
-          .sort((a, b) => {
-            if (a.rate < b.rate) return 1;
-            if (a.rate > b.rate) return -1;
-            return 0;
-          })
-          .map(async (userInfo) => {
-            const { rows } = await client.query(
-              "SELECT profile_images FROM user_profile_images WHERE user_id = $1",
-              [userInfo.id]
-            );
-            const profileImages = rows.length > 0 ? rows[0].profile_images : null;
-
-            const userHashtags = await client.query(
-              `SELECT hashtags FROM user_hashtags WHERE user_id = $1`,
-              [userInfo.id]
-            );
-
-            console.log("hashtag: " + userHashtags.rows[0].hashtags)
-
-            const commonHashtags = userHashtags.rows[0].hashtags.filter((value) => hashtags.includes(value)).length;
-
-            console.log(commonHashtags);
-  
-            return {
-              username: userInfo.username,
-              age: userInfo.age,
-              profileImages: profileImages ? profileImages[0] : null,
-              rate: userInfo.rate,
-              commonHashtags: commonHashtags,
-            };
-          })
+    // 사용자 평균 평점 계산 및 필터링
+    const filteredUserInfos = [];
+    for (const userInfo of preferenceUsers.rows) {
+      const ratingInfo = await client.query(
+        "SELECT rate_score FROM user_ratings WHERE rated_id = $1",
+        [userInfo.id]
       );
+      let rate;
+      if (ratingInfo.rows.length === 0) {
+        rate = parseFloat(0);
+        console.log("rate: " + rate);
+      } else {
+        const ratingScores = ratingInfo.rows.map((row) => row.rate_score);
+        const totalScore = ratingScores.reduce((acc, score) => acc + score, 0);
+        rate = totalScore / ratingInfo.rows.length;
+      }
+      userInfo.rate = rate;
+      filteredUserInfos.push(userInfo);
+    }
 
-  return {
-    users: UserInfo,
-    totalCount: totalCount,
-  };
+    //console.log('infologs: ' + filteredUserInfos);
+
+    const UserInfo = await Promise.all(
+      filteredUserInfos
+        .sort((a, b) => {
+          if (a.rate < b.rate) return 1;
+          if (a.rate > b.rate) return -1;
+          return 0;
+        })
+        .map(async (userInfo) => {
+          const { rows } = await client.query(
+            "SELECT profile_images FROM user_profile_images WHERE user_id = $1",
+            [userInfo.id]
+          );
+          const profileImages = rows.length > 0 ? rows[0].profile_images : null;
+
+          const userHashtags = await client.query(
+            `SELECT hashtags FROM user_hashtags WHERE user_id = $1`,
+            [userInfo.id]
+          );
+
+          console.log("hashtag: " + userHashtags.rows[0].hashtags);
+
+          const commonHashtags = userHashtags.rows[0].hashtags.filter((value) =>
+            hashtags.includes(value)
+          ).length;
+
+          console.log(commonHashtags);
+
+          return {
+            username: userInfo.username,
+            age: userInfo.age,
+            profileImages: profileImages ? profileImages[0] : null,
+            rate: userInfo.rate,
+            commonHashtags: commonHashtags,
+          };
+        })
+    );
+
+    return {
+      users: UserInfo,
+      totalCount: totalCount,
+    };
   } catch (error) {
     console.log(error);
     throw error;
   }
 };
 
-
 const findUserByFilter = async (filter, page, pageSize) => {
   try {
     //console.log(filter)
 
-    var { hashtags, minAge, maxAge, minRate, maxRate, si, gu } = filter;
+    const { hashtags, minAge, maxAge, si, gu } = filter;
+
+    console.log(hashtags);
 
     let query = "SELECT u.* FROM users u";
     const params = [];
 
-    // hashtags 조건 추가
-    if (hashtags) {
-      query += " JOIN user_hashtags uh ON u.id = uh.user_id";
+    query += " JOIN user_hashtags uh ON u.id = uh.user_id";
+    query += " JOIN user_regions ur ON u.id = ur.user_id";
+    query += " WHERE $1 <@ uh.hashtags";
+    params.push(hashtags);
+
+    query += " AND ur.si = $" + (params.length + 1);
+    params.push(si);
+
+    if (gu) {
+      query += " AND ur.gu = $" + (params.length + 1);
+      params.push(gu);
     }
 
-    if (si) {
-      query += " JOIN user_regions ur ON u.id = ur.user_id";
-    }
-
-    if (hashtags) {
-      query += " WHERE $1 <@ uh.hashtags";
-      params.push(hashtags);
-    }
-
-    // si, gu 조건 추가
-    if (si) {
-      query += " AND ur.si = $" + (params.length + 1);
-      params.push(si);
-
-      if (gu) {
-        query += " AND ur.gu = $" + (params.length + 1);
-        params.push(gu);
-      }
-    }
-
-    // minAge, maxAge 조건 추가
-    if (minAge) {
+    if (minAge && maxAge) {
+      query +=
+        " AND u.age >= $" +
+        (params.length + 1) +
+        " AND u.age <= $" +
+        (params.length + 2);
+      params.push(minAge);
+      params.push(maxAge);
+    } else if (minAge) {
       query += " AND u.age >= $" + (params.length + 1);
       params.push(minAge);
-    }
-    if (maxAge) {
+    } else if (maxAge) {
       query += " AND u.age <= $" + (params.length + 1);
       params.push(maxAge);
     }
 
-    if (!minRate) {
-      minRate = parseFloat(0);
-    }
-
-    if (!maxRate) {
-      maxRate = parseFloat(5);
-    }
-
-    // LIMIT와 OFFSET을 추가하여 페이지네이션 구현
     query +=
       " LIMIT $" + (params.length + 1) + " OFFSET $" + (params.length + 2);
     params.push(pageSize);
     params.push((page - 1) * pageSize);
 
+    console.log(query);
     const userInfos = await client.query(query, params);
 
     // 전체 사용자 수 계산

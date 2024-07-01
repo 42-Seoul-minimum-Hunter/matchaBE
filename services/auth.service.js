@@ -6,10 +6,11 @@ const sendEmail = require("../configs/sendEmail.js");
 const { totp } = require("otplib");
 const moment = require("moment-timezone");
 const axios = require("axios");
+const bcypt = require("bcrypt");
 
-const registerationCode = {};
-const twoFactorCode = {};
-const resetPasswordCode = {};
+const registerationCode = new Map();
+const twoFactorCode = new Map();
+const resetPasswordCode = new Map();
 
 const loginByUsernameAndPassword = async (username, password) => {
   try {
@@ -85,21 +86,24 @@ const createTwofactorCode = async (email) => {
     const userTimezone = "Asia/Seoul"; // 사용자의 시간대
     const expirationDate = moment().tz(userTimezone).add(5, "minutes").toDate(); // 5분 후 만료
 
-    twoFactorCode[code] = expirationDate;
+    twoFactorCode.set(code, expirationDate);
+    // twoFactorCode[code] = expirationDate;
   } catch (error) {
-        console.log(error);
+    console.log(error);
     throw error;
   }
 };
 
-const verifyTwoFactorCode = (expirationDate, code) => {
+const verifyTwoFactorCode = (code) => {
   try {
     const secret = process.env.TWOFACTOR_SECRET;
-    const expirationDate = twoFactorCode[code];
+    // const expirationDate = twoFactorCode[code];
+    const expirationDate = twoFactorCode.get(code);
     if (!expirationDate) {
       return false;
     } else if (expirationDate < new Date()) {
-      delete twoFactorCode[code];
+      // delete twoFactorCode[code];
+      twoFactorCode.delete(code);
       return false;
     } else if (totp.verify({ secret, code })) {
       delete req.session.twoFactorCode;
@@ -132,29 +136,33 @@ const createRegistURL = async (email) => {
       text: emailContent,
     });
 
-    registerationCode[code] = { expirationDate, email };
+    // registerationCode[code] = { expirationDate, email };
+    registerationCode.set(code, { expirationDate, email });
   } catch (error) {
-        console.log(error);
+    console.log(error);
     throw error;
   }
 };
 
 const verifyRegistURL = async (code) => {
   try {
-    const { expirationDate, email } = registerationCode[code];
+    // const { expirationDate, email } = registerationCode[code];
+    const { expirationDate, email } = registerationCode.get(code);
     if (!expirationDate) {
       return false;
     } else if (expirationDate < new Date()) {
-      delete registerationCode[code];
+      // delete registerationCode[code];
+      registerationCode.delete(code);
       return false;
     } else {
-      delete registerationCode[code];
+      // delete registerationCode[code];
+      registerationCode.delete(code);
       await userRepository.updateUserValidByEmail(email);
       const userInfo = await userRepository.findUserByEmail(email);
       return userInfo;
     }
   } catch (error) {
-        console.log(error);
+    console.log(error);
     throw error;
   }
 };
@@ -197,29 +205,33 @@ const createResetPasswordURL = async (email) => {
       isValid: userInfo.isValid,
     };
 
-    resetPasswordCode[code] = expirationDate;
+    // resetPasswordCode[code] = expirationDate;
+    resetPasswordCode.set(code, expirationDate);
 
     return resetPasswordInfo;
   } catch (error) {
-        console.log(error);
+    console.log(error);
     throw error;
   }
 };
 
 const verifyResetPasswordURL = (code) => {
   try {
-    const expirationDate = resetPasswordCode[code];
+    // const expirationDate = resetPasswordCode[code];
+    const expirationDate = resetPasswordCode.get(code);
     if (!expirationDate) {
       return false;
     } else if (expirationDate < new Date()) {
-      delete resetPasswordCode[code];
+      // delete resetPasswordCode[code];
+      resetPasswordCode.delete(code);
       return false;
     } else {
-      delete resetPasswordCode[code];
+      // delete resetPasswordCode[code];
+      resetPasswordCode.delete(code);
       return true;
     }
   } catch (error) {
-        console.log(error);
+    console.log(error);
     throw error;
   }
 };
@@ -231,7 +243,7 @@ const generateJWT = (obj) => {
     });
     return jwtToken;
   } catch (error) {
-        console.log(error);
+    console.log(error);
     throw error;
   }
 };

@@ -263,6 +263,12 @@ router.get("/find", verifyAllprocess, async function (req, res, next) {
       pageSize = 20,
     } = req.query;
 
+    if (hashtags) {
+      hashtags = hashtags.split(",");
+    }
+
+    console.log(hashtags);
+
     const filter = {
       hashtags: hashtags || undefined,
       minAge: minAge ? Number(minAge) : undefined,

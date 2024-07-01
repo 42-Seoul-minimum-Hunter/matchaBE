@@ -101,8 +101,8 @@ CREATE TABLE IF NOT EXISTS user_chat_histories (
 
 CREATE TABLE IF NOT EXISTS user_alarm_histories (
   id SERIAL PRIMARY KEY,
-  user_id INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
-  alarmed_id INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  user_id INT ,
+  alarmed_id INT ,
   alarm_type VARCHAR(10) NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
   deleted_at TIMESTAMP
