@@ -9,6 +9,7 @@ const userChatSerivce = require("../services/user.chat.service.js");
 */
 router.get("/", verifyAllprocess, async function (req, res, next) {
   try {
+    logger.info("user.chat.js GET /user/chat")
     const id = req.query.id;
     if (!id) {
       return res.status(400).send("id is required");

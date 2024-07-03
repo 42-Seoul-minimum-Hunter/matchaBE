@@ -1,8 +1,12 @@
+const logger = require("../configs/logger");
+
 const userAlarmRepository = require("../repositories/user.alarm.repository");
 const userRepository = require("../repositories/user.repository");
 
+
 const saveAlarmById = async (id, alarmedId, alarmType) => {
     try {
+        logger.info("user.alarm.service.js saveAlarmById: " + id + ", " + alarmedId + ", " + alarmType)
         const alarmedUserInfo = await userRepository.findUserById(alarmedId);
         if (!alarmedUserInfo) {
             const error = new Error("User not found.");
@@ -12,17 +16,17 @@ const saveAlarmById = async (id, alarmedId, alarmType) => {
         await userAlarmRepository.addAlarm(id, alarmedId, alarmType);
 
     } catch (error) {
-            console.log(error);
-    throw error;
+        logger.error("user.alarm.service.js saveAlarmById: " + error.message);
+        throw error;
     }
 }
 
 const findAllAlarmsById = async (id) => {
     try {
-
+        logger.info("user.alarm.service.js findAllAlarmsById: " + id)
         const result = await userAlarmRepository.findAllAlarmsById(id);
 
-        let alarmedUserInfo = [];
+        const alarmedUserInfo = [];
 
         if (result) {
             result.forEach(async (element) => {
@@ -37,17 +41,18 @@ const findAllAlarmsById = async (id) => {
         return alarmedUserInfo;
     }
     catch (error) {
-            console.log(error);
-    throw error;
+        logger.error("user.alarm.service.js findAllAlarmsById: " + error.message);
+        throw error;
     }
 };
 
 const deleteAllAlarmsById = async (id) => {
     try {
+        logger.info("user.alarm.service.js deleteAllAlarmsById: " + id);
         await userAlarmRepository.deleteAllAlarmsById(id);
     } catch (error) {
-            console.log(error);
-    throw error;
+        logger.error("user.alarm.service.js deleteAllAlarmsById: " + error.message);
+        throw error;
     }
 }
 

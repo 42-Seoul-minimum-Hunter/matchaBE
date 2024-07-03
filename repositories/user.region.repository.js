@@ -1,6 +1,7 @@
 const { Client } = require("pg");
 const fs = require("fs");
 const path = require("path");
+const logger = require("../configs/logger.js");
 
 require("dotenv").config();
 
@@ -16,31 +17,34 @@ client.connect();
 
 const findRegionById = async (id) => {
   try {
+    logger.info("user.region.repository.js findRegionById: " + id);
     const regionInfo = await client.query(
       "SELECT si, gu FROM user_regions WHERE user_id = $1",
       [id]
     );
     return regionInfo.rows;
   } catch (error) {
-        console.log(error);
+    logger.error("user.region.repository.js findRegionById: " + error.message);
     throw error;
   }
 };
 
 const updateRegionById = async (si, gu, userId) => {
   try {
+    logger.info("user.region.repository.js updateRegionById: " + userId + ', ' + si + ', ' + gu);
     await client.query(
       "UPDATE user_regions SET si = $1, gu = $2 WHERE user_id = $3",
-      [si, gu, userId]
+      [si, gu, userId]  
     );
   } catch (error) {
-        console.log(error);
+    logger.error("user.region.repository.js updateRegionById: " + error.message);
     throw error;
   }
 };
 
 const saveRegionById = async (si, gu, id) => {
   try {
+    logger.info("user.region.repository.js saveRegionById: " + id + ', ' + si + ', ' + gu);
     await client.query(
       `INSERT INTO user_regions (
                 user_id,
@@ -52,7 +56,7 @@ const saveRegionById = async (si, gu, id) => {
       [id, si, gu]
     );
   } catch (error) {
-    console.log(error);
+    logger.error("user.region.repository.js saveRegionById: " + error.message);
     throw error;
   }
 };

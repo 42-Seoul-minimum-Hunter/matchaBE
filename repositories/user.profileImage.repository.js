@@ -1,6 +1,7 @@
 const { Client } = require("pg");
 const fs = require("fs");
 const path = require("path");
+const logger = require("../configs/logger.js");
 
 require("dotenv").config();
 
@@ -16,6 +17,7 @@ client.connect();
 
 const saveProfileImagesById = async (profileImages, userId) => {
   try {
+    logger.info("user.profileImage.repository.js saveProfileImagesById: " + userId);
     const encodedProfileImages = profileImages.map((image) => {
       return Buffer.from(image).toString("base64");
     });
@@ -31,7 +33,7 @@ const saveProfileImagesById = async (profileImages, userId) => {
     );
 
   } catch (error) {
-    console.log(error);
+    logger.error("user.profileImage.repository.js saveProfileImagesById: " + error);
     throw error;
   }
 };
@@ -49,7 +51,7 @@ const updateProfileImagesById = async (profileImages, userId) => {
       [encodedProfileImages, userId]
     );
   } catch (error) {
-    console.log(error);
+    logger.error("user.profileImage.repository.js updateProfileImagesById: " + error);
     throw error;
   }
 };
@@ -63,7 +65,7 @@ const findProfileImagesById = async (id) => {
 
     return profileImageInfo.rows.map((row) => row.profile_images);
   } catch (error) {
-    console.log(error);
+    logger.error("user.profileImage.repository.js findProfileImagesById: " + error);
     throw error;
   }
 };

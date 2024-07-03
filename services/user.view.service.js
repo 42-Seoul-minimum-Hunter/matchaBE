@@ -1,8 +1,11 @@
 const userRepository = require("../repositories/user.repository");
 const userViewRepository = require("../repositories/user.view.repository");
 
+const logger = require("../configs/logger");
+
 const saveVisitHistoryById = async (username, id) => {
     try {
+        logger.info("user.view.service.js saveVisitHistoryById: " + username + ", " + id);
         const visitedUserInfo = await userRepository.findUserByUsername(username);
         if (!visitedUserInfo) {
             const error = new Error("User not found.");
@@ -11,8 +14,8 @@ const saveVisitHistoryById = async (username, id) => {
         }
         await userViewRepository.saveVisitHistoryById(id, visitedUserInfo.id);
     } catch (error) {
-            console.log(error);
-    throw error;
+        logger.error("user.view.service.js saveVisitHistoryById: " + error.message);
+        throw error;
     }
 };
 

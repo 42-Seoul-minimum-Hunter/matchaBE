@@ -7,10 +7,11 @@ const userAlarmRepository = require("../repositories/user.alarm.repository");
 
 const userRepository = require("../repositories/user.repository");
 
+const logger = require("../configs/logger");
+
 const getUserProfile = async (username, userId) => {
   try {
-    console.log("username", username);
-    console.log("userId", userId);
+    logger.info("user.profile.service.js getUserProfile: " + username + ", " + userId)
     const userInfo = await userRepository.findUserByUsername(username);
     if (!userInfo) {
       const error = new Error("User not found");
@@ -73,13 +74,14 @@ const getUserProfile = async (username, userId) => {
     await userAlarmRepository.saveAlarmById(userId, userInfo.id, "VISITED");
     return user;
   } catch (error) {
-    console.log(error);
+    logger.error("user.profile.service.js getUserProfile: " + error.message);
     throw error;
   }
 };
 
 const getMyInfo = async (userId) => {
   try {
+    logger.info("user.profile.service.js getMyInfo: " + userId);
     const userInfo = await userRepository.findUserById(userId);
     const hashtagInfo = await userHashtagRepository.findHashtagById(userId);
     const regionInfo = await userRegionRepository.findRegionById(userId);
@@ -114,13 +116,14 @@ const getMyInfo = async (userId) => {
 
     return user;
   } catch (error) {
-    console.log(error);
+    logger.error("user.profile.service.js getMyInfo: " + error.message);
     throw error;
   }
 };
 
 const updateUser = async (UserUpdateDto, userId) => {
   try {
+    logger.info("user.profile.service.js updateUser: " + UserUpdateDto + ", " + userId);
     const userInfo = await userRepository.findUserByEmail(UserUpdateDto.email);
 
     if (userInfo) {
@@ -143,7 +146,7 @@ const updateUser = async (UserUpdateDto, userId) => {
       UserUpdateDto.userId
     );
   } catch (error) {
-    console.log(error);
+    logger.error("user.profile.service.js updateUser: " + error.message);
     throw error;
   }
 };

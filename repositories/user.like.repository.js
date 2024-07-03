@@ -1,6 +1,7 @@
 const { Client } = require("pg");
 const fs = require("fs");
 const path = require("path");
+const logger = require("../configs/logger.js");
 
 require("dotenv").config();
 
@@ -16,6 +17,7 @@ client.connect();
 
 const likeUserById = async (userId, likedUserId) => {
   try {
+    logger.info("user.like.repository.js likeUserById: " + userId + ", " + likedUserId);
     const existingLikeHistory = await client.query(
       `
             SELECT * 
@@ -46,13 +48,14 @@ const likeUserById = async (userId, likedUserId) => {
       [userId, likedUserId]
     );
   } catch (error) {
-    console.log(error.message);
+    logger.info("user.like.repository.js likeUserById: " + error.message);
     throw error;
   }
 };
 
 const dislikeUserByUsername = async (likeUsunuserId) => {
   try {
+    logger.info("user.like.repository.js dislikeUserByUsername: " + likeUsunuserId);
     const existingLikeHistory = await client.query(
       `
             SELECT * 
@@ -77,13 +80,14 @@ const dislikeUserByUsername = async (likeUsunuserId) => {
       [userId, likeUserId]
     );
   } catch (error) {
-    console.log(error.message);
+    logger.error("user.like.repository.js dislikeUserByUsername: " + error.message)
     throw error;
   }
 };
 
 const getLikeUserHistoriesById = async (id) => {
   try {
+    logger.info("user.like.repository.js getLikeUserHistoriesById: " + id);
     const likeUserHistories = await client.query(
       `
             SELECT * 
@@ -95,13 +99,14 @@ const getLikeUserHistoriesById = async (id) => {
 
     return likeUserHistories.rows;
   } catch (error) {
-    console.log(error);
+    logger.error("user.like.repository.js getLikeUserHistoriesById: " + error.message)
     throw error;
   }
 };
 
 const updateLikeUserHistoriesById = async (id) => {
   try {
+    logger.info("user.like.repository.js updateLikeUserHistoriesById: " + id);
     await client.query(
       `
             UPDATE user_like_histories
@@ -111,13 +116,14 @@ const updateLikeUserHistoriesById = async (id) => {
       [id]
     );
   } catch (error) {
-    console.log(error);
+    logger.error("user.like.repository.js updateLikeUserHistoriesById: " + error.message)
     throw error;
   }
 };
 
 const checkUserLikeBoth = async (userId, likeUserId) => {
   try {
+    logger.info("user.like.repository.js checkUserLikeBoth: " + userId + ", " + likeUserId);
     const likeUserHistories = await client.query(
       `
             SELECT id
@@ -133,7 +139,7 @@ const checkUserLikeBoth = async (userId, likeUserId) => {
 
     return likeUserHistories.rows;
   } catch (error) {
-    console.log(error);
+    logger.info("user.like.repository.js checkUserLikeBoth: " + error.message);
     throw error;
   }
 };

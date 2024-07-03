@@ -14,6 +14,7 @@ reason : String(ENUM) 신고 사유
 //TODO: 신고 시 사용자 차단 추가
 router.post("/", verifyAllprocess, async function (req, res, next) {
   try {
+    logger.info("user.report.js POST /user/report: " + JSON.stringify(req.body));
     const { reportedUsername, reason } = req.body;
     if (!reportedUsername || !reason) {
       return res.status(400).send("reportedUsername, reason를 입력하세요.");

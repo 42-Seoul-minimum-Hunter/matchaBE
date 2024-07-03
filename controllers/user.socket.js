@@ -14,6 +14,8 @@ const userAlarmRepository = require("../repositories/user.alarm.repository");
 
 const { verifyAllprocess, verifySocket } = require("../configs/middleware");
 
+const logger = require("../configs/logger");
+
 /* 필요한 기능
 - 유저는 다음 알림들을 실시간으로 보내야 한다
     - 유저가 좋아요를 받았을때
@@ -39,6 +41,8 @@ module.exports = (server, app) => {
   // 소캣 연결
   io.on("connection", async (socket) => {
     try {
+      logger.info("user.socket.js connection: " + socket.handshake.auth.authorization);
+      //JWT 토큰 검증
       if (!socket.handshake.auth.authorization) {
         await socket.disconnect();
         return;
@@ -77,16 +81,8 @@ module.exports = (server, app) => {
       }
 
       // 유저 접속 상태
-      //await (userActivate[id] = socket.id);
-      const userActivateSize = userActivate.size;
       
-      userActivate.set(userActivateSize, socket.id);
-      //userActivate[
-      //  userActivateSize
-      //] = socket.id;
-
-      console.log("userActivate", userActivate);
-      console.log("size", userActivateSize);
+      userActivate.set(id, socket.id);
       await socket.join(socket.id);
 
       // 채팅 입장
@@ -95,6 +91,7 @@ module.exports = (server, app) => {
       // TODO: 채팅이력이 있는지 확인
       socket.on("joinChatRoom", async (data) => {
         try {
+          logger.info("user.socket.js joinChatRoom: " + data);
           var rooms = io.sockets.adapter.sids[socket.id];
           for (var room in rooms) {
             if (room !== socket.id) socket.leave(room);
@@ -167,6 +164,7 @@ module.exports = (server, app) => {
     // 채팅 받아서 저장하고, 그 채팅 보내서 보여주기
     socket.on("sendMessage", async (data) => {
       try {
+        logger.info("user.socket.js sendMessage: " + data);
         const { message, username } = data;
 
         if (!message || !username) {
@@ -214,6 +212,7 @@ module.exports = (server, app) => {
     });
 
     socket.on("onlineStatus", async (data) => {
+      logger.info("user.socket.js onlineStatus: " + data);
       try {
         const { username } = data;
 
@@ -239,6 +238,7 @@ module.exports = (server, app) => {
 
     socket.on("likeUser", async (data) => {
       try {
+        logger.info("user.socket.js likeUser: " + data);
         const { username } = data;
 
         if (!username) {
@@ -272,6 +272,7 @@ module.exports = (server, app) => {
 
     socket.on("dislikeUser", async (data) => {
       try {
+        logger.info("user.socket.js dislikeUser: " + data);
         const { username } = data;
 
         if (!username) {
@@ -290,7 +291,7 @@ module.exports = (server, app) => {
 
         if (result) {
           //연결된 유저가 좋아요를 취소했을때
-          await io.to(userActivate.get(userInfo.id)).emit("alarm", {
+          await io.to(userAwctivate.get(userInfo.id)).emit("alarm", {
             alarmType: "DISLIKED",
             username,
           });
@@ -303,6 +304,7 @@ module.exports = (server, app) => {
 
     socket.on("visitUserProfile", async (data) => {
       try {
+        logger.info("user.socket.js visitUserProfile: " + data)
         const { username } = data;
 
         if (!username) {
@@ -329,7 +331,7 @@ module.exports = (server, app) => {
 
     socket.on("getAlarms", async () => {
       try {
-        console.log("getAlarms");
+        logger.info("user.socket.js getAlarms")
 
         const alarms = await userAlarmService.findAllAlarmsById(id);
         await userAlarmService.deleteAllAlarmsById(id);
@@ -355,7 +357,13 @@ module.exports = (server, app) => {
 
     socket.on("disconnect", async () => {
       try {
-        console.log("소켓 연결 해제됨", socket.id);
+        logger.info("user.socket.js disconnect: " + socket.handshake.auth.authorization)
+
+        //이 코드는 현재 클라이언트 소켓이 참여하고 있는 모든 방(room)에서 해당 소켓을 제외시키는 역할을 합니다.
+        var rooms = io.sockets.adapter.sids[socket.id];
+        for (var room in rooms) {
+          socket.leave(room);
+        }
 
         // 유저 접속 상태
         const userKey = Object.keys(userActivate).find(
@@ -365,23 +373,8 @@ module.exports = (server, app) => {
         console.log("userKey", userKey);
         if (userKey) {
           userActivate.delete(userKey);
-          //delete userActivate[userKey];
         } else {
           console.log(`Could not find user key for socket ${socket.id}`);
-        }
-        delete userActivate[id];
-
-        ////이 코드는 현재 클라이언트 소켓이 참여하고 있는 모든 방(room)에서 해당 소켓을 제외시키는 역할을 합니다.
-        //var rooms = io.sockets.adapter.sids[socket.id];
-        //for (var room in rooms) {
-        //  socket.leave(room);
-        //}
-        console.log("success leave room ${socket.id}");
-
-        for (const room of socket.rooms) {
-          if (room !== socket.id) {
-            await socket.leave(room);
-          }
         }
       } catch (error) {
         console.log(error);

@@ -1,6 +1,6 @@
 const { Client } = require("pg");
 const fs = require("fs");
-const path = require("path");
+const logger = require("../configs/logger.js");
 
 require("dotenv").config();
 
@@ -16,6 +16,7 @@ client.connect();
 
 const createUser = async (UserCreateDto) => {
   try {
+    logger.info("user.repository.js createUser: " + UserCreateDto);
     const {
       email,
       username,
@@ -68,7 +69,7 @@ const createUser = async (UserCreateDto) => {
 
     return result.rows[0].id;
   } catch (error) {
-    console.log(error);
+    logger.error("user.repository.js createUser: " + error);
     throw error;
   }
 };
@@ -76,6 +77,7 @@ const createUser = async (UserCreateDto) => {
 const deleteUserById = async (id) => {
   try {
     // 유저 삭제 처리
+    logger = logger.info("user.repository.js deleteUserById: " + id);
     await client.query(
       `UPDATE users 
              SET deleted_at = now(), updated_at = now()
@@ -83,13 +85,14 @@ const deleteUserById = async (id) => {
       [id]
     );
   } catch (error) {
-    console.log(error);
+    logger.error("user.repository.js deleteUserById: " + error);
     throw error;
   }
 };
 
 const changePassword = async (hashedPassword, email) => {
   try {
+    logger.info("user.repository.js changePassword: " + hashedPassword + ", " + email);
     await client.query(
       `UPDATE users
              SET password = $1, updated_at = now()
@@ -97,7 +100,7 @@ const changePassword = async (hashedPassword, email) => {
       [hashedPassword, email]
     );
   } catch (error) {
-    console.log(error);
+    logger.error("user.repository.js changePassword: " + error);
     throw error;
   }
 };
@@ -111,7 +114,7 @@ const findUserByDefaultFilter = async (
   pageSize
 ) => {
   try {
-    console.log(preference, si, gu, hashtags, page, pageSize);
+    logger.info("user.repository.js findUserByDefaultFilter: " + preference + ", " + si + ", " + gu + ", " + hashtags + ", " + page + ", " + pageSize);
 
     // 유저의 성향에 따른 쿼리 조건 설정
     let genderCondition;
@@ -152,7 +155,6 @@ const findUserByDefaultFilter = async (
       (page - 1) * pageSize,
     ]);
 
-    console.log(preferenceUsers.rows);
 
     // Calculate the total count
     const totalCountQuery = `
@@ -218,8 +220,6 @@ const findUserByDefaultFilter = async (
             hashtags.includes(value)
           ).length;
 
-          console.log(commonHashtags);
-
           return {
             username: userInfo.username,
             age: userInfo.age,
@@ -235,14 +235,14 @@ const findUserByDefaultFilter = async (
       totalCount: totalCount,
     };
   } catch (error) {
-    console.log(error);
+    logger.error("user.repository.js findUserByDefaultFilter: " + error);
     throw error;
   }
 };
 
 const findUserByFilter = async (filter, page, pageSize) => {
   try {
-    //console.log(filter)
+    logger.info("user.repository.js findUserByFilter: " + filter + ", " + page + ", " + pageSize);
 
     const { hashtags, minAge, maxAge, si, gu } = filter;
 
@@ -348,13 +348,14 @@ const findUserByFilter = async (filter, page, pageSize) => {
 
     //return UserInfo;
   } catch (error) {
-    console.log(error);
+    logger.error("user.repository.js findUserByFilter: " + error);
     throw error;
   }
 };
 
 const findUserByUsername = async (username) => {
   try {
+    logger.info("user.repository.js findUserByUsername: " + username);
     const { rows } = await client.query(
       "SELECT * FROM users WHERE username = $1 AND deleted_at IS NULL",
       [username]
@@ -365,13 +366,14 @@ const findUserByUsername = async (username) => {
 
     return rows[0];
   } catch (error) {
-    console.log(error);
+    logger.error("user.repository.js findUserByUsername: " + error);
     throw error;
   }
 };
 
 const findUserByEmail = async (email) => {
   try {
+    logger.info("user.repository.js findUserByEmail: " + email);
     const { rows } = await client.query(
       `SELECT * FROM users WHERE email = $1 AND deleted_at IS NULL`,
       [email]
@@ -383,13 +385,14 @@ const findUserByEmail = async (email) => {
 
     return rows[0];
   } catch (error) {
-    console.log(error);
+    logger.error("user.repository.js findUserByEmail: " + error)
     throw error;
   }
 };
 
 const findUserById = async (id) => {
   try {
+    logger.info("user.repository.js findUserById: " + id);
     const { rows } = await client.query(
       `SELECT * FROM users WHERE id = $1 AND deleted_at IS NULL`,
       [id]
@@ -407,6 +410,7 @@ const findUserById = async (id) => {
 
 const updateUserById = async (UserUpdateDto, id) => {
   try {
+    logger.info("user.repository.js updateUserById: " + UserUpdateDto + ", " + id);
     const {
       email,
       password,
@@ -455,6 +459,7 @@ const updateUserById = async (UserUpdateDto, id) => {
 
 const updateUserValidByEmail = async (email) => {
   try {
+    logger.info("user.repository.js updateUserValidByEmail: " + email);
     await client.query(
       `UPDATE users
              SET is_valid = true, updated_at = now()

@@ -1,6 +1,7 @@
 const { Client } = require("pg");
 const fs = require("fs");
 const path = require("path");
+const logger = require("../configs/logger.js");
 
 require("dotenv").config();
 
@@ -16,6 +17,7 @@ client.connect();
 
 const addBlockUser = async (blockedUserId, userId) => {
   try {
+    logger.info("user.block.repository.js addBlockUser: " + blockedUserId + ", " + userId);
     const existingBlockHistory = await client.query(
       `
             SELECT * 
@@ -46,13 +48,14 @@ const addBlockUser = async (blockedUserId, userId) => {
       [userId, blockedUserId]
     );
   } catch (error) {
-    console.log(error);
+    logger.error("user.block.repository.js addBlockUser: " + error.message)
     throw error;
   }
 };
 
 const deleteBlockUser = async (blockedUserId, userId) => {
   try {
+    logger.info("user.block.repository.js deleteBlockUser: " + blockedUserId + ", " + userId)
     const existingBlockHistory = await client.query(
       `
             SELECT * 
@@ -77,13 +80,14 @@ const deleteBlockUser = async (blockedUserId, userId) => {
       [userId, blockedUserId]
     );
   } catch (error) {
-    console.log(error);
+    logger.error("user.block.repository.js deleteBlockUser: " + error.message)
     throw error;
   }
 };
 
 const filterBlockedUser = async (userId, userInfos) => {
   try {
+    logger.info("user.block.repository.js filterBlockedUser: " + userId + ", " + userInfos)
     const blockedUserInfos = await client.query(
       "SELECT blocked_id FROM user_block_histories WHERE user_id = $1",
       [userId]
@@ -92,13 +96,14 @@ const filterBlockedUser = async (userId, userInfos) => {
 
     return userInfos.filter((userInfo) => !blockedIds.includes(userInfo.id));
   } catch (error) {
-    console.log(error);
+    logger.error("user.block.repository.js filterBlockedUser: " + error.message)
     throw error;
   }
 };
 
 const getBlockRelationByid = async (userId, blockedUserId) => {
   try {
+    logger.info("user.block.repository.js getBlockRelationByid: " + userId + ", " + blockedUserId)
     const blockRelation = await client.query(
       `
             SELECT * 
@@ -110,7 +115,7 @@ const getBlockRelationByid = async (userId, blockedUserId) => {
 
     return blockRelation.rows[0];
   } catch (error) {
-    console.log(error);
+    logger.error("user.block.repository.js getBlockRelationByid: " + error.message)
     throw error;
   }
 };

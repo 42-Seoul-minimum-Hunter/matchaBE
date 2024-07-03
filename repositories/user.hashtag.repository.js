@@ -1,6 +1,7 @@
 const { Client } = require("pg");
 const fs = require("fs");
 const path = require("path");
+const logger = require("../configs/logger.js");
 
 require("dotenv").config();
 
@@ -16,6 +17,7 @@ client.connect();
 
 const findHashtagById = async (id) => {
   try {
+    logger.info("user.hashtag.repository.js findHashtagById: " + id);
     const hashtagInfo = await client.query(
       "SELECT hashtags FROM user_hashtags WHERE user_id = $1",
       [id]
@@ -29,6 +31,7 @@ const findHashtagById = async (id) => {
 
 const updateHashtagById = async (hashtags, userId) => {
   try {
+    logger.info("user.hashtag.repository.js updateHashtagById: " + hashtags + ", " + userId);
     await client.query(
       "UPDATE user_hashtags SET hashtags = $1 WHERE user_id = $2",
       [hashtags, userId]
@@ -41,6 +44,7 @@ const updateHashtagById = async (hashtags, userId) => {
 
 const saveHashtagById = async (hashtags, id) => {
   try {
+    logger.info("user.hashtag.repository.js saveHashtagById: " + hashtags + ", " + id)
     await client.query(
       `INSERT INTO user_hashtags (
                 user_id,

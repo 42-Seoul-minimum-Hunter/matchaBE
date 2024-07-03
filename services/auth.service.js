@@ -7,6 +7,7 @@ const { totp } = require("otplib");
 const moment = require("moment-timezone");
 const axios = require("axios");
 const bcypt = require("bcrypt");
+const logger = require("../configs/logger.js");
 
 const registerationCode = new Map();
 const twoFactorCode = new Map();
@@ -14,6 +15,7 @@ const resetPasswordCode = new Map();
 
 const loginByUsernameAndPassword = async (username, password) => {
   try {
+    logger.info("auth.service.js loginByUsernameAndPassword: " + username + ", " + password); 
     const userInfo = await userRepository.findUserByUsername(username);
 
     if (!userInfo) {
@@ -34,38 +36,35 @@ const loginByUsernameAndPassword = async (username, password) => {
 
     return userInfo;
   } catch (error) {
-    console.log(error);
+    logger.error("auth.service.js loginByUsernameAndPassword: " + error.message);
     throw error;
   }
 };
 
 const getOauthInfo = async (code) => {
   try {
+    logger.info("auth.service.js getOauthInfo: " + code)
     const accessToken = await getAccessTokens(code);
     const oauthInfo = await getOAuthInfo(accessToken);
     var user = await userRepository.findUserByEmail(oauthInfo.email);
-
-    //console.log(user);
-    //console.log(oauthInfo);
 
     if (!user) {
       return { user: null, oauthInfo };
     } else {
       const profileImageInfo =
         await userProfileImageRepository.findProfileImagesById(user.id);
-      console.log(profileImageInfo);
       user.profileImage = profileImageInfo[0][0];
-      console.log(user);
       return { user: user, oauthInfo: oauthInfo };
     }
   } catch (error) {
-    console.log(error);
+    logger.error("auth.service.js getOauthInfo: " + error.message);
     throw error;
   }
 };
 
 const createTwofactorCode = async (email) => {
   try {
+    logger.info("auth.service.js createTwofactorCode: " + email);
     const code = totp.generate(process.env.TWOFACTOR_SECRET);
 
     // 이메일 내용 구성
@@ -89,20 +88,20 @@ const createTwofactorCode = async (email) => {
     twoFactorCode.set(code, expirationDate);
     // twoFactorCode[code] = expirationDate;
   } catch (error) {
-    console.log(error);
+    logger.error("auth.service.js createTwofactorCode: " + error.message);
     throw error;
   }
 };
 
 const verifyTwoFactorCode = (code) => {
   try {
+    logger.info("auth.service.js verifyTwoFactorCode: " + code);
     const secret = process.env.TWOFACTOR_SECRET;
-    // const expirationDate = twoFactorCode[code];
     const expirationDate = twoFactorCode.get(code);
+
     if (!expirationDate) {
       return false;
     } else if (expirationDate < new Date()) {
-      // delete twoFactorCode[code];
       twoFactorCode.delete(code);
       return false;
     } else if (totp.verify({ secret, code })) {
@@ -110,13 +109,14 @@ const verifyTwoFactorCode = (code) => {
       return true;
     }
   } catch (error) {
-    console.log(error);
+    logger.error("auth.service.js verifyTwoFactorCode: " + error.message);
     throw error;
   }
 };
 
 const createRegistURL = async (email) => {
   try {
+    logger.info("auth.service.js createRegistURL: " + email)
     const code = crypto.randomBytes(20).toString("hex");
     const userTimezone = "Asia/Seoul"; // 사용자의 시간대
     const expirationDate = moment().tz(userTimezone).add(5, "minutes").toDate(); // 5분 후 만료
@@ -136,39 +136,37 @@ const createRegistURL = async (email) => {
       text: emailContent,
     });
 
-    // registerationCode[code] = { expirationDate, email };
     registerationCode.set(code, { expirationDate, email });
   } catch (error) {
-    console.log(error);
+    logger.error("auth.service.js createRegistURL: " + error.message);
     throw error;
   }
 };
 
 const verifyRegistURL = async (code) => {
   try {
-    // const { expirationDate, email } = registerationCode[code];
+    logger.info("auth.service.js verifyRegistURL: " + code)
     const { expirationDate, email } = registerationCode.get(code);
     if (!expirationDate) {
       return false;
     } else if (expirationDate < new Date()) {
-      // delete registerationCode[code];
       registerationCode.delete(code);
       return false;
     } else {
-      // delete registerationCode[code];
       registerationCode.delete(code);
       await userRepository.updateUserValidByEmail(email);
       const userInfo = await userRepository.findUserByEmail(email);
       return userInfo;
     }
   } catch (error) {
-    console.log(error);
+    logger.error("auth.service.js verifyRegistURL: " + error.message);
     throw error;
   }
 };
 
 const createResetPasswordURL = async (email) => {
   try {
+    logger.info("auth.service.js createResetPasswordURL: " + email)
     const userInfo = await userRepository.findUserByEmail(email);
 
     if (!userInfo) {
@@ -210,28 +208,26 @@ const createResetPasswordURL = async (email) => {
 
     return resetPasswordInfo;
   } catch (error) {
-    console.log(error);
+    logger.error("auth.service.js createResetPasswordURL: " + error.message);
     throw error;
   }
 };
 
 const verifyResetPasswordURL = (code) => {
   try {
-    // const expirationDate = resetPasswordCode[code];
+    logger.info("auth.service.js verifyResetPasswordURL: " + code)
     const expirationDate = resetPasswordCode.get(code);
     if (!expirationDate) {
       return false;
     } else if (expirationDate < new Date()) {
-      // delete resetPasswordCode[code];
       resetPasswordCode.delete(code);
       return false;
     } else {
-      // delete resetPasswordCode[code];
       resetPasswordCode.delete(code);
       return true;
     }
   } catch (error) {
-    console.log(error);
+    logger.error("auth.service.js verifyResetPasswordURL: " + error.message);
     throw error;
   }
 };
@@ -250,6 +246,7 @@ const generateJWT = (obj) => {
 
 const getAccessTokens = async (code) => {
   try {
+    logger.info("auth.service.js getAccessTokens: " + code)
     const data = {
       grant_type: "authorization_code",
       client_id: process.env.OAUTH_CLIENT_ID,
@@ -271,13 +268,14 @@ const getAccessTokens = async (code) => {
     }
     return response.data.access_token;
   } catch (error) {
-    console.log(error);
+    logger.error("auth.service.js getAccessTokens: " + error.message);
     throw error;
   }
 };
 
 const getOAuthInfo = async (accessToken) => {
   try {
+    logger.info("auth.service.js getOAuthInfo: " + accessToken);
     const response = await axios.get(process.env.OAUTH_USER_URI, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -301,7 +299,7 @@ const getOAuthInfo = async (accessToken) => {
 
     return oauthInfo;
   } catch (error) {
-    console.log(error);
+    logger.error("auth.service.js getOAuthInfo: " + error.message);
     throw error;
   }
 };

@@ -11,6 +11,7 @@ blockUsername : String 차단 대상사용자 닉네임
 //TODO: verifyAllprocess 미들웨어 추가
 router.post("/", verifyAllprocess, async function (req, res, next) {
   try {
+    console.log("user.block.js POST /user/block");
     const blockUsername = req.body.blockUsername;
     if (!blockUsername) {
       return res.status(400).send("blockUsername을 입력하세요.");
@@ -30,6 +31,7 @@ blockUsername : String 차단 대상사용자 닉네임
 //TODO: verifyAllprocess 미들웨어 추가
 router.delete("/", verifyAllprocess, async function (req, res, next) {
   try {
+    logger.info("user.block.js DELETE /user/block")
     const blockUsername = req.body.blockUsername;
     if (!blockUsername) {
       return res.status(400).send("blockUsername을 입력하세요.");

@@ -1,4 +1,5 @@
 const bcrypt = require("bcrypt");
+const logger = require("../configs/logger.js");
 
 const userRepository = require("../repositories/user.repository");
 const userHashtagRepository = require("../repositories/user.hashtag.repository");
@@ -13,7 +14,7 @@ const userRateRepository = require("../repositories/user.rate.repository");
 //https://jinyisland.kr/post/middleware/
 const createUser = async (UserCreateDto) => {
   try {
-    console.log("user.service.createUser");
+    logger.info("user.service.js createUser: " + JSON.stringify(UserCreateDto))
     const hashed = await bcrypt.hash(UserCreateDto.password, 10);
     UserCreateDto.password = hashed;
 
@@ -50,37 +51,39 @@ const createUser = async (UserCreateDto) => {
 
     return userId;
   } catch (error) {
-    console.log(error);
+    info.error("user.service.js createUser: " + error.message)
     throw error;
   }
 };
 
 const unregister = async (id) => {
   try {
+    logger.info("user.service.js unregister: " + id)
     await userRepository.deleteUserById(id);
   } catch (error) {
-        console.log(error);
+    logger.error("user.service.js unregister: " + error.message)
     throw error;
   }
 };
 
 const changePassword = async (password, email) => {
   try {
+    logger.info("user.service.js changePassword: " + email)
     const hashed = await bcrypt.hash(password, 10);
 
     await userRepository.changePassword(hashed, email);
   } catch (error) {
-        console.log(error);
+    logger.error("user.service.js changePassword: " + error.message)
     throw error;
   }
 };
 
 const findUserByFilter = async (id, filter, page, pageSize) => {
   try {
-    //console.log(id, filter, page, pageSize)
+
+    logger.info("user.service.js findUserByFilter: " + id + ", " + JSON.stringify(filter) + ", " + page + ", " + pageSize)
 
     const isFilterNull = Object.values(filter).every((value) => !value);
-    //console.log(isFilterNull)
     
     let users, totalCount, filteredByBlock, filteredInfo;
     if (isFilterNull === true) {
@@ -110,35 +113,27 @@ const findUserByFilter = async (id, filter, page, pageSize) => {
       totalCount: totalCount,
     };
   } catch (error) {
-    console.log(error)
-    throw error;
-  }
-};
-
-const checkRightRegion = async (si, gu) => {
-  try {
-    switch (si) {
-    }
-  } catch (error) {
-        console.log(error);
+    logger.error("user.service.js findUserByFilter: " + error.message)
     throw error;
   }
 };
 
 const findOneUserByUsername = async (username) => {
   try {
+    logger.info("user.service.js findOneUserByUsername: " + username)
     return await userRepository.findUserByUsername(username);
   } catch (error) {
-        console.log(error);
+    logger.error("user.service.js findOneUserByUsername: " + error.message)
     throw error;
   }
 };
 
 const findOneUserById = async (id) => {
   try {
+    logger.info("user.service.js findOneUserById: " + id)
     return await userRepository.findUserById(id);
   } catch (error) {
-        console.log(error);
+    logger.error("user.service.js findOneUserById: " + error.message)
     throw error;
   }
 };

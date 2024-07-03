@@ -1,7 +1,9 @@
 const userRateRepository = require("../repositories/user.rate.repository");
+const logger = require("../configs/logger");
 
 const rateUser = async (ratedUsername, rateScore, userId) => {
   try {
+    logger.info("user.rate.service.js rateUser: " + ratedUsername + ", " + rateScore + ", " + userId)
     const ratedUserInfo = await userRateRepository.findUserByUsername(
       ratedUsername
     );
@@ -12,7 +14,7 @@ const rateUser = async (ratedUsername, rateScore, userId) => {
     }
     await userRateRepository.rateUser(ratedUserInfo.id, rateScore, userId);
   } catch (error) {
-        console.log(error);
+    logger.error("user.rate.service.js rateUser: " + error.message);
     throw error;
   }
 };

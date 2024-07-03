@@ -3,12 +3,12 @@ const userRepository = require("../repositories/user.repository");
 const userLikeRepository = require("../repositories/user.like.repository");
 const userProfileImageRepository = require("../repositories/user.profileImage.repository");
 
+const logger = require("../configs/logger");
+
 const getChatInfo = async (userId) => {
   try {
+    logger.info("user.chat.service.js getChatInfo: " + userId);
     const chatRoomInfos = await userChatRepository.getChatInfo(userId);
-
-    console.log("chatRoomInfos", chatRoomInfos);
-
     if (!chatRoomInfos) {
       return null;
     }
@@ -16,18 +16,12 @@ const getChatInfo = async (userId) => {
     let AllChatRoomInfos = [];
 
     for (const chat of chatRoomInfos) {
-      console.log("chat", chat);
       const recentChat = await userChatRepository.getRecentChat(chat.id);
-      console.log("recentChat", recentChat);
-      console.log("userId", userId);
       const otherUserId =
         chat.user_id !== userId ? chat.user_id : chat.chated_id;
-      console.log("otherUserId", otherUserId);
-      const userInfo = await userRepository.findUserById(otherUserId);
-      console.log("userInfo", userInfo);
-      const userProfileImage =
+        const userInfo = await userRepository.findUserById(otherUserId);
+        const userProfileImage =
         await userProfileImageRepository.findProfileImagesById(otherUserId);
-      console.log("userProfileImage", userProfileImage);
       let userChatInfo;
       if (recentChat) {
         userChatInfo = {
@@ -49,24 +43,26 @@ const getChatInfo = async (userId) => {
     }
     return AllChatRoomInfos;
   } catch (error) {
-        console.log(error);
+    logger.error("user.chat.service.js getChatInfo: " + error.message);
     throw error;
   }
 };
 
 const findAllChatHistoriesByRoomId = async (roomId) => {
   try {
+    logger.info("user.chat.service.js findAllChatHistoriesByRoomId: " + roomId);
     const chatHistories = await userChatRepository.getChatHistoriesById(roomId);
 
     return chatHistories;
   } catch (error) {
-    console.log(error);
+    logger.error("user.chat.service.js findAllChatHistoriesByRoomId: " + error.message);
     throw error;
   }
 };
 
 const findOneChatRoomById = async (userId, chatedId) => {
   try {
+    logger.info("user.chat.service.js findOneChatRoomById: " + userId + ", " + chatedId);
     const chatRoom = await userChatRepository.findOneChatRoomById(
       userId,
       chatedId
@@ -74,16 +70,17 @@ const findOneChatRoomById = async (userId, chatedId) => {
     
     return chatRoom;
   } catch (error) {
-    console.log(error);
+    logger.error("user.chat.service.js findOneChatRoomById: " + error.message);
     throw error;
   }
 };
 
 const saveSendedChatById = async (roomId, senderId, content) => {
   try {
+    logger.info("user.chat.service.js saveSendedChatById: " + roomId + ", " + senderId + ", " + content);
     return await userChatRepository.saveSendedChatById(roomId, senderId, content);
   } catch (error) {
-    console.log(error);
+    logger.error("user.chat.service.js saveSendedChatById: " + error.message);
     throw error;
   }
 }

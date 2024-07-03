@@ -1,6 +1,8 @@
 const jwt = require("jsonwebtoken");
+const logger = require("./logger.js");
 
 function verifyJWTToken(req, res, next) {
+  logger.info("middleware verifyJWTToken")
   if (!req.headers.authorization) {
     return res.status(401).send("No token provided.");
   }
@@ -19,12 +21,13 @@ function verifyJWTToken(req, res, next) {
     next(); // 다음 미들웨어로 진행합니다.
   } catch (error) {
     // 토큰 검증에 실패한 경우 401 Unauthorized 응답을 보냅니다.
+    logger.error("middleware verifyJWTToken error")
     return res.status(401).send("Failed to authenticate token.");
   }
 }
 
 function verifyTwoFA(req, res, next) {
-  console.log("hello");
+  logger.info("middleware verifyTwoFA")
   // 1. 요청 헤더에서 토큰을 가져옵니다.
   if (!req.headers.authorization) {
     return res.status(401).send("No token provided.");
@@ -52,11 +55,13 @@ function verifyTwoFA(req, res, next) {
     next(); // 다음 미들웨어로 진행합니다.
   } catch (error) {
     // 토큰 검증에 실패한 경우 401 Unauthorized 응답을 보냅니다.
+    logger.error("middleware verifyTwoFA error")
     return res.status(401).send("Failed to authenticate token.");
   }
 }
 
 function verifyValid(req, res, next) {
+  console.log("middleware verifyValid");
   if (!req.headers.authorization) {
     return res.status(401).send("No token provided.");
   }
@@ -80,11 +85,13 @@ function verifyValid(req, res, next) {
     next(); // 다음 미들웨어로 진행합니다.
   } catch (error) {
     // 토큰 검증에 실패한 경우 401 Unauthorized 응답을 보냅니다.
+    logger.error("middleware verifyValid error")
     return res.status(401).send("Failed to authenticate token.");
   }
 }
 
 function verifyAllprocess(req, res, next) {
+  logger.info("middleware verifyAllprocess")
   if (!req.headers.authorization) {
     return res.status(401).send("No token provided.");
   }
@@ -110,16 +117,16 @@ function verifyAllprocess(req, res, next) {
     next(); // 다음 미들웨어로 진행합니다.
   } catch (error) {
     // 토큰 검증에 실패한 경우 401 Unauthorized 응답을 보냅니다.
+    logger.error("middleware verifyAllprocess error")
     return res.status(401).send("Failed to authenticate token.");
   }
 }
 
 function checkOauthLogin(req, res, next) {
   try {
-    console.log(req.headers);
+    logger.info("middleware checkOauthLogin")
     if (!req.headers.authorization) {
       req.jwtInfo = undefined;
-      console.log("No token provided");
       next();
     }
 
@@ -134,11 +141,15 @@ function checkOauthLogin(req, res, next) {
 
     console.log(req.jwtInfo);
     next();
-  } catch (error) {}
+  } catch (error) {
+    logger.error("middleware checkOauthLogin error")
+    return res.status(400).send("Bad Access");
+  }
 }
 
 function verifyResetPassword(req, res, next) {
   try {
+    logger.info("middleware verifyResetPassword")
     if (!req.headers.authorization) {
       return res.status(401).send("No token provided.");
     }
@@ -158,11 +169,15 @@ function verifyResetPassword(req, res, next) {
 
     req.jwtInfo = decoded;
     next();
-  } catch (error) {}
+  } catch (error) {
+    logger.error("middleware verifyResetPassword error")
+    return res.status(400).send("Bad Access");
+  }
 }
 
 function verifyChangePassword(req, res, next) {
   try {
+    logger.info("middleware verifyChangePassword")
     if (!req.headers.authorization) {
       return res.status(401).send("No token provided.");
     }
@@ -180,13 +195,15 @@ function verifyChangePassword(req, res, next) {
 
     req.resetPasswordJwt = decoded;
     next();
-  } catch (error) {}
+  } catch (error) {
+    logger.error("middleware verifyChangePassword error")
+    return res.status(400).send("Bad Access");
+  }
 }
 
 function verifySocket(socket) {
   try {
-    console.log(socket.handshake.auth.authorization);
-    //console.log(socket.handshake.auth.authorizationn);
+    logger.info("middleware verifySocket")
     if (!socket.handshake.auth.authorization) {
       return res.status(400).send("Bad Access");
     }
@@ -206,7 +223,7 @@ function verifySocket(socket) {
 
     socket.jwtInfo = decoded;
   } catch (error) {
-    console.log(error);
+    logger.error("middleware verifySocket error")
     throw error;
   }
 }

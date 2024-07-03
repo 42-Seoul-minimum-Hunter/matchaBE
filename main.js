@@ -53,11 +53,13 @@ const authRouter = require("./controllers/auth.js");
 const userChatRouter = require("./controllers/user.chat.js");
 
 const socketRouter = require("./controllers/user.socket.js");
+const logger = require('./configs/logger.js');
+
 
 socketRouter(server, app);
 
 app.use(express.json());
-app.use(morgan("combined"));
+//app.use(morgan("combined"));
 
 app.set("socket.io", io);
 app.use("/user", userRouter);
@@ -73,6 +75,8 @@ app.use((err, req, res, next) => {
   const status = err.status || 500;
   res.status(status).send(err.message);
 });
+
+app.use(morgan("combined", {stream : logger.stream})); // morgan 로그 설정 
 
 // 서버 실행
 app.listen(port, async () => {

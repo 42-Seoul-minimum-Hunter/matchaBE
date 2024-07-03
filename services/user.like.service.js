@@ -3,8 +3,11 @@ const userChatRepository = require("../repositories/user.chat.repository");
 const userRepository = require("../repositories/user.repository");
 const userAlarmRepository = require("../repositories/user.alarm.repository");
 
+const logger = require("../configs/logger");
+
 const likeUserByUsername = async (likedUsername, userId) => {
   try {
+    logger.info("user.like.service.js likeUserByUsername: " + likedUsername + ", " + userId)
     const likedUserInfo = await userRepository.findUserByUsername(
       likedUsername
     );
@@ -25,13 +28,14 @@ const likeUserByUsername = async (likedUsername, userId) => {
       return false;
     }
   } catch (error) {
-        console.log(error);
+    logger.error("user.like.service.js likeUserByUsername: " + error.message);
     throw error;
   }
 };
 
 const dislikeUserByUsername = async (likedUsername, userId) => {
   try {
+    logger.info("user.like.service.js dislikeUserByUsername: " + likedUsername + ", " + userId)
     const likedUserInfo = await userRepository.findUserByUsername(
       likedUsername
     );
@@ -49,13 +53,14 @@ const dislikeUserByUsername = async (likedUsername, userId) => {
       return false;
     }
   } catch (error) {
-        console.log(error);
+    logger.error("user.like.service.js dislikeUserByUsername: " + error.message);
     throw error;
   }
 };
 
 const validateLike = async (userId, username) => {
   try {
+    logger.info("user.like.service.js validateLike: " + userId + ", " + username)
     const userInfo = await userRepository.findUserByUsername(username);
 
     if (!userInfo) {
@@ -77,7 +82,7 @@ const validateLike = async (userId, username) => {
       return null;
     }
   } catch (error) {
-    console.log(error);
+    logger.error("user.like.service.js validateLike: " + error.message);
     throw error;
   }
 };

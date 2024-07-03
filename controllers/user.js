@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const morgan = require("morgan");
+const logger = require("../configs/logger.js");
 
 const { UserGender } = require("../enums/user.gender.enum.js");
 const { UserPreference } = require("../enums/user.preference.enum.js");
@@ -29,12 +29,6 @@ const {
 const userSerivce = require("../services/user.service.js");
 const authService = require("../services/auth.service.js");
 
-morgan("combined", {
-  skip: function (request, response) {
-    return response.statusCode < 400;
-  },
-});
-
 /* POST /user/create
 email : String 사용자 이메일
 username : String 사용자 닉네임
@@ -62,8 +56,9 @@ profileImages : String 사용자 프로필 이미지 => BASE64로 반환 예정
 //gender, preference, hashtags enum
 
 //TODO: 2차원으로 profileImage 저장하는 거 해결
-router.post("/create", checkOauthLogin, async function (req, res, next) {
+router.post("/create", async function (req, res, next) {
   try {
+    logger.info("user.js POST /user/create: " + JSON.stringify(user))
     const user = {
       email: req.body.email || undefined,
       username: req.body.username || undefined,
@@ -80,8 +75,6 @@ router.post("/create", checkOauthLogin, async function (req, res, next) {
       gu: req.body.gu || undefined,
       profileImages: req.body.profileImages || undefined,
     };
-
-    console.log(user);
 
     const requiredFields = [
       "email",
@@ -173,7 +166,6 @@ router.post("/create", checkOauthLogin, async function (req, res, next) {
       });
     }
 
-    console.log(jwtToken);
     //res.cookie("jwt", jwtToken, {
     //  sameSite: "none",
     //  secure: true,
@@ -183,8 +175,6 @@ router.post("/create", checkOauthLogin, async function (req, res, next) {
     res.cookie("jwt", jwtToken, {
       //sameSite: "none", // 크로스 사이트 요청 위험을 방지하기 위해 설정
     });
-
-    console.log(res.cookie);
 
     res.set("Authorization", `Bearer ${jwtToken}`);
     return res.send(user);
@@ -199,6 +189,8 @@ router.post("/create", checkOauthLogin, async function (req, res, next) {
 //TODO: jwt 토큰 확인 추가
 router.delete("/unregister", verifyAllprocess, async function (req, res, next) {
   try {
+    //console.log("user.js DELETE /user/unregister");
+    logger.info("user.js DELETE /user/unregister")
     await userSerivce.unregister(req.jwtInfo.id);
     res.clearCookie("jwt");
     return res.send();
@@ -216,6 +208,8 @@ router.post(
   verifyChangePassword,
   async function (req, res, next) {
     try {
+      //console.log("user.js POST /user/change/password");
+      logger.info("user.js POST /user/change/password: " + JSON.stringify(req.body))
       let password = req.body.password;
       const { email, expirationDate } = req.jwtInfo.email;
 
@@ -251,6 +245,8 @@ gu : String 사용자 구
 //TODO: gu 기준으로 정렬, si 기준으로 정렬 추가
 router.get("/find", verifyAllprocess, async function (req, res, next) {
   try {
+    //console.log("user.js GET /user/find: " + req.query);
+    logger.info("user.js GET /user/find: " + JSON.stringify(req.query))
     let {
       hashtags,
       minAge,
@@ -308,6 +304,7 @@ router.get("/find", verifyAllprocess, async function (req, res, next) {
 //TODO: isGpsAllowed 확인 상관없이 위치 확인
 router.get("/search/region", function (req, res, next) {
   try {
+    logger.info("user.js GET /user/search/region")
     let region = userSerivce.getRegion(req.jwtInfo.id);
     return res.send(region);
   } catch (error) {

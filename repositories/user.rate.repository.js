@@ -1,6 +1,7 @@
 const { Client } = require('pg');
 const fs = require('fs');
 const path = require('path');
+const logger = require('../configs/logger.js');
 
 require('dotenv').config();
 
@@ -17,6 +18,7 @@ client.connect();
 
 const rateUser = async (ratedUserId, rateScore, userId) => {
     try {
+        logger.info('user.rate.repository.js rateUser: ' + ratedUserId + ', ' + rateScore + ', ' + userId);
         // 기존 데이터 확인
         const existingRatingResult = await client.query(`
             SELECT * 
@@ -41,13 +43,14 @@ const rateUser = async (ratedUserId, rateScore, userId) => {
             `, [rateScore, userId, ratedUserId]);
         }
     } catch (error) {
-        console.log(error);
+        logger.error('user.rate.repository.js rateUser: ' + error.message);
         throw error;
     }
 };
 
 const findRateInfoById = async (id) => {
     try {
+        logger.info('user.rate.repository.js findRateInfoById: ' + id);
         const ratingInfo = await client.query('SELECT * FROM user_ratings WHERE rated_id = $1', [id]);
 
         if (ratingInfo.rows.length === 0) {
@@ -57,7 +60,7 @@ const findRateInfoById = async (id) => {
         return ratingInfo.rows;
 
     } catch (error) {
-        console.log(error);
+        logger.error('user.rate.repository.js findRateInfoById: ' + error.message);
         throw error;
     }
 }

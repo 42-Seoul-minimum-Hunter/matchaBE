@@ -2,6 +2,8 @@ const { Client } = require("pg");
 const fs = require("fs");
 const path = require("path");
 
+const logger = require("../configs/logger.js");
+
 require("dotenv").config();
 
 const client = new Client({
@@ -16,6 +18,7 @@ client.connect();
 
 const saveAlarmById = async (userId, alarmedId, alarmType) => {
     try {
+        logger.info("user.alarm.repository.js saveAlarmById: " + userId + ", " + alarmedId + ", " + alarmType)
         await client.query(
             `
             INSERT INTO user_alarm_histories
@@ -32,6 +35,7 @@ const saveAlarmById = async (userId, alarmedId, alarmType) => {
 
 const findAllAlarmsById = async (id) => {
     try {
+        logger.info("user.alarm.repository.js findAllAlarmsById: " + id)
         const result = await client.query(
             `
             SELECT * FROM user_alarm_histories
@@ -49,6 +53,7 @@ const findAllAlarmsById = async (id) => {
 
 const deleteAllAlarmsById = async (id) => {
     try {
+        logger.info("user.alarm.repository.js deleteAllAlarmsById: " + id)
         await client.query(
             `
             UPDATE user_alarm_histories

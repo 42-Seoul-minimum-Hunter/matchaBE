@@ -1,6 +1,7 @@
 const { Client } = require("pg");
 const fs = require("fs");
 const path = require("path");
+const logger = require("../configs/logger.js");
 
 require("dotenv").config();
 
@@ -16,6 +17,7 @@ client.connect();
 
 const getChatInfo = async (userId) => {
   try {
+    logger.info("user.chat.repository.js getChatInfo: " + userId);
     const chatRoomInfo = await client.query(
       `
             SELECT * FROM user_chat_rooms 
@@ -54,13 +56,14 @@ const getChatInfo = async (userId) => {
 
     return chatRoomInfo.rows;
   } catch (error) {
-    console.log(error);
+    logger.error("user.chat.repository.js getChatInfo: " + error.message);
     throw error;
   }
 };
 
 const getRecentChat = async (roomId) => {
   try {
+    logger.info("user.chat.repository.js getRecentChat: " + roomId)
     const recentChat = await client.query(
       `
             SELECT * FROM user_chat_histories
@@ -73,7 +76,7 @@ const getRecentChat = async (roomId) => {
 
     return recentChat.rows[0];
   } catch (error) {
-    console.log(error);
+    logger.error("user.chat.repository.js getRecentChat: " + error.message);
     throw error;
   }
 };
@@ -87,6 +90,7 @@ const getRecentChat = async (roomId) => {
 */
 const generateChatRoom = async (chatUserId, userId) => {
   try {
+    logger.info("user.chat.repository.js generateChatRoom: " + chatUserId + ", " + userId)
     if (userId >= chatUserId) {
       const temp = userId;
       userId = chatUserId;
@@ -129,13 +133,14 @@ const generateChatRoom = async (chatUserId, userId) => {
       [userId, chatUserId]
     );
   } catch (error) {
-    console.log(error);
+    logger.error("user.chat.repository.js generateChatRoom: " + error.message);
     throw error;
   }
 };
 
 const deleteChatRoom = async (chatUserId, userId) => {
   try {
+    logger.info("user.chat.repository.js deleteChatRoom: " + chatUserId + ", " + userId)
     if (userId >= chatUserId) {
       const temp = userId;
       userId = chatUserId;
@@ -166,13 +171,14 @@ const deleteChatRoom = async (chatUserId, userId) => {
       [existingChatRoom.rows[0].id]
     );
   } catch (error) {
-    console.log(error);
+    logger.error("user.chat.repository.js deleteChatRoom: " + error.message);
     throw error;
   }
 };
 
 const getChatHistoriesForAlarmById = async (id) => {
   try {
+    logger.info("user.chat.repository.js getChatHistoriesForAlarmById: " + id)
     const chatRoom = await client.query(
       `
             SELECT *
@@ -211,13 +217,14 @@ const getChatHistoriesForAlarmById = async (id) => {
 
     return chatHistories;
   } catch (error) {
-    console.log(error);
+    logger.error("user.chat.repository.js getChatHistoriesForAlarmById: " + error.message);
     throw error;
   }
 };
 
 const updateChatHistoriesForAlarmById = async (id) => {
   try {
+    logger.info("user.chat.repository.js updateChatHistoriesForAlarmById: " + id)
     const chatRoom = await client.query(
       `
             SELECT *
@@ -241,13 +248,14 @@ const updateChatHistoriesForAlarmById = async (id) => {
       })
     );
   } catch (error) {
-    console.log(error);
+    logger.error("user.chat.repository.js updateChatHistoriesForAlarmById: " + error.message);
     throw error;
   }
 };
 
 const getChatHistoriesById = async (roomId) => {
   try {
+    logger.info("user.chat.repository.js getChatHistoriesById: " + roomId)
     const chatHistories = await client.query(
       `
             SELECT * 
@@ -260,13 +268,14 @@ const getChatHistoriesById = async (roomId) => {
 
     return chatHistories.rows;
   } catch (error) {
-    console.log(error);
+    logger.error("user.chat.repository.js getChatHistoriesById: " + error.message);
     throw error;
   }
 };
 
 const findOneChatRoomById = async (userId, chatedId) => {
   try {
+    logger.info("user.chat.repository.js findOneChatRoomById: " + userId)
     if (userId >= chatedId) {
       const temp = userId;
       userId = chatedId;
@@ -284,13 +293,14 @@ const findOneChatRoomById = async (userId, chatedId) => {
 
     return chatRoom.rows[0];
   } catch (error) {
-    console.log(error);
+    logger.error("user.chat.repository.js findOneChatRoomById: " + error.message);
     throw error;
   }
 };
 
 const saveSendedChatById = async (roomId, senderId, content) => {
   try {
+    logger.info("user.chat.repository.js saveSendedChatById: " + roomId + ", " + senderId + ", " + content)
     await client.query(
       `
       INSERT INTO user_chat_histories (
@@ -307,7 +317,7 @@ const saveSendedChatById = async (roomId, senderId, content) => {
       `, [roomId, senderId, content]
     )
   } catch (error) {
-    console.log(error);
+    logger.error("user.chat.repository.js saveSendedChatById: " + error.message);
     throw error;
   }
 };

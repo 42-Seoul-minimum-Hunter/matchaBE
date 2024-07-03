@@ -1,6 +1,6 @@
 const { Client } = require('pg');
 const fs = require('fs');
-const path = require('path');
+const logger = require('../configs/logger.js');
 
 require('dotenv').config();
 
@@ -17,6 +17,7 @@ client.connect();
 
 const reportUser = async (reportedUserId, reason, userId) => {
     try {
+        logger.info("user.report.repository.js reportUser: " + reportedUserId + ", " + reason + ", " + userId);
         await client.query(`
             INSERT INTO user_reports (
                 user_id,
@@ -27,7 +28,7 @@ const reportUser = async (reportedUserId, reason, userId) => {
              RETURNING *
         `, [userId, reportedUserId, reason]);
     } catch (error) {
-        console.log(error);
+        logger.error("user.report.repository.js reportUser: " + error.message);
         throw error;
     }
 };
