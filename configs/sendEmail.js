@@ -1,6 +1,7 @@
 //https://velog.io/@hoonnn/NodeJS-%EC%9D%B4%EB%A9%94%EC%9D%BC-%EB%B0%9C%EC%86%A1-%EA%B8%B0%EB%8A%A5-%EA%B5%AC%ED%98%84%ED%95%98%EA%B8%B0
 
 const nodemailer = require("nodemailer"); // 이메일 전송을 위한 nodemailer 모듈 불러오기
+const logger = require("./logger.js");
 require("dotenv").config();
 
 async function sendEmail({ to, subject, text }) {
@@ -31,13 +32,12 @@ async function sendEmail({ to, subject, text }) {
       text,
     };
 
-    console.log("이메일 전송을 위한 메일 옵션 설정:", mailOptions);
+    logger.info("mail options:", mailOptions);
 
     // 이메일 전송
     const result = await transporter.sendMail(mailOptions);
   } catch (error) {
-    console.error("이메일 전송 중 오류 발생:", error);
-
+    logger.error("sendEmail error: " + error.message)
     throw error;
   }
 }

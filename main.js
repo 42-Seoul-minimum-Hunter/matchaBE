@@ -80,7 +80,7 @@ app.use(morgan("combined", {stream : logger.stream})); // morgan 로그 설정
 
 // 서버 실행
 app.listen(port, async () => {
-  console.log(`App running on port ${port}...`);
+  logger.info(`App running on port ${port}...`);
   client.connect();
 
   try {
@@ -92,7 +92,7 @@ app.listen(port, async () => {
 
     // 쿼리 실행
     await client.query(schemaQuery);
-    console.log("Tables created successfully!");
+    logger.info("Tables created successfully!");
 
     // mock 데이터 삽입
     const usersMockQuery = fs.readFileSync(
@@ -102,7 +102,7 @@ app.listen(port, async () => {
 
     await client.query(usersMockQuery);
 
-    console.log("users mock data inserted successfully!");
+    logger.info("users mock data inserted successfully!");
 
     const profileMockQuery = fs.readFileSync(
       path.join(__dirname, "mocks", "user.profileImages.mock.sql"),
@@ -111,7 +111,7 @@ app.listen(port, async () => {
 
     await client.query(profileMockQuery);
 
-    console.log("user_profile_images mock data inserted successfully!");
+    logger.info("user_profile_images mock data inserted successfully!");
 
     const hashtagMockQuery = fs.readFileSync(
       path.join(__dirname, "mocks", "user.hashtags.mock.sql"),
@@ -120,7 +120,7 @@ app.listen(port, async () => {
 
     await client.query(hashtagMockQuery);
 
-    console.log("user_hashtags mock data inserted successfully!");
+    logger.info("user_hashtags mock data inserted successfully!")
 
     const regionMockQuery = fs.readFileSync(
       path.join(__dirname, "mocks", "user.regions.mock.sql"),
@@ -129,7 +129,7 @@ app.listen(port, async () => {
 
     await client.query(regionMockQuery);
 
-    console.log("user_regions mock data inserted successfully!");
+    logger.info("user_regions mock data inserted successfully!");
 
     const playableMockQuery = fs.readFileSync(
       path.join(__dirname, "mocks", "playable.mock.sql"),
@@ -137,8 +137,7 @@ app.listen(port, async () => {
     );
 
     await client.query(playableMockQuery);
-
-    console.log("playable mock data inserted successfully!");
+    logger.info("playable mock data inserted successfully!");
   } catch (err) {
     console.error("Error creating tables:", err);
   }
@@ -146,7 +145,7 @@ app.listen(port, async () => {
 
 // WebSocket 서버 실행
 server.listen(wsPort, () => {
-  console.log(`WebSocket server running on port ${wsPort}...`);
+  logger.info(`WebSocket server running on port ${wsPort}...`)
 });
 
 io.use((socket, res, next) => {

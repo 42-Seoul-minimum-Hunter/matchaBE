@@ -190,10 +190,6 @@ router.get("/callback", async function (req, res, next) {
     const result = await authService.getOauthInfo(code);
 
     const { user, oauthInfo } = result;
-    //const { user, oauthInfo } = await authService.getOauthInfo(code);
-
-    //console.log("user " + user);
-    //console.log("oauthInfo " + oauthInfo);
 
     if (!oauthInfo) {
       return res.status(401).send("oauthInfo not found.");
@@ -201,7 +197,6 @@ router.get("/callback", async function (req, res, next) {
 
     let jwtToken = null;
     if (!user) {
-      console.log("here is not user");
       jwtToken = authService.generateJWT({
         id: null,
         email: oauthInfo.email,
@@ -221,7 +216,6 @@ router.get("/callback", async function (req, res, next) {
       return res.redirect(process.env.OAUTH_USER_REGISTRATION_URL);
       //return res.send();
     } else {
-      console.log("here is already user");
       jwtToken = authService.generateJWT({
         id: user.id,
         email: user.email,
@@ -327,7 +321,6 @@ router.post(
       logger.info("auth.js POST /auth/register/email/send")
       //const email = req.body.email;
       const email = req.jwtInfo.email;
-      console.log(email);
       if (!email) {
         return res.status(400).send("Email not found.");
       }
@@ -360,8 +353,6 @@ router.get("/register/email/verify", async function (req, res, next) {
       return res.status(400).send("Invalid code OR Code expired.");
     }
 
-    console.log(result);
-
     let jwtInfo = {
       id: result.id,
       email: result.email,
@@ -383,13 +374,7 @@ router.get("/register/email/verify", async function (req, res, next) {
       //secure: false,
     });
 
-    //res.set("Authorization", `Bearer ${jwtToken}`);
-
-    console.log(process.env.FE_TWOFACTOR_URL);
-
     return res.redirect(process.env.FE_SEARCH_URL);
-    //return res.send();
-    //return res.send("redirect");
   } catch (error) {
     next(error);
   }

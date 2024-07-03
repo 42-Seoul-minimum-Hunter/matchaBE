@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const logger = require("../configs/logger.js");
 const { verifyAllprocess } = require("../configs/middleware.js");
 
 const userBlockSerivce = require("../services/user.block.service.js");
@@ -11,7 +12,7 @@ blockUsername : String 차단 대상사용자 닉네임
 //TODO: verifyAllprocess 미들웨어 추가
 router.post("/", verifyAllprocess, async function (req, res, next) {
   try {
-    console.log("user.block.js POST /user/block");
+    logger.info("user.block.js POST /user/block")
     const blockUsername = req.body.blockUsername;
     if (!blockUsername) {
       return res.status(400).send("blockUsername을 입력하세요.");

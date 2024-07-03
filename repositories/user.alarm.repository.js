@@ -28,8 +28,8 @@ const saveAlarmById = async (userId, alarmedId, alarmType) => {
             [userId, alarmedId, alarmType]
         )
     } catch (error) {
-            console.log(error);
-    throw error;
+        logger.error("user.alarm.repository.js saveAlarmById error: " + error.message)
+        throw error;
     }
 }
 
@@ -46,8 +46,8 @@ const findAllAlarmsById = async (id) => {
 
         return result.rows;
     } catch (error) {
-            console.log(error);
-    throw error;
+        logger.error("user.alarm.repository.js findAllAlarmsById error: " + error.message)
+        throw error;
     }
 }
 
@@ -63,8 +63,8 @@ const deleteAllAlarmsById = async (id) => {
             [id]
         );
     } catch (error) {
-            console.log(error);
-    throw error;
+        logger.error("user.alarm.repository.js deleteAllAlarmsById error: " + error.message)
+        throw error;
     }
 }
 

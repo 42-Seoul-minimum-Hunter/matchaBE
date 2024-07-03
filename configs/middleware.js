@@ -34,8 +34,6 @@ function verifyTwoFA(req, res, next) {
   }
   const token = req.headers.authorization.split(" ")[1];
 
-  console.log(token);
-
   if (!token) {
     // 토큰이 없는 경우 401 Unauthorized 응답을 보냅니다.
     return res.status(401).send("No token provided.");
@@ -61,7 +59,7 @@ function verifyTwoFA(req, res, next) {
 }
 
 function verifyValid(req, res, next) {
-  console.log("middleware verifyValid");
+  logger.info("middleware verifyValid");
   if (!req.headers.authorization) {
     return res.status(401).send("No token provided.");
   }
@@ -138,8 +136,6 @@ function checkOauthLogin(req, res, next) {
     }
 
     req.jwtInfo = decoded;
-
-    console.log(req.jwtInfo);
     next();
   } catch (error) {
     logger.error("middleware checkOauthLogin error")

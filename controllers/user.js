@@ -102,7 +102,6 @@ router.post("/create", async function (req, res, next) {
     if (!validateEmail(user.email)) {
       return res.status(400).send("Please enter a valid email.");
     } else if (!validateUsername(user.username)) {
-      console.log("hashtags");
       return res
         .status(400)
         .send("Please enter a valid username. (4~15 characters)");
@@ -140,7 +139,6 @@ router.post("/create", async function (req, res, next) {
 
     const user_id = await userSerivce.createUser(user);
     if (!user_id) {
-      console.log("Bad Request");
       return res.status(400).send("Bad Request");
     }
     user.id = user_id;
@@ -189,7 +187,7 @@ router.post("/create", async function (req, res, next) {
 //TODO: jwt 토큰 확인 추가
 router.delete("/unregister", verifyAllprocess, async function (req, res, next) {
   try {
-    //console.log("user.js DELETE /user/unregister");
+
     logger.info("user.js DELETE /user/unregister")
     await userSerivce.unregister(req.jwtInfo.id);
     res.clearCookie("jwt");
@@ -208,7 +206,6 @@ router.post(
   verifyChangePassword,
   async function (req, res, next) {
     try {
-      //console.log("user.js POST /user/change/password");
       logger.info("user.js POST /user/change/password: " + JSON.stringify(req.body))
       let password = req.body.password;
       const { email, expirationDate } = req.jwtInfo.email;
@@ -245,7 +242,6 @@ gu : String 사용자 구
 //TODO: gu 기준으로 정렬, si 기준으로 정렬 추가
 router.get("/find", verifyAllprocess, async function (req, res, next) {
   try {
-    //console.log("user.js GET /user/find: " + req.query);
     logger.info("user.js GET /user/find: " + JSON.stringify(req.query))
     let {
       hashtags,
@@ -262,8 +258,6 @@ router.get("/find", verifyAllprocess, async function (req, res, next) {
     if (hashtags) {
       hashtags = hashtags.split(",");
     }
-
-    console.log(hashtags);
 
     const filter = {
       hashtags: hashtags || undefined,

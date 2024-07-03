@@ -88,11 +88,8 @@ const findUserByFilter = async (id, filter, page, pageSize) => {
     let users, totalCount, filteredByBlock, filteredInfo;
     if (isFilterNull === true) {
       const userInfo = await userRepository.findUserById(id);
-      //console.log(userInfo)
       const userRegionInfo = await userRegionRepository.findRegionById(id);
-      //console.log(userRegionInfo)
       const userHashtagInfo = await userHashtagRepository.findHashtagById(id);
-      //console.log(userHashtagInfo)
 
       filteredInfo = await userRepository.findUserByDefaultFilter(userInfo.preference, userRegionInfo[0].si, userRegionInfo[0].gu, userHashtagInfo[0],page, pageSize);
     } else {

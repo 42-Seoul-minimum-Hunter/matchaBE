@@ -239,7 +239,7 @@ const generateJWT = (obj) => {
     });
     return jwtToken;
   } catch (error) {
-    console.log(error);
+    logger.error("auth.service.js generateJWT: " + error.message);
     throw error;
   }
 };

@@ -24,7 +24,7 @@ const findHashtagById = async (id) => {
     );
     return hashtagInfo.rows.map((row) => row.hashtags);
   } catch (error) {
-        console.log(error);
+    logger.error("user.hashtag.repository.js findHashtagById error: " + error.message);
     throw error;
   }
 };
@@ -37,7 +37,7 @@ const updateHashtagById = async (hashtags, userId) => {
       [hashtags, userId]
     );
   } catch (error) {
-        console.log(error);
+    logger.error("user.hashtag.repository.js updateHashtagById error: " + error.message);
     throw error;
   }
 };
@@ -55,7 +55,7 @@ const saveHashtagById = async (hashtags, id) => {
       [id, hashtags]
     );
   } catch (error) {
-    console.log(error);
+    logger.error("user.hashtag.repository.js saveHashtagById error: " + error.message);
     throw error;
   }
 };

@@ -183,7 +183,6 @@ const findUserByDefaultFilter = async (
       let rate;
       if (ratingInfo.rows.length === 0) {
         rate = parseFloat(0);
-        console.log("rate: " + rate);
       } else {
         const ratingScores = ratingInfo.rows.map((row) => row.rate_score);
         const totalScore = ratingScores.reduce((acc, score) => acc + score, 0);
@@ -403,7 +402,7 @@ const findUserById = async (id) => {
 
     return rows[0];
   } catch (error) {
-    console.log(error);
+    logger.error("user.repository.js findUserById: " + error);
     throw error;
   }
 };
@@ -452,7 +451,7 @@ const updateUserById = async (UserUpdateDto, id) => {
       ]
     );
   } catch (error) {
-    console.log(error);
+    logger.error("user.repository.js updateUserById: " + error);
     throw error;
   }
 };
@@ -467,7 +466,7 @@ const updateUserValidByEmail = async (email) => {
       [email]
     );
   } catch (error) {
-    console.log(error);
+    logger.error("user.repository.js updateUserValidByEmail: " + error);
     throw error;
   }
 };
