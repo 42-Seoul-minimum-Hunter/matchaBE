@@ -58,7 +58,7 @@ profileImages : String 사용자 프로필 이미지 => BASE64로 반환 예정
 //TODO: 2차원으로 profileImage 저장하는 거 해결
 router.post("/create", async function (req, res, next) {
   try {
-    logger.info("user.js POST /user/create: " + JSON.stringify(user))
+    logger.info("user.js POST /user/create: " + JSON.stringify(user));
     const user = {
       email: req.body.email || undefined,
       username: req.body.username || undefined,
@@ -187,8 +187,7 @@ router.post("/create", async function (req, res, next) {
 //TODO: jwt 토큰 확인 추가
 router.delete("/unregister", verifyAllprocess, async function (req, res, next) {
   try {
-
-    logger.info("user.js DELETE /user/unregister")
+    logger.info("user.js DELETE /user/unregister");
     await userSerivce.unregister(req.jwtInfo.id);
     res.clearCookie("jwt");
     return res.send();
@@ -206,7 +205,9 @@ router.post(
   verifyChangePassword,
   async function (req, res, next) {
     try {
-      logger.info("user.js POST /user/change/password: " + JSON.stringify(req.body))
+      logger.info(
+        "user.js POST /user/change/password: " + JSON.stringify(req.body)
+      );
       let password = req.body.password;
       const { email, expirationDate } = req.jwtInfo.email;
 
@@ -242,7 +243,7 @@ gu : String 사용자 구
 //TODO: gu 기준으로 정렬, si 기준으로 정렬 추가
 router.get("/find", verifyAllprocess, async function (req, res, next) {
   try {
-    logger.info("user.js GET /user/find: " + JSON.stringify(req.query))
+    logger.info("user.js GET /user/find: " + JSON.stringify(req.query));
     let {
       hashtags,
       minAge,
@@ -281,7 +282,7 @@ router.get("/find", verifyAllprocess, async function (req, res, next) {
     const { users, totalCount } = await userSerivce.findUserByFilter(
       //req.jwtInfo.id,
       //TODO: req.jwtInfo.id 추가
-      703,
+      req.jwtInfo.id,
       filter,
       page,
       pageSize
@@ -298,7 +299,7 @@ router.get("/find", verifyAllprocess, async function (req, res, next) {
 //TODO: isGpsAllowed 확인 상관없이 위치 확인
 router.get("/search/region", function (req, res, next) {
   try {
-    logger.info("user.js GET /user/search/region")
+    logger.info("user.js GET /user/search/region");
     let region = userSerivce.getRegion(req.jwtInfo.id);
     return res.send(region);
   } catch (error) {

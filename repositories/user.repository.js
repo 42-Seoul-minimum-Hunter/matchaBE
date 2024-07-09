@@ -92,7 +92,9 @@ const deleteUserById = async (id) => {
 
 const changePassword = async (hashedPassword, email) => {
   try {
-    logger.info("user.repository.js changePassword: " + hashedPassword + ", " + email);
+    logger.info(
+      "user.repository.js changePassword: " + hashedPassword + ", " + email
+    );
     await client.query(
       `UPDATE users
              SET password = $1, updated_at = now()
@@ -114,7 +116,20 @@ const findUserByDefaultFilter = async (
   pageSize
 ) => {
   try {
-    logger.info("user.repository.js findUserByDefaultFilter: " + preference + ", " + si + ", " + gu + ", " + hashtags + ", " + page + ", " + pageSize);
+    logger.info(
+      "user.repository.js findUserByDefaultFilter: " +
+        preference +
+        ", " +
+        si +
+        ", " +
+        gu +
+        ", " +
+        hashtags +
+        ", " +
+        page +
+        ", " +
+        pageSize
+    );
 
     // 유저의 성향에 따른 쿼리 조건 설정
     let genderCondition;
@@ -154,7 +169,6 @@ const findUserByDefaultFilter = async (
       pageSize,
       (page - 1) * pageSize,
     ]);
-
 
     // Calculate the total count
     const totalCountQuery = `
@@ -220,6 +234,7 @@ const findUserByDefaultFilter = async (
           ).length;
 
           return {
+            id: userInfo.id,
             username: userInfo.username,
             age: userInfo.age,
             profileImages: profileImages ? profileImages[0] : null,
@@ -241,7 +256,14 @@ const findUserByDefaultFilter = async (
 
 const findUserByFilter = async (filter, page, pageSize) => {
   try {
-    logger.info("user.repository.js findUserByFilter: " + filter + ", " + page + ", " + pageSize);
+    logger.info(
+      "user.repository.js findUserByFilter: " +
+        filter +
+        ", " +
+        page +
+        ", " +
+        pageSize
+    );
 
     const { hashtags, minAge, maxAge, si, gu } = filter;
 
@@ -332,6 +354,7 @@ const findUserByFilter = async (filter, page, pageSize) => {
           const profileImages = rows.length > 0 ? rows[0].profile_images : null;
 
           return {
+            id: userInfo.id,
             username: userInfo.username,
             age: userInfo.age,
             profileImages: profileImages ? profileImages[0] : null,
@@ -384,7 +407,7 @@ const findUserByEmail = async (email) => {
 
     return rows[0];
   } catch (error) {
-    logger.error("user.repository.js findUserByEmail: " + error)
+    logger.error("user.repository.js findUserByEmail: " + error);
     throw error;
   }
 };
@@ -409,7 +432,9 @@ const findUserById = async (id) => {
 
 const updateUserById = async (UserUpdateDto, id) => {
   try {
-    logger.info("user.repository.js updateUserById: " + UserUpdateDto + ", " + id);
+    logger.info(
+      "user.repository.js updateUserById: " + UserUpdateDto + ", " + id
+    );
     const {
       email,
       password,

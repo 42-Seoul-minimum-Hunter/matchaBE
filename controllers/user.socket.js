@@ -9,6 +9,7 @@ const userLikeService = require("../services/user.like.service");
 const userViewService = require("../services/user.view.service");
 const userService = require("../services/user.service");
 const userAlarmService = require("../services/user.alarm.service");
+const userBlockService = require("../services/user.block.service");
 
 const userAlarmRepository = require("../repositories/user.alarm.repository");
 
@@ -28,12 +29,19 @@ const logger = require("../configs/logger");
 */
 
 const userActivate = new Map();
+var id;
+var email;
 
 module.exports = (server, app) => {
   const io = socket(server, {
     cors: {
-      origin: ["http://localhost:5173", "http://localhost:3000", "http://localhost:3001", "http://localhost:5173/email", "http://localhost:5173/twofactor",
-        "http://127.0.0.1:3000"
+      origin: [
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:5173/email",
+        "http://localhost:5173/twofactor",
+        "http://127.0.0.1:3000",
       ],
       credentials: true,
     },
@@ -41,7 +49,12 @@ module.exports = (server, app) => {
   // 소캣 연결
   io.on("connection", async (socket) => {
     try {
-      logger.info("user.socket.js connection: " + socket.handshake.auth.authorization + " " + socket.id);
+      logger.info(
+        "user.socket.js connection: " +
+          socket.handshake.auth.authorization +
+          " " +
+          socket.id
+      );
       //JWT 토큰 검증
       if (!socket.handshake.auth.authorization) {
         await socket.disconnect();
@@ -65,7 +78,10 @@ module.exports = (server, app) => {
       }
 
       socket.jwtInfo = decoded;
-      const { id, email } = socket.jwtInfo;
+      id = socket.jwtInfo.id;
+      email = socket.jwtInfo.email;
+
+      console.log(id);
       //const jwt = socket.handshake.headers.authorization.split(" ")[1];
 
       // 유저 아이디
@@ -78,9 +94,23 @@ module.exports = (server, app) => {
       }
 
       // 유저 접속 상태
-      
+
       userActivate.set(id, socket.id);
       await socket.join(socket.id);
+
+      // 채팅 방 목록
+      //socket.on("getChatList", async () => {
+      //  try {
+      //    logger.info("user.socket.js getChatList: " + id);
+      //    const chatRooms = await userChatService.getChatInfo(id);
+
+      //      io.to(userActivate.get()).emit("sendChatList", chatList);
+      //  } else {
+      //      io.to(userActivate.get()).emit("sendChatList", null);
+      //    } catch (error) {
+      //    logger.error("user.socket.js getChatList error: " + error.message);
+      //    return;
+      //  })
 
       // 채팅 입장
       // TODO: username이 올바른 지
@@ -104,20 +134,19 @@ module.exports = (server, app) => {
           const userInfo = await userService.findOneUserById(id);
 
           if (!chatedInfo) {
-            return ;
+            return;
           }
 
           const chatRoomInfo = await userChatService.findOneChatRoomById(
             id,
             chatedInfo.id
           );
-          
+
           if (!chatRoomInfo) {
-            return ;
+            return;
           }
           const chatHistories =
             await userChatService.findAllChatHistoriesByRoomId(chatRoomInfo.id);
-
 
           let chatInfos = [];
 
@@ -132,9 +161,9 @@ module.exports = (server, app) => {
               chatInfos.push(param);
             });
 
-            io.to(socket.id).emit("sendHistories", chatInfos);
+            io.to(userActivate.get()).emit("sendHistories", chatInfos);
           } else {
-            io.to(socket.id).emit("sendHistories", null);
+            io.to(userActivate.get()).emit("sendHistories", null);
           }
           socket.join(chatRoomInfo.id);
         } catch (error) {
@@ -143,8 +172,8 @@ module.exports = (server, app) => {
         }
       });
     } catch (error) {
-      logger.error("user.socket.js connection error: " + error.message)
-      return ; 
+      logger.error("user.socket.js connection error: " + error.message);
+      return;
     }
 
     // 채팅 받아서 저장하고, 그 채팅 보내서 보여주기
@@ -198,8 +227,8 @@ module.exports = (server, app) => {
         });
         await userAlarmRepository.saveAlarmById(id, userInfo.id, "MESSAGED");
       } catch (error) {
-        logger.error("user.socket.js sendMessage error: " + error.message)
-        return ;
+        logger.error("user.socket.js sendMessage error: " + error.message);
+        return;
       }
     });
 
@@ -221,30 +250,31 @@ module.exports = (server, app) => {
           socket.emit("onlineStatus", false);
         }
       } catch (error) {
-        logger.error("user.socket.js onlineStatus error: " + error.message)
+        logger.error("user.socket.js onlineStatus error: " + error.message);
         return;
       }
     });
 
     socket.on("likeUser", async (data) => {
       try {
-        logger.info("user.socket.js likeUser: " + data);
+        logger.info("user.socket.js likeUser: " + JSON.stringify(data));
         const { username } = data;
 
         if (!username) {
           return;
-        } 
+        }
         const userInfo = await userReposiotry.findUserByUsername(username);
 
         if (!userInfo) {
           return;
         }
 
+        console.log(id);
+
         const result = await userLikeService.likeUserByUsername(username, id);
 
-        io.to()
         await io.to(userActivate.get(userInfo.id)).emit("alarm", {
-          AlarmType: "LIKED",
+          alarmType: "LIKED",
           username,
         }); //유저가 좋아요를 받았을때
 
@@ -253,9 +283,15 @@ module.exports = (server, app) => {
             alarmType: "MATCHED",
             username: userInfo.username,
           });
+          await io.to(userActivate.get(id)).emit("likeUser", {
+            isMatched: true,
+          });
+          await io.to(userActivate.get(userInfo.id)).emit("likeUser", {
+            isMatched: true,
+          });
         }
       } catch (error) {
-        logger.error("user.socket.js likeUser error: " + error.message)
+        logger.error("user.socket.js likeUser error: " + error.message);
         return;
       }
     });
@@ -287,14 +323,14 @@ module.exports = (server, app) => {
           });
         }
       } catch (error) {
-        logger.error("user.socket.js dislikeUser error: " + error.message)
+        logger.error("user.socket.js dislikeUser error: " + error.message);
         return;
       }
     });
 
     socket.on("visitUserProfile", async (data) => {
       try {
-        logger.info("user.socket.js visitUserProfile: " + data)
+        logger.info("user.socket.js visitUserProfile: " + data);
         const { username } = data;
 
         if (!username) {
@@ -318,20 +354,20 @@ module.exports = (server, app) => {
 
         await userViewService.saveVisitHistoryById(username, id);
       } catch (error) {
-        logger.error("user.socket.js visitUserProfile error: " + error.message)
+        logger.error("user.socket.js visitUserProfile error: " + error.message);
         return false;
       }
     });
 
     socket.on("getAlarms", async () => {
       try {
-        logger.info("user.socket.js getAlarms")
+        logger.info("user.socket.js getAlarms");
 
         const alarms = await userAlarmService.findAllAlarmsById(id);
         await userAlarmService.deleteAllAlarmsById(id);
         return alarms;
       } catch (error) {
-        logger.error("user.socket.js getAlarms error: " + error.message)
+        logger.error("user.socket.js getAlarms error: " + error.message);
         return false;
       }
     });
@@ -351,7 +387,9 @@ module.exports = (server, app) => {
 
     socket.on("disconnect", async () => {
       try {
-        logger.info("user.socket.js disconnect: " + socket.handshake.auth.authorization)
+        logger.info(
+          "user.socket.js disconnect: " + socket.handshake.auth.authorization
+        );
 
         //이 코드는 현재 클라이언트 소켓이 참여하고 있는 모든 방(room)에서 해당 소켓을 제외시키는 역할을 합니다.
         var rooms = io.sockets.adapter.sids[socket.id];
@@ -369,7 +407,7 @@ module.exports = (server, app) => {
           console.log(`Could not find user key for socket ${socket.id}`);
         }
       } catch (error) {
-        logger.error("user.socket.js disconnect error: " + error.message)
+        logger.error("user.socket.js disconnect error: " + error.message);
         return;
       }
     });

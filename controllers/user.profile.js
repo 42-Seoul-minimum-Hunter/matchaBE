@@ -4,6 +4,8 @@ const { verifyAllprocess } = require("../configs/middleware.js");
 
 const userProfileService = require("../services/user.profile.service.js");
 
+const logger = require("../configs/logger.js");
+
 /* GET /user/profile?username=john
 username : String 사용자 닉네임
 */
@@ -11,9 +13,13 @@ username : String 사용자 닉네임
 //TODO: verifyAllprocess 미들웨어 추가
 //TODO: 조회 기록 저장 추가
 //TODO: 온라인 상태 확인 추가
+//TODO: 해당 유저 LIKE 정보
+//TODO: 매치 유무 확인
 router.get("/", verifyAllprocess, async function (req, res, next) {
   try {
-    logger.info("user.profile.js GET /user/profile: " + JSON.stringify(req.query))
+    logger.info(
+      "user.profile.js GET /user/profile: " + JSON.stringify(req.query)
+    );
     const { username } = req.query;
     if (!username) {
       return res.status(400).send("사용자 닉네임을 입력하세요.");
@@ -33,7 +39,7 @@ router.get("/", verifyAllprocess, async function (req, res, next) {
  */
 router.get("/me", verifyAllprocess, async function (req, res, next) {
   try {
-    logger.info("user.profile.js GET /user/profile/me")
+    logger.info("user.profile.js GET /user/profile/me");
     const user = await userProfileService.getMyInfo(req.jwtInfo.id);
     return res.send(user);
   } catch (error) {
@@ -59,7 +65,9 @@ profileImages : String 사용자 프로필 이미지 => BASE64로 반환 예정
 
 router.put("/update", verifyAllprocess, async function (req, res, next) {
   try {
-    logger.info("user.profile.js PUT /user/profile/update: " + JSON.stringify(req.body))
+    logger.info(
+      "user.profile.js PUT /user/profile/update: " + JSON.stringify(req.body)
+    );
     const user = {
       email: req.body.email,
       password: req.body.password,

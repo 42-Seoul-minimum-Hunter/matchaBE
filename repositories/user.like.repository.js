@@ -17,7 +17,9 @@ client.connect();
 
 const likeUserById = async (userId, likedUserId) => {
   try {
-    logger.info("user.like.repository.js likeUserById: " + userId + ", " + likedUserId);
+    logger.info(
+      "user.like.repository.js likeUserById: " + userId + ", " + likedUserId
+    );
     const existingLikeHistory = await client.query(
       `
             SELECT * 
@@ -53,14 +55,14 @@ const likeUserById = async (userId, likedUserId) => {
   }
 };
 
-const dislikeUserByUsername = async (likeUsunuserId) => {
+const dislikeUserByUsername = async (likeUserId) => {
   try {
-    logger.info("user.like.repository.js dislikeUserByUsername: " + likeUsunuserId);
+    logger.info("user.like.repository.js dislikeUserByUsername: " + likeUserId);
     const existingLikeHistory = await client.query(
       `
             SELECT * 
             FROM user_like_histories
-            WHERE user_id = $1 AND liked_id = $2 AND deleted_at NOT NULL
+            WHERE user_id = $1 AND liked_id = $2 AND deleted_at IS NULL
         `,
       [userId, likeUserId]
     );
@@ -74,13 +76,15 @@ const dislikeUserByUsername = async (likeUsunuserId) => {
     await client.query(
       `
             UPDATE user_like_histories
-            SET deleted_at = now() AND viewed_at = NULL
+            SET deleted_at = now()
             WHERE user_id = $1 AND liked_id = $2
         `,
       [userId, likeUserId]
     );
   } catch (error) {
-    logger.error("user.like.repository.js dislikeUserByUsername: " + error.message)
+    logger.error(
+      "user.like.repository.js dislikeUserByUsername: " + error.message
+    );
     throw error;
   }
 };
@@ -99,7 +103,9 @@ const getLikeUserHistoriesById = async (id) => {
 
     return likeUserHistories.rows;
   } catch (error) {
-    logger.error("user.like.repository.js getLikeUserHistoriesById: " + error.message)
+    logger.error(
+      "user.like.repository.js getLikeUserHistoriesById: " + error.message
+    );
     throw error;
   }
 };
@@ -110,20 +116,24 @@ const updateLikeUserHistoriesById = async (id) => {
     await client.query(
       `
             UPDATE user_like_histories
-            SET viewed_at = now()
-            WHERE liked_id = $1 AND viewed_at IS NULL
+            SET created_at = now()
+            WHERE liked_id = $1 AND created_at IS NULL
         `,
       [id]
     );
   } catch (error) {
-    logger.error("user.like.repository.js updateLikeUserHistoriesById: " + error.message)
+    logger.error(
+      "user.like.repository.js updateLikeUserHistoriesById: " + error.message
+    );
     throw error;
   }
 };
 
 const checkUserLikeBoth = async (userId, likeUserId) => {
   try {
-    logger.info("user.like.repository.js checkUserLikeBoth: " + userId + ", " + likeUserId);
+    logger.info(
+      "user.like.repository.js checkUserLikeBoth: " + userId + ", " + likeUserId
+    );
     const likeUserHistories = await client.query(
       `
             SELECT id

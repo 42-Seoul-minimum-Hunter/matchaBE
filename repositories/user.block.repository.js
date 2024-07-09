@@ -17,21 +17,23 @@ client.connect();
 
 const addBlockUser = async (blockedUserId, userId) => {
   try {
-    logger.info("user.block.repository.js addBlockUser: " + blockedUserId + ", " + userId);
+    logger.info(
+      "user.block.repository.js addBlockUser: " + blockedUserId + ", " + userId
+    );
     const existingBlockHistory = await client.query(
       `
             SELECT * 
             FROM user_block_histories
-            WHERE user_id = $1 AND blocked_id = $2 AND deleted_at NOT NULL
+            WHERE user_id = $1 AND blocked_id = $2 AND deleted_at IS NULL
         `,
       [userId, blockedUserId]
     );
 
-    if (existingBlockHistory.rows.length > 0) {
-      const Error = new Error("User already blocked.");
-      Error.statusCode = 400;
-      throw Error;
-    }
+    console.log(
+      "existingBlockHistory.rows" + JSON.stringify(existingBlockHistory.rows)
+    );
+    if (existingBlockHistory.rows.length != 0)
+      throw new Error("User already blocked.");
 
     await client.query(
       `
@@ -48,14 +50,19 @@ const addBlockUser = async (blockedUserId, userId) => {
       [userId, blockedUserId]
     );
   } catch (error) {
-    logger.error("user.block.repository.js addBlockUser: " + error.message)
+    logger.error("user.block.repository.js addBlockUser: " + error.message);
     throw error;
   }
 };
 
 const deleteBlockUser = async (blockedUserId, userId) => {
   try {
-    logger.info("user.block.repository.js deleteBlockUser: " + blockedUserId + ", " + userId)
+    logger.info(
+      "user.block.repository.js deleteBlockUser: " +
+        blockedUserId +
+        ", " +
+        userId
+    );
     const existingBlockHistory = await client.query(
       `
             SELECT * 
@@ -67,7 +74,7 @@ const deleteBlockUser = async (blockedUserId, userId) => {
 
     if (existingBlockHistory.rows.length === 0) {
       const Error = new Error("User not blocked.");
-      Error.statusCode = 400;
+      Error.status = 400;
       throw Error;
     }
 
@@ -80,30 +87,45 @@ const deleteBlockUser = async (blockedUserId, userId) => {
       [userId, blockedUserId]
     );
   } catch (error) {
-    logger.error("user.block.repository.js deleteBlockUser: " + error.message)
+    logger.error("user.block.repository.js deleteBlockUser: " + error.message);
     throw error;
   }
 };
 
 const filterBlockedUser = async (userId, userInfos) => {
   try {
-    logger.info("user.block.repository.js filterBlockedUser: " + userId + ", " + userInfos)
+    logger.info(
+      "user.block.repository.js filterBlockedUser: " +
+        userId +
+        ", " +
+        JSON.stringify(userInfos)
+    );
     const blockedUserInfos = await client.query(
-      "SELECT blocked_id FROM user_block_histories WHERE user_id = $1",
+      "SELECT blocked_id FROM user_block_histories WHERE user_id = $1 AND deleted_at IS NULL",
       [userId]
+    );
+    console.log(
+      "blockedUserInfos rows" + JSON.stringify(blockedUserInfos.rows)
     );
     const blockedIds = blockedUserInfos.rows.map((row) => row.blocked_id);
 
     return userInfos.filter((userInfo) => !blockedIds.includes(userInfo.id));
   } catch (error) {
-    logger.error("user.block.repository.js filterBlockedUser: " + error.message)
+    logger.error(
+      "user.block.repository.js filterBlockedUser: " + error.message
+    );
     throw error;
   }
 };
 
 const getBlockRelationByid = async (userId, blockedUserId) => {
   try {
-    logger.info("user.block.repository.js getBlockRelationByid: " + userId + ", " + blockedUserId)
+    logger.info(
+      "user.block.repository.js getBlockRelationByid: " +
+        userId +
+        ", " +
+        blockedUserId
+    );
     const blockRelation = await client.query(
       `
             SELECT * 
@@ -115,7 +137,9 @@ const getBlockRelationByid = async (userId, blockedUserId) => {
 
     return blockRelation.rows[0];
   } catch (error) {
-    logger.error("user.block.repository.js getBlockRelationByid: " + error.message)
+    logger.error(
+      "user.block.repository.js getBlockRelationByid: " + error.message
+    );
     throw error;
   }
 };
