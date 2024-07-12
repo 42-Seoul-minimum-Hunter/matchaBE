@@ -113,7 +113,7 @@ password : String 사용자 비밀번호
 
 router.post("/login", async function (req, res, next) {
   try {
-    logger.info("auth.js POST /auth/login: " + JSON.stringify(req.body))
+    logger.info("auth.js POST /auth/login: " + JSON.stringify(req.body));
     const { username, password } = req.body;
 
     if (!username || !password) {
@@ -165,7 +165,7 @@ router.post("/login", async function (req, res, next) {
 //TODO: POST로 바꾸는거 고려
 router.delete("/logout", function (req, res, next) {
   try {
-    logger.info("auth.js DELETE /auth/logout")
+    logger.info("auth.js DELETE /auth/logout");
     res.clearCookie("jwt");
     res.send("로그아웃 되었습니다.");
   } catch (error) {
@@ -179,7 +179,9 @@ code : String OAuth 인증 코드
 
 router.get("/callback", async function (req, res, next) {
   try {
-    logger.info("auth.js GET /auth/callback: " + JSON.stringify(req.query.code))
+    logger.info(
+      "auth.js GET /auth/callback: " + JSON.stringify(req.query.code)
+    );
     const code = req.query.code;
     if (!code) {
       return res.status(401).send("Code not found.");
@@ -229,7 +231,7 @@ router.get("/callback", async function (req, res, next) {
 
       res.set("Authorization", `Bearer ${jwtToken}`);
       if (user.isValid === true) {
-      return res.redirect(process.env.FE_TWOFACTOR_URL);
+        return res.redirect(process.env.FE_TWOFACTOR_URL);
       } else {
         return res.redirect('http://localhost:5173/email');
       }
@@ -243,7 +245,7 @@ router.get("/callback", async function (req, res, next) {
  */
 router.post("/twofactor/create", verifyTwoFA, async function (req, res, next) {
   try {
-    logger.info("auth.js POST /auth/twofactor/create")
+    logger.info("auth.js POST /auth/twofactor/create");
     const email = req.jwtInfo.email;
     //const email = req.body.email;
     if (!email) {
@@ -261,7 +263,9 @@ code : String 2FA 인증 코드
 */
 router.post("/twofactor/verify", verifyTwoFA, function (req, res, next) {
   try {
-    logger.info("auth.js POST /auth/twofactor/verify: " + JSON.stringify(req.body))
+    logger.info(
+      "auth.js POST /auth/twofactor/verify: " + JSON.stringify(req.body)
+    );
     const email = req.jwtInfo.email;
     const code = req.body.code;
 
@@ -309,7 +313,7 @@ router.post(
   verifyValid,
   async function (req, res, next) {
     try {
-      logger.info("auth.js POST /auth/register/email/send")
+      logger.info("auth.js POST /auth/register/email/send");
       //const email = req.body.email;
       const email = req.jwtInfo.email;
       if (!email) {
@@ -329,7 +333,10 @@ code : String 인증 코드
 
 router.get("/register/email/verify", async function (req, res, next) {
   try {
-    logger.info("auth.js GET /auth/register/email/verify: " + JSON.stringify(req.query.code))
+    logger.info(
+      "auth.js GET /auth/register/email/verify: " +
+        JSON.stringify(req.query.code)
+    );
     const code = req.query.code;
 
     if (!code) {
@@ -377,7 +384,9 @@ email : String 사용자 이메일
 
 router.post("/reset/email/create", async function (req, res, next) {
   try {
-    logger.info("auth.js POST /auth/reset/email/create: " + JSON.stringify(req.body))
+    logger.info(
+      "auth.js POST /auth/reset/email/create: " + JSON.stringify(req.body)
+    );
     const email = req.body.email;
     if (!email) {
       res.status(400).send("Email not found.");
@@ -406,8 +415,10 @@ router.get(
   verifyResetPassword,
   async function (req, res, next) {
     try {
-
-      logger.info("auth.js GET /auth/reset/email/verify: " + JSON.stringify(req.query.code))
+      logger.info(
+        "auth.js GET /auth/reset/email/verify: " +
+          JSON.stringify(req.query.code)
+      );
       const email = req.jwtInfo.email;
       if (!code || !email) {
         res.status(400).send("Code not found.");

@@ -49,7 +49,7 @@ profileImages : String 사용자 프로필 이미지 => BASE64로 반환 예정
 
 router.post("/create", async function (req, res, next) {
   try {
-    logger.info("user.js POST /user/create: " + JSON.stringify(user))
+    logger.info("user.js POST /user/create: " + JSON.stringify(user));
     const user = {
       email: req.body.email || undefined,
       username: req.body.username || undefined,
@@ -177,8 +177,7 @@ router.post("/create", async function (req, res, next) {
 
 router.delete("/unregister", verifyAllprocess, async function (req, res, next) {
   try {
-
-    logger.info("user.js DELETE /user/unregister")
+    logger.info("user.js DELETE /user/unregister");
     await userSerivce.unregister(req.jwtInfo.id);
     res.clearCookie("jwt");
     return res.send();
@@ -196,7 +195,9 @@ router.post(
   verifyChangePassword,
   async function (req, res, next) {
     try {
-      logger.info("user.js POST /user/change/password: " + JSON.stringify(req.body))
+      logger.info(
+        "user.js POST /user/change/password: " + JSON.stringify(req.body)
+      );
       let password = req.body.password;
       const { email, expirationDate } = req.jwtInfo.email;
 
@@ -228,7 +229,7 @@ gu : String 사용자 구
 */
 router.get("/find", verifyAllprocess, async function (req, res, next) {
   try {
-    logger.info("user.js GET /user/find: " + JSON.stringify(req.query))
+    logger.info("user.js GET /user/find: " + JSON.stringify(req.query));
     let {
       hashtags,
       minAge,
@@ -282,7 +283,7 @@ router.get("/find", verifyAllprocess, async function (req, res, next) {
 //TODO: isGpsAllowed 확인 상관없이 위치 확인
 router.get("/search/region", function (req, res, next) {
   try {
-    logger.info("user.js GET /user/search/region")
+    logger.info("user.js GET /user/search/region");
     let region = userSerivce.getRegion(req.jwtInfo.id);
     return res.send(region);
   } catch (error) {

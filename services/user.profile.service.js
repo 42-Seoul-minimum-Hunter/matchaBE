@@ -13,7 +13,9 @@ const logger = require("../configs/logger");
 
 const getUserProfile = async (username, userId) => {
   try {
-    logger.info("user.profile.service.js getUserProfile: " + username + ", " + userId)
+    logger.info(
+      "user.profile.service.js getUserProfile: " + username + ", " + userId
+    );
     const userInfo = await userRepository.findUserByUsername(username);
     if (!userInfo) {
       const err = new Error("User not found");
@@ -32,6 +34,7 @@ const getUserProfile = async (username, userId) => {
     const rateInfo = await userRateRepository.findRateInfoById(userInfo.id);
 
     let rate;
+    console.log("rateInfo", rateInfo);
     if (!rateInfo || rateInfo.length === 0) {
       rate = parseFloat(0);
     } else {
@@ -47,7 +50,7 @@ const getUserProfile = async (username, userId) => {
 
     let isBlocked = true;
 
-    if (!blockInfo || blockInfo.rows.length === 0) {
+    if (!blockInfo || blockInfo.length === 0) {
       isBlocked = false;
     }
 

@@ -54,8 +54,7 @@ const userChatRouter = require("./controllers/user.chat.js");
 const userBlockRouter = require("./controllers/user.block.js");
 
 const socketRouter = require("./controllers/user.socket.js");
-const logger = require('./configs/logger.js');
-
+const logger = require("./configs/logger.js");
 
 socketRouter(server, app);
 
@@ -68,10 +67,16 @@ app.use("/user/rating", userRateRouter);
 app.use("/user/report", userReportRouter);
 app.use("/user/profile", userProfileRouter);
 app.use("/user/alarm", userAlarmRouter);
-app.use('/user/block', userBlockRouter);
+app.use("/user/block", userBlockRouter);
 app.use("/user/chat", userChatRouter);
 app.use("/auth", authRouter);
-app.use(morgan("combined", {stream : logger.stream})); // morgan 로그 설정 
+
+app.use((err, req, res, next) => {
+  const status = err.status || 500;
+  res.status(status).send(err.message);
+});
+
+app.use(morgan("combined", { stream: logger.stream })); // morgan 로그 설정
 
 // 서버 실행
 app.listen(port, async () => {
@@ -115,7 +120,7 @@ app.listen(port, async () => {
 
     await client.query(hashtagMockQuery);
 
-    logger.info("user_hashtags mock data inserted successfully!")
+    logger.info("user_hashtags mock data inserted successfully!");
 
     const regionMockQuery = fs.readFileSync(
       path.join(__dirname, "mocks", "user.regions.mock.sql"),
@@ -140,14 +145,8 @@ app.listen(port, async () => {
 
 // WebSocket 서버 실행
 server.listen(wsPort, () => {
-  logger.info(`WebSocket server running on port ${wsPort}...`)
+  logger.info(`WebSocket server running on port ${wsPort}...`);
 });
-
-app.use((err, req, res, next) => {
-  const status = err.status || 500;
-  res.status(status).send(err.message);
-});
-
 
 io.use((socket, res, next) => {
   const status = err.status || 500;

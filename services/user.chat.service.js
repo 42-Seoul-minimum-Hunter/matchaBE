@@ -8,7 +8,7 @@ const logger = require("../configs/logger");
 const findAllChatRooms = async (userId) => {
   try {
     logger.info("user.chat.service.js findAllChatRooms: " + userId);
-    const chatRoomInfos = await userChatRepository.findAllChatRooms(userId);
+    const chatRoomInfos = await userChatRepository.getChatInfo(userId);
     if (!chatRoomInfos) {
       return null;
     }
@@ -19,8 +19,8 @@ const findAllChatRooms = async (userId) => {
       const recentChat = await userChatRepository.getRecentChat(chat.id);
       const otherUserId =
         chat.user_id !== userId ? chat.user_id : chat.chated_id;
-        const userInfo = await userRepository.findUserById(otherUserId);
-        const userProfileImage =
+      const userInfo = await userRepository.findUserById(otherUserId);
+      const userProfileImage =
         await userProfileImageRepository.findProfileImagesById(otherUserId);
       let userChatInfo;
       if (recentChat) {
@@ -55,19 +55,23 @@ const findAllChatHistoriesByRoomId = async (roomId) => {
 
     return chatHistories;
   } catch (error) {
-    logger.error("user.chat.service.js findAllChatHistoriesByRoomId: " + error.message);
+    logger.error(
+      "user.chat.service.js findAllChatHistoriesByRoomId: " + error.message
+    );
     throw error;
   }
 };
 
 const findOneChatRoomById = async (userId, chatedId) => {
   try {
-    logger.info("user.chat.service.js findOneChatRoomById: " + userId + ", " + chatedId);
+    logger.info(
+      "user.chat.service.js findOneChatRoomById: " + userId + ", " + chatedId
+    );
     const chatRoom = await userChatRepository.findOneChatRoomById(
       userId,
       chatedId
     );
-    
+
     return chatRoom;
   } catch (error) {
     logger.error("user.chat.service.js findOneChatRoomById: " + error.message);
@@ -77,18 +81,29 @@ const findOneChatRoomById = async (userId, chatedId) => {
 
 const saveSendedChatById = async (roomId, senderId, content) => {
   try {
-    logger.info("user.chat.service.js saveSendedChatById: " + roomId + ", " + senderId + ", " + content);
-    return await userChatRepository.saveSendedChatById(roomId, senderId, content);
+    logger.info(
+      "user.chat.service.js saveSendedChatById: " +
+        roomId +
+        ", " +
+        senderId +
+        ", " +
+        content
+    );
+    return await userChatRepository.saveSendedChatById(
+      roomId,
+      senderId,
+      content
+    );
   } catch (error) {
     logger.error("user.chat.service.js saveSendedChatById: " + error.message);
     throw error;
   }
-}
+};
 
 module.exports = {
   findAllChatRooms,
   findAllChatHistoriesByRoomId,
   findOneChatRoomById,
 
-  saveSendedChatById
+  saveSendedChatById,
 };
