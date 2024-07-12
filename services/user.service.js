@@ -8,8 +8,6 @@ const userBlockRepository = require("../repositories/user.block.repository");
 const userProfileImageRepository = require("../repositories/user.profileImage.repository");
 const userRateRepository = require("../repositories/user.rate.repository");
 
-// TODO : username, password 정규표현식, email 형식 확인
-
 // https://goodmemory.tistory.com/137
 //https://jinyisland.kr/post/middleware/
 const createUser = async (UserCreateDto) => {

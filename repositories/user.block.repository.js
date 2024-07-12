@@ -22,15 +22,15 @@ const addBlockUser = async (blockedUserId, userId) => {
       `
             SELECT * 
             FROM user_block_histories
-            WHERE user_id = $1 AND blocked_id = $2 AND deleted_at NOT NULL
+            WHERE user_id = $1 AND blocked_id = $2 AND deleted_at IS NULL
         `,
       [userId, blockedUserId]
     );
 
     if (existingBlockHistory.rows.length > 0) {
-      const Error = new Error("User already blocked.");
-      Error.statusCode = 400;
-      throw Error;
+      const err = new Error("User already blocked.");
+      err.statusCode = 400;
+      throw err;
     }
 
     await client.query(
@@ -66,15 +66,15 @@ const deleteBlockUser = async (blockedUserId, userId) => {
     );
 
     if (existingBlockHistory.rows.length === 0) {
-      const Error = new Error("User not blocked.");
-      Error.statusCode = 400;
-      throw Error;
+      const err = new Error("User not blocked.");
+      err.statusCode = 400;
+      throw err;
     }
 
     await client.query(
       `
             UPDATE user_block_histories
-            SET deleted_at = NULL
+            SET deleted_at = now()
             WHERE user_id = $1 AND blocked_id = $2
         `,
       [userId, blockedUserId]

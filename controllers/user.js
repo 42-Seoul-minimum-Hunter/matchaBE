@@ -47,15 +47,6 @@ profileImages : String 사용자 프로필 이미지 => BASE64로 반환 예정
 }
 */
 
-//TODO: jwt 토큰 확인 추가
-//TODO: username, password 정규표현식, email 형식 확인, biography 정규표현식
-
-//TODO: 이미지 형식 확인
-//TODO: 해시태그 형식 확인
-
-//gender, preference, hashtags enum
-
-//TODO: 2차원으로 profileImage 저장하는 거 해결
 router.post("/create", async function (req, res, next) {
   try {
     logger.info("user.js POST /user/create: " + JSON.stringify(user))
@@ -184,7 +175,6 @@ router.post("/create", async function (req, res, next) {
 /* DELETE /user/unregister
  */
 
-//TODO: jwt 토큰 확인 추가
 router.delete("/unregister", verifyAllprocess, async function (req, res, next) {
   try {
 
@@ -197,7 +187,7 @@ router.delete("/unregister", verifyAllprocess, async function (req, res, next) {
   }
 });
 
-//세션으로 변경 가능 여부 확인
+// 임시 쿠키로 변경확인
 /* POST /user/change/password
 password : String 사용자 비밀번호
 */
@@ -236,10 +226,6 @@ maxRate : Number 사용자 평점
 si : String 사용자 시
 gu : String 사용자 구
 */
-
-//TODO: si, gu 올바른 형식인지 확인
-//TODO: user preference 필터 추가
-//TODO: gu 기준으로 정렬, si 기준으로 정렬 추가
 router.get("/find", verifyAllprocess, async function (req, res, next) {
   try {
     logger.info("user.js GET /user/find: " + JSON.stringify(req.query))
@@ -279,9 +265,7 @@ router.get("/find", verifyAllprocess, async function (req, res, next) {
     }
 
     const { users, totalCount } = await userSerivce.findUserByFilter(
-      //req.jwtInfo.id,
-      //TODO: req.jwtInfo.id 추가
-      703,
+      req.jwtInfo.id,
       filter,
       page,
       pageSize

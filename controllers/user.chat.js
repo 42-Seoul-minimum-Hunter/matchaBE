@@ -1,21 +1,18 @@
 const express = require("express");
 const router = express.Router();
+const logger = require("../configs/logger.js");
 const { verifyAllprocess } = require("../configs/middleware.js");
 
 const userChatSerivce = require("../services/user.chat.service.js");
 
-/* GET /user/chat
-
+/* GET /user/chatRoom
 */
 router.get("/", verifyAllprocess, async function (req, res, next) {
   try {
-    logger.info("user.chat.js GET /user/chat")
-    const id = req.query.id;
-    if (!id) {
-      return res.status(400).send("id is required");
-    }
-    //const chatInfo = await userChatSerivce.getChatInfo(req.jwtInfo.id);
-    const chatInfo = await userChatSerivce.getChatInfo(parseInt(id));
+    logger.info("user.chat.js GET /user/chatRoom")
+    const id = req.jwtInfo.id;
+
+    const chatInfo = await userChatSerivce.findAllChatRooms(id);
     return res.send(chatInfo);
   } catch (error) {
     next(error);

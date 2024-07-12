@@ -111,8 +111,6 @@ password : String 사용자 비밀번호
 // 일반로그인 -> 2fa -> search
 // oauth 로그인(이미 가입한 유저다 ) -> 2fa -> search
 
-//TODO: OAUTH 유저도 username이랑 password로 로그인할 수 있어야함
-
 router.post("/login", async function (req, res, next) {
   try {
     logger.info("auth.js POST /auth/login: " + JSON.stringify(req.body))
@@ -214,7 +212,6 @@ router.get("/callback", async function (req, res, next) {
 
       res.set("Authorization", `Bearer ${jwtToken}`);
       return res.redirect(process.env.OAUTH_USER_REGISTRATION_URL);
-      //return res.send();
     } else {
       jwtToken = authService.generateJWT({
         id: user.id,
@@ -231,16 +228,12 @@ router.get("/callback", async function (req, res, next) {
       });
 
       res.set("Authorization", `Bearer ${jwtToken}`);
-      //TODO: 테스트 필요
       if (user.isValid === true) {
       return res.redirect(process.env.FE_TWOFACTOR_URL);
       } else {
-      //return res.send();
-      return res.redirect('http://localhost:5173/email');
+        return res.redirect('http://localhost:5173/email');
       }
-      //return res.send(user);
     }
-    return res.send(user);
   } catch (error) {
     next(error);
   }
@@ -248,7 +241,6 @@ router.get("/callback", async function (req, res, next) {
 
 /* POST /auth/twoFactor/create
  */
-//TODO : verifyTwoFA 추가
 router.post("/twofactor/create", verifyTwoFA, async function (req, res, next) {
   try {
     logger.info("auth.js POST /auth/twofactor/create")
@@ -267,7 +259,6 @@ router.post("/twofactor/create", verifyTwoFA, async function (req, res, next) {
 /* POST /auth/twoFactor/verify
 code : String 2FA 인증 코드
 */
-//TODO : verifyTwoFA 추가
 router.post("/twofactor/verify", verifyTwoFA, function (req, res, next) {
   try {
     logger.info("auth.js POST /auth/twofactor/verify: " + JSON.stringify(req.body))
@@ -280,7 +271,7 @@ router.post("/twofactor/verify", verifyTwoFA, function (req, res, next) {
       return res.status(400).send("Email not found.");
     }
 
-    const result = authService.verifyTwoFactorCode(expirationDate, code);
+    const result = authService.verifyTwoFactorCode(code);
 
     if (result === false) {
       return res.status(400).send("Invalid code.");
@@ -312,7 +303,7 @@ router.post("/twofactor/verify", verifyTwoFA, function (req, res, next) {
 
 /* POST /auth/register/email/send
  */
-//TODO : verifyValid 추가
+
 router.post(
   "/register/email/send",
   verifyValid,
@@ -336,7 +327,6 @@ router.post(
 code : String 인증 코드
 */
 
-//TODO : verifyValid 추가
 router.get("/register/email/verify", async function (req, res, next) {
   try {
     logger.info("auth.js GET /auth/register/email/verify: " + JSON.stringify(req.query.code))
@@ -346,7 +336,6 @@ router.get("/register/email/verify", async function (req, res, next) {
       return res.status(400).send("Code not found.");
     }
 
-    //TODO : email 추가해서 isValid true로 변경
     const result = await authService.verifyRegistURL(code);
 
     if (!result) {
@@ -412,8 +401,6 @@ router.post("/reset/email/create", async function (req, res, next) {
 /* GET /auth/reset/email/verify
 code : String 인증 코드
 */
-
-//TODO: jwt cookie 추가해서 비밀번호 변경 페이지로 리다이렉트
 router.get(
   "/reset/email/verify",
   verifyResetPassword,
@@ -438,9 +425,6 @@ router.get(
       });
 
       res.cookie("jwt", jwtToken, {
-        //httpOnly: true,
-        //secure: true, // HTTPS 프로토콜에서만 전송되도록 설정
-        //sameSite: "none", // 크로스 사이트 요청 위험을 방지하기 위해 설정
       });
 
       res.set("Authorization", `Bearer ${jwtToken}`);

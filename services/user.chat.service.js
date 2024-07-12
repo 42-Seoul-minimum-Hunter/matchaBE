@@ -5,10 +5,10 @@ const userProfileImageRepository = require("../repositories/user.profileImage.re
 
 const logger = require("../configs/logger");
 
-const getChatInfo = async (userId) => {
+const findAllChatRooms = async (userId) => {
   try {
-    logger.info("user.chat.service.js getChatInfo: " + userId);
-    const chatRoomInfos = await userChatRepository.getChatInfo(userId);
+    logger.info("user.chat.service.js findAllChatRooms: " + userId);
+    const chatRoomInfos = await userChatRepository.findAllChatRooms(userId);
     if (!chatRoomInfos) {
       return null;
     }
@@ -34,7 +34,7 @@ const getChatInfo = async (userId) => {
         userChatInfo = {
           username: userInfo.username,
           content: "No chat history",
-          createdAt: null,
+          createdAt: chat.created_at,
           profileImage: userProfileImage[0][0],
         };
       }
@@ -43,7 +43,7 @@ const getChatInfo = async (userId) => {
     }
     return AllChatRoomInfos;
   } catch (error) {
-    logger.error("user.chat.service.js getChatInfo: " + error.message);
+    logger.error("user.chat.service.js findAllChatRooms: " + error.message);
     throw error;
   }
 };
@@ -86,7 +86,7 @@ const saveSendedChatById = async (roomId, senderId, content) => {
 }
 
 module.exports = {
-  getChatInfo,
+  findAllChatRooms,
   findAllChatHistoriesByRoomId,
   findOneChatRoomById,
 

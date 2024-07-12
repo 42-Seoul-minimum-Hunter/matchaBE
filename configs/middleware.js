@@ -84,7 +84,7 @@ function verifyValid(req, res, next) {
   } catch (error) {
     // 토큰 검증에 실패한 경우 401 Unauthorized 응답을 보냅니다.
     logger.error("middleware verifyValid error")
-    return res.status(401).send("Failed to authenticate token.");
+    return res.status(401).send(error.message);
   }
 }
 

@@ -1,5 +1,3 @@
-const express = require("express");
-const router = express.Router();
 const socket = require("socket.io");
 const jwt = require("jsonwebtoken");
 
@@ -7,14 +5,10 @@ const userReposiotry = require("../repositories/user.repository");
 const userChatService = require("../services/user.chat.service");
 const userLikeService = require("../services/user.like.service");
 const userViewService = require("../services/user.view.service");
-const userService = require("../services/user.service");
 const userAlarmService = require("../services/user.alarm.service");
 
-const userAlarmRepository = require("../repositories/user.alarm.repository");
-
-const { verifyAllprocess, verifySocket } = require("../configs/middleware");
-
 const logger = require("../configs/logger");
+const { validateUsername } = require("../configs/validate");
 
 /* 필요한 기능
 - 유저는 다음 알림들을 실시간으로 보내야 한다
@@ -28,6 +22,8 @@ const logger = require("../configs/logger");
 */
 
 const userActivate = new Map();
+
+var userId;
 
 module.exports = (server, app) => {
   const io = socket(server, {
@@ -65,78 +61,68 @@ module.exports = (server, app) => {
       }
 
       socket.jwtInfo = decoded;
-      const { id, email } = socket.jwtInfo;
-      //const jwt = socket.handshake.headers.authorization.split(" ")[1];
+      userId = socket.jwtInfo;
 
-      // 유저 아이디
-      //const userId = socket.handshake.header["userId"];
-      //const userId = socket.handshake.auth["userId"];
-
-      if (!id) {
+      if (!userId) {
         await socket.disconnect();
         return;
       }
 
       // 유저 접속 상태
       
-      userActivate.set(id, socket.id);
+      userActivate.set(userId, socket.id);
       await socket.join(socket.id);
 
-      // 채팅 입장
-      // TODO: username이 올바른 지
-      // TODO: 채팅방이 만들어 질 수 있는지
-      // TODO: 채팅이력이 있는지 확인
+      // 채팅방 입장
       socket.on("joinChatRoom", async (data) => {
         try {
           logger.info("user.socket.js joinChatRoom: " + data);
-          var rooms = io.sockets.adapter.sids[socket.id];
+          const socketId = userActivate.get(id);
+          var rooms = io.sockets.adapter.sids[socketId];
           for (var room in rooms) {
-            if (room !== socket.id) socket.leave(room);
+            if (room !== socketId) socket.leave(room);
           }
 
           const { username } = data;
 
-          if (!id || !username) {
+          if (!username || !validateUsername(username)) {
             return;
           }
 
-          const chatedInfo = await userService.findOneUserByUsername(username);
-          const userInfo = await userService.findOneUserById(id);
-
-          if (!chatedInfo) {
-            return ;
+          const userInfo = await userReposiotry.findUserByUsername(username);
+          if (!userInfo) {
+            return;
           }
 
           const chatRoomInfo = await userChatService.findOneChatRoomById(
             id,
-            chatedInfo.id
+            userInfo.id
           );
-          
+
           if (!chatRoomInfo) {
-            return ;
+            return;
           }
-          const chatHistories =
-            await userChatService.findAllChatHistoriesByRoomId(chatRoomInfo.id);
 
+          const chatHistories = await userChatService.findAllChatHistoriesByRoomId(
+            chatRoomInfo.id
+          );
 
-          let chatInfos = [];
-
+          //TODO: 채팅 형태 논의필요
           if (chatHistories) {
-            chatHistories.forEach((chat) => {
-              let param = {
-                message: chat.content,
-                username:
-                  chat.user_id === id ? userInfo.username : chatedInfo.username,
-                time: chat.created_at, // (9시간 차이나는 시간)
+            const chatHistory = chatHistories.map(async (chat) => {
+              const userInfo = await userReposiotry.findUserById(chat.userId);
+              return {
+                content: chat.content,
+                username: userInfo.username,
+                createdAt: chat.created_at,
               };
-              chatInfos.push(param);
             });
+            
+            await io.to(socketId).emit("joinChatRoom", chatHistory);
+          } 
 
-            io.to(socket.id).emit("sendHistories", chatInfos);
-          } else {
-            io.to(socket.id).emit("sendHistories", null);
-          }
-          socket.join(chatRoomInfo.id);
+          await socket.join(chatRoomInfo.id);
+          
         } catch (error) {
           logger.error("user.socket.js joinChatRoom error: " + error.message);
           throw error;
@@ -154,18 +140,16 @@ module.exports = (server, app) => {
         const { message, username } = data;
 
         if (!message || !username) {
-          const error = new Error("message or username is null");
-          error.name = "BadRequest";
-          throw error;
+          return;
         }
 
         const userInfo = await userReposiotry.findUserByUsername(username);
 
         if (!userInfo) {
-          const error = new Error("userInfo is null");
-          error.name = "BadRequest";
-          throw error;
+          return;
         }
+
+        // TODO: 채팅을 보낼 수 있는 상황인지 확인
 
         const chatRoomInfo = await userChatService.findOneChatRoomById(
           id,
@@ -173,15 +157,14 @@ module.exports = (server, app) => {
         );
 
         if (!chatRoomInfo) {
-          const error = new Error("chatRoomInfo is null");
-          error.name = "BadRequest";
-          throw error;
+          return;
         }
 
+        //TODO: 채팅 형태 논의필요
         const param = {
-          message,
+          content: message,
           username,
-          time: new Date(),
+          createdAt: new Date(),
         };
 
         await userChatService.saveSendedChatById(
@@ -192,11 +175,11 @@ module.exports = (server, app) => {
         io.to(chatRoomInfo.id).emit("message", param);
 
         //유저가 메세지를 받았을때
-        io.to(userActivate.get(userInfo.id)).emit("alarm", {
+        io.to(userActivate.get(userActivate.get(userInfo.id))).emit("alarm", {
           AlarmType: "MESSAGED",
           username,
         });
-        await userAlarmRepository.saveAlarmById(id, userInfo.id, "MESSAGED");
+        await userAlarmService.saveAlarmById(id, userInfo.id, "MESSAGED");
       } catch (error) {
         logger.error("user.socket.js sendMessage error: " + error.message)
         return ;
@@ -208,17 +191,18 @@ module.exports = (server, app) => {
         logger.info("user.socket.js onlineStatus: " + data);
         const { username } = data;
 
+        if (!username) {
+          return;
+        }
+
         const userInfo = await userReposiotry.findUserByUsername(username);
 
         if (!userInfo) {
-          socket.emit("onlineStatus", false);
+          return ;
         } else if (userActivate.get(userInfo.id)) {
-          //return socket.to(userActivate[userId]).emit("onlineStatus", true);
-          socket.emit("onlineStatus", true);
+          io.to(userActivate.get(userId)).emit("onlineStatus", true);
         } else {
-          //TODO: 자기 자신에게만 보내지는지 확인
-          //return socket.to(userActivate[userId]).emit("onlineStatus", false);
-          socket.emit("onlineStatus", false);
+          io.to(userActivate.get(userId)).emit("onlineStatus", false);
         }
       } catch (error) {
         logger.error("user.socket.js onlineStatus error: " + error.message)

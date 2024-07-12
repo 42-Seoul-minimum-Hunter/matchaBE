@@ -15,9 +15,9 @@ const client = new Client({
 
 client.connect();
 
-const getChatInfo = async (userId) => {
+const findAllChatRooms = async (userId) => {
   try {
-    logger.info("user.chat.repository.js getChatInfo: " + userId);
+    logger.info("user.chat.repository.js findAllChatRooms: " + userId);
     const chatRoomInfo = await client.query(
       `
             SELECT * FROM user_chat_rooms 
@@ -27,36 +27,9 @@ const getChatInfo = async (userId) => {
       [userId]
     );
 
-    //const recentChat = await Promise.all(
-    //  chatRoomInfo.rows.map(async (room) => {
-    //    const { rows } = await client.query(
-    //      `
-    //            SELECT * FROM user_chat_histories
-    //            WHERE room_id = $1
-    //            ORDER BY created_at DESC
-    //            LIMIT 1
-    //        `,
-    //      [room.id]
-    //    );
-
-    //    return rows.length > 0 ? rows[0] : null;
-    //  })
-    //);
-
-    //if (!recentChat) {
-    //  return {
-    //    chatRoomInfo: chatRoomInfo.rows,
-    //    recentChat: [],
-    //  };
-    //}
-
-    //const chatInfo = {
-    //  chatRoomInfo: chatRoomInfo.rows,
-    //};
-
     return chatRoomInfo.rows;
   } catch (error) {
-    logger.error("user.chat.repository.js getChatInfo: " + error.message);
+    logger.error("user.chat.repository.js findAllChatRooms: " + error.message);
     throw error;
   }
 };
@@ -323,7 +296,7 @@ const saveSendedChatById = async (roomId, senderId, content) => {
 };
 
 module.exports = {
-  getChatInfo,
+  findAllChatRooms,
   getRecentChat,
   generateChatRoom,
   deleteChatRoom,

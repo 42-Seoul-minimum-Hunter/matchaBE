@@ -51,6 +51,7 @@ const userProfileRouter = require("./controllers/user.profile.js");
 const userAlarmRouter = require("./controllers/user.alarm.js");
 const authRouter = require("./controllers/auth.js");
 const userChatRouter = require("./controllers/user.chat.js");
+const userBlockRouter = require("./controllers/user.block.js");
 
 const socketRouter = require("./controllers/user.socket.js");
 const logger = require('./configs/logger.js');
@@ -67,15 +68,9 @@ app.use("/user/rating", userRateRouter);
 app.use("/user/report", userReportRouter);
 app.use("/user/profile", userProfileRouter);
 app.use("/user/alarm", userAlarmRouter);
-// app.user('/user/block', userBlockRouter);
+app.use('/user/block', userBlockRouter);
 app.use("/user/chat", userChatRouter);
 app.use("/auth", authRouter);
-
-app.use((err, req, res, next) => {
-  const status = err.status || 500;
-  res.status(status).send(err.message);
-});
-
 app.use(morgan("combined", {stream : logger.stream})); // morgan 로그 설정 
 
 // 서버 실행
@@ -148,11 +143,13 @@ server.listen(wsPort, () => {
   logger.info(`WebSocket server running on port ${wsPort}...`)
 });
 
+app.use((err, req, res, next) => {
+  const status = err.status || 500;
+  res.status(status).send(err.message);
+});
+
+
 io.use((socket, res, next) => {
   const status = err.status || 500;
   res.status(status).json({ error: err.message });
 });
-
-//socketIO(WsServer, app);
-
-//TODO : jwt 확인, 삭제된 유저인지 확인 + 유저 존재 유무 확인

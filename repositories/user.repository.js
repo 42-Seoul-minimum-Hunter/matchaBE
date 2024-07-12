@@ -409,7 +409,7 @@ const findUserById = async (id) => {
 
 const updateUserById = async (UserUpdateDto, id) => {
   try {
-    logger.info("user.repository.js updateUserById: " + UserUpdateDto + ", " + id);
+    logger.info("user.repository.js updateUserById: " + JSON.stringify(UserUpdateDto) + ", " + id);
     const {
       email,
       password,

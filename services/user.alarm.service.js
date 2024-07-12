@@ -26,19 +26,18 @@ const findAllAlarmsById = async (id) => {
         logger.info("user.alarm.service.js findAllAlarmsById: " + id)
         const result = await userAlarmRepository.findAllAlarmsById(id);
 
-        const alarmedUserInfo = [];
-
-        if (result) {
-            result.forEach(async (element) => {
-                const alarmedUserInfo = await userRepository.findUserById(element.alarmed_id);
-                alarmedUserInfo.push({
+        const alarmedInfos = await Promise.all(result.map(async (element) => {
+            const alarmedUserInfo = await userRepository.findUserById(element.user_id);
+            if (alarmedUserInfo) {
+                return {
                     username: alarmedUserInfo.username,
                     alarm_type: element.alarm_type,
                     created_at: element.created_at
-                });
-            });
-        }
-        return alarmedUserInfo;
+                };
+            }
+        }));
+
+        return alarmedInfos.filter(Boolean);
     }
     catch (error) {
         logger.error("user.alarm.service.js findAllAlarmsById: " + error.message);

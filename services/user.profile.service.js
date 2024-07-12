@@ -1,3 +1,5 @@
+const bcrypt = require("bcrypt");
+
 const userProfileImageRepository = require("../repositories/user.profileImage.repository");
 const userHashtagRepository = require("../repositories/user.hashtag.repository");
 const userRegionRepository = require("../repositories/user.region.repository");
@@ -14,14 +16,9 @@ const getUserProfile = async (username, userId) => {
     logger.info("user.profile.service.js getUserProfile: " + username + ", " + userId)
     const userInfo = await userRepository.findUserByUsername(username);
     if (!userInfo) {
-      const error = new Error("User not found");
-      error.status = 404;
-      throw error;
-    } else if (userInfo.id === userId) {
-      //TODO: 논의 필요
-      const error = new Error("You cannot see your own profile");
-      error.status = 403;
-      throw error;
+      const err = new Error("User not found");
+      err.statusCode = 404;
+      throw err;
     }
 
     //console.log("user info", userInfo.rows[0]);
@@ -123,27 +120,27 @@ const getMyInfo = async (userId) => {
 
 const updateUser = async (UserUpdateDto, userId) => {
   try {
-    logger.info("user.profile.service.js updateUser: " + UserUpdateDto + ", " + userId);
+    logger.info("user.profile.service.js updateUser: " + JSON.stringify(UserUpdateDto) + ", " + JSON.stringify(userId));
     const userInfo = await userRepository.findUserByEmail(UserUpdateDto.email);
+    const hashed = await bcrypt.hash(UserCreateDto.password, 10);
+    UserCreateDto.password = hashed;
 
-    if (userInfo) {
-      const error = new Error("User already exists");
-      error.status = 409;
+    if (!userInfo) {
+      const error = new Error("User Not Found");
+      error.status = 404;
       throw error;
     }
 
     await userRepository.updateUserById(UserUpdateDto, userId);
-    await userHashtagRepository.updateHashtagById(
-      UserUpdateDto.hashtags,
-      UserUpdateDto.userId
+    await userHashtagRepository.saveHashtagById(UserUpdateDto.hashtags, userId);
+    await userRegionRepository.saveRegionById(
+      UserUpdateDto.si,
+      UserUpdateDto.gu,
+      userId
     );
-    await userRegionRepository.updateRegionById(
-      UserUpdateDto.region,
-      UserUpdateDto.userId
-    );
-    await userProfileImageRepository.updateProfileImagesById(
+    await userProfileImageRepository.saveProfileImagesById(
       UserUpdateDto.profileImages,
-      UserUpdateDto.userId
+      userId
     );
   } catch (error) {
     logger.error("user.profile.service.js updateUser: " + error.message);

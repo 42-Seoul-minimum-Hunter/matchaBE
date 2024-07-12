@@ -8,7 +8,6 @@ const userRateSerivce = require("../services/user.rate.service.js");
 rateScore : Float 평가 점수
 */
 
-//TODO: jwt 토큰 확인 추가
 //TODO: 정밀도 소수점 1자리
 router.post("/", verifyAllprocess, async function (req, res, next) {
   try {

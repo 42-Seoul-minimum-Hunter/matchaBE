@@ -39,7 +39,7 @@ const findAllAlarmsById = async (id) => {
         const result = await client.query(
             `
             SELECT * FROM user_alarm_histories
-            WHERE user_id = $1 AND deleted_at IS NULL
+            WHERE alarmed_id = $1 AND deleted_at IS NULL
             `,
             [id]
         );

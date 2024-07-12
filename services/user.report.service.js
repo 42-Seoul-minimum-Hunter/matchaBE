@@ -1,5 +1,6 @@
 const userReportRepository = require('../repositories/user.report.repository');
 const userRepository = require('../repositories/user.repository');
+const userBlockRepository = require('../repositories/user.block.repository');
 
 const logger = require('../configs/logger');
 
@@ -13,7 +14,7 @@ const reportUser = async (reportedUsername, reason, userId) => {
             throw error;
         }
         await userReportRepository.reportUser(reportedUserInfo.id, reason, userId);
-        //TODO: 유저 신고 시 차단 기능 추가 논의
+        await userBlockRepository.addBlockUser(reportedUserInfo.id, userId);
     } catch (error) {
         logger.error('user.report.service.js reportUser: ' + error.message);
         throw error;

@@ -23,7 +23,7 @@ const reportUser = async (reportedUserId, reason, userId) => {
                 user_id,
                 reported_id,
                 reason,
-                reported_at
+                created_at
             ) VALUES ($1, $2, $3, now())
              RETURNING *
         `, [userId, reportedUserId, reason]);
