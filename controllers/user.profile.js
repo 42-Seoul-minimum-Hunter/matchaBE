@@ -1,6 +1,5 @@
 const express = require("express");
 const router = express.Router();
-const logger = require("../configs/logger.js");
 const { verifyAllprocess } = require("../configs/middleware.js");
 
 const { validateEmail, validatePassword, validateName, validateBiography, validateAge, validateGender, validatePreference, validateHashtags, validateSi, validateGu } = require("../configs/validate.js");
