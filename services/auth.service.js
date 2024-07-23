@@ -15,7 +15,12 @@ const resetPasswordCode = new Map();
 
 const loginByUsernameAndPassword = async (username, password) => {
   try {
-    logger.info("auth.service.js loginByUsernameAndPassword: " + username + ", " + password); 
+    logger.info(
+      "auth.service.js loginByUsernameAndPassword: " +
+        username +
+        ", " +
+        password
+    );
     const userInfo = await userRepository.findUserByUsername(username);
 
     if (!userInfo) {
@@ -28,7 +33,7 @@ const loginByUsernameAndPassword = async (username, password) => {
       );
       error.status = 400;
       throw error;
-    } else if (await bcypt.compare(password, userInfo.password)) {
+    } else if (bcypt.compare(password, userInfo.password)) {
       const error = new Error("Password not match");
       error.status = 400;
       throw error;
@@ -36,14 +41,16 @@ const loginByUsernameAndPassword = async (username, password) => {
 
     return userInfo;
   } catch (error) {
-    logger.error("auth.service.js loginByUsernameAndPassword: " + error.message);
+    logger.error(
+      "auth.service.js loginByUsernameAndPassword: " + error.message
+    );
     throw error;
   }
 };
 
 const getOauthInfo = async (code) => {
   try {
-    logger.info("auth.service.js getOauthInfo: " + code)
+    logger.info("auth.service.js getOauthInfo: " + code);
     const accessToken = await getAccessTokens(code);
     const oauthInfo = await getOAuthInfo(accessToken);
     var user = await userRepository.findUserByEmail(oauthInfo.email);
@@ -116,7 +123,7 @@ const verifyTwoFactorCode = (code) => {
 
 const createRegistURL = async (email) => {
   try {
-    logger.info("auth.service.js createRegistURL: " + email)
+    logger.info("auth.service.js createRegistURL: " + email);
     const code = crypto.randomBytes(20).toString("hex");
     const userTimezone = "Asia/Seoul"; // 사용자의 시간대
     const expirationDate = moment().tz(userTimezone).add(5, "minutes").toDate(); // 5분 후 만료
@@ -145,7 +152,7 @@ const createRegistURL = async (email) => {
 
 const verifyRegistURL = async (code) => {
   try {
-    logger.info("auth.service.js verifyRegistURL: " + code)
+    logger.info("auth.service.js verifyRegistURL: " + code);
     const { expirationDate, email } = registerationCode.get(code);
     if (!expirationDate) {
       return false;
@@ -166,7 +173,7 @@ const verifyRegistURL = async (code) => {
 
 const createResetPasswordURL = async (email) => {
   try {
-    logger.info("auth.service.js createResetPasswordURL: " + email)
+    logger.info("auth.service.js createResetPasswordURL: " + email);
     const userInfo = await userRepository.findUserByEmail(email);
 
     if (!userInfo) {
@@ -215,7 +222,7 @@ const createResetPasswordURL = async (email) => {
 
 const verifyResetPasswordURL = (code) => {
   try {
-    logger.info("auth.service.js verifyResetPasswordURL: " + code)
+    logger.info("auth.service.js verifyResetPasswordURL: " + code);
     const expirationDate = resetPasswordCode.get(code);
     if (!expirationDate) {
       return false;
@@ -246,7 +253,7 @@ const generateJWT = (obj) => {
 
 const getAccessTokens = async (code) => {
   try {
-    logger.info("auth.service.js getAccessTokens: " + code)
+    logger.info("auth.service.js getAccessTokens: " + code);
     const data = {
       grant_type: "authorization_code",
       client_id: process.env.OAUTH_CLIENT_ID,
@@ -281,6 +288,8 @@ const getOAuthInfo = async (accessToken) => {
         Authorization: `Bearer ${accessToken}`,
       },
     });
+
+    console.log(response);
 
     if (response.status !== 200) {
       const error = new Error("Failed to get OAuth info");
