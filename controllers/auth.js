@@ -133,28 +133,33 @@ router.post("/login", async function (req, res, next) {
       return res.status(400).send("User not found.");
     }
 
-    const jwtToken = authService.generateJWT({
+    const authInfo = await authService.findAuthInfoById(user.id);
+
+    let jwtToken = {
       id: user.id,
       email: user.email,
-      isValid: user.isValid,
+      isValid: authInfo.is_valid,
       isOauth: false,
       accessToken: null,
       twofaVerified: false,
-    });
+    };
 
-    res.cookie("jwt", jwtToken, {});
+    if (authInfo.is_twofa === true) {
+      jwtToken.twofaVerified = true;
+    }
 
-    res.set("Authorization", `Bearer ${jwtToken}`);
+    const cookie = authService.generateJWT(jwtToken);
 
-    //if (user.isValid === true) {
-    //  return res.redirect(process.env.FE_TWOFACTOR_URL);
-    //} else {
-    //  //return res.redirect(process.env.FE_EMAIL_VERIFY_URL);
-    //  //return res.redirect("");
-    //  return res.send();
-    //}
+    res.cookie("jwt", cookie, {});
 
-    return res.send(user.isValid);
+    res.set("Authorization", `Bearer ${cookie}`);
+
+    const validComponent = {
+      isValid: authInfo.is_valid,
+      isTwofa: authInfo.is_twofa,
+    };
+
+    return res.send(validComponent);
   } catch (error) {
     next(error);
   }
@@ -201,7 +206,6 @@ router.get("/callback", async function (req, res, next) {
         id: null,
         email: oauthInfo.email,
         isValid: false,
-        isValid: false,
         isOauth: true,
         accessToken: oauthInfo.accessToken,
         twofaVerified: false,
@@ -215,10 +219,12 @@ router.get("/callback", async function (req, res, next) {
       res.set("Authorization", `Bearer ${jwtToken}`);
       return res.redirect(process.env.OAUTH_USER_REGISTRATION_URL);
     } else {
+      const authInfo = await authService.findAuthInfoById(user.id);
+
       jwtToken = authService.generateJWT({
         id: user.id,
         email: user.email,
-        isValid: user.isValid,
+        isValid: authInfo.is_valid,
         isOauth: true,
         accessToken: oauthInfo.accessToken,
         twofaVerified: false,
@@ -230,10 +236,12 @@ router.get("/callback", async function (req, res, next) {
       });
 
       res.set("Authorization", `Bearer ${jwtToken}`);
-      if (user.isValid === true) {
+      if (authInfo.is_twofa === true) {
+        return res.send();
+      } else if (authInfo.is_valid === true) {
         return res.redirect(process.env.FE_TWOFACTOR_URL);
       } else {
-        return res.redirect('http://localhost:5173/email');
+        return res.redirect("http://localhost:5173/email");
       }
     }
   } catch (error) {
@@ -246,7 +254,15 @@ router.get("/callback", async function (req, res, next) {
 router.post("/twofactor/create", verifyTwoFA, async function (req, res, next) {
   try {
     logger.info("auth.js POST /auth/twofactor/create");
+
+    const authInfo = await authService.findAuthInfoById(req.jwtInfo.id);
+
+    if (authInfo.is_twofa === false) {
+      return res.status(400).send("2FA is not enabled.");
+    }
+
     const email = req.jwtInfo.email;
+
     //const email = req.body.email;
     if (!email) {
       res.status(400).send("Email not found.");
@@ -349,21 +365,25 @@ router.get("/register/email/verify", async function (req, res, next) {
       return res.status(400).send("Invalid code OR Code expired.");
     }
 
+    const authInfo = await authService.findAuthInfoById(result.id);
+
     let jwtInfo = {
       id: result.id,
       email: result.email,
       isValid: true,
-      isOauth: result.is_oauth,
+      isOauth: authInfo.is_oauth,
       accessToken: null,
       twofaVerified: true,
     };
 
-    if (result.is_oauth === true) {
+    if (jwtInfo.isOauth === true) {
       const { oauthInfo } = await authService.getOauthInfo(result.email);
       jwtInfo.accessToken = oauthInfo.accessToken;
     }
 
     const jwtToken = authService.generateJWT(jwtInfo);
+
+    await authService.updateVerificationById(result.email);
 
     res.cookie("jwt", jwtToken, {
       //httpOnly: true,
@@ -435,8 +455,7 @@ router.get(
         isPasswordResetVerified: true,
       });
 
-      res.cookie("jwt", jwtToken, {
-      });
+      res.cookie("jwt", jwtToken, {});
 
       res.set("Authorization", `Bearer ${jwtToken}`);
 

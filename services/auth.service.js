@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const userProfileImageRepository = require("../repositories/user.profileImage.repository.js");
+const authRepository = require("../repositories/auth.repository");
 const userRepository = require("../repositories/user.repository");
 const sendEmail = require("../configs/sendEmail.js");
 const { totp } = require("otplib");
@@ -27,17 +28,12 @@ const loginByUsernameAndPassword = async (username, password) => {
       const error = new Error("User not found");
       error.status = 404;
       throw error;
-    } else if (userInfo.is_oauth === true) {
-      const error = new Error(
-        "OAuth user cannot login with username and password"
-      );
-      error.status = 400;
-      throw error;
-    } else if (bcypt.compare(password, userInfo.password)) {
-      const error = new Error("Password not match");
-      error.status = 400;
-      throw error;
     }
+    //else if (bcypt.compare(password, userInfo.password)) {
+    //  const error = new Error("Password not match");
+    //  error.status = 400;
+    //  throw error;
+    //}
 
     return userInfo;
   } catch (error) {
@@ -48,12 +44,31 @@ const loginByUsernameAndPassword = async (username, password) => {
   }
 };
 
+const findAuthInfoById = async (id) => {
+  try {
+    const authInfo = await authRepository.findAuthInfoById(id);
+
+    if (authInfo.is_oauth === true) {
+      const error = new Error(
+        "OAuth user cannot login with username and password"
+      );
+      error.status = 400;
+      throw error;
+    }
+
+    return authInfo;
+  } catch (error) {
+    logger.error("auth.service.js findAuthInfoById: " + error.message);
+    throw error;
+  }
+};
+
 const getOauthInfo = async (code) => {
   try {
     logger.info("auth.service.js getOauthInfo: " + code);
     const accessToken = await getAccessTokens(code);
     const oauthInfo = await getOAuthInfo(accessToken);
-    var user = await userRepository.findUserByEmail(oauthInfo.email);
+    const user = await userRepository.findUserByEmail(oauthInfo.email);
 
     if (!user) {
       return { user: null, oauthInfo };
@@ -204,10 +219,12 @@ const createResetPasswordURL = async (email) => {
       text: emailContent,
     });
 
+    const authInfo = await authRepository.findAuthInfoById(userInfo.id);
+
     const resetPasswordInfo = {
       email,
       isPasswordResetVerified: false,
-      isValid: userInfo.isValid,
+      isValid: authInfo.is_valid,
     };
 
     // resetPasswordCode[code] = expirationDate;
@@ -313,8 +330,19 @@ const getOAuthInfo = async (accessToken) => {
   }
 };
 
+const updateVerificationById = async (id) => {
+  try {
+    logger.info("auth.service.js updateVerificationById: " + id);
+    await authRepository.updateUserValidById(id);
+  } catch (error) {
+    logger.error("auth.service.js updateVerification: " + error.message);
+    throw error;
+  }
+};
+
 module.exports = {
   loginByUsernameAndPassword,
+  findAuthInfoById,
   getOauthInfo,
   generateJWT,
 
@@ -329,4 +357,6 @@ module.exports = {
 
   createResetPasswordURL,
   verifyResetPasswordURL,
+
+  updateVerificationById,
 };

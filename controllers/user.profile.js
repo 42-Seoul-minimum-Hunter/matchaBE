@@ -2,7 +2,18 @@ const express = require("express");
 const router = express.Router();
 const { verifyAllprocess } = require("../configs/middleware.js");
 
-const { validateEmail, validatePassword, validateName, validateBiography, validateAge, validateGender, validatePreference, validateHashtags, validateSi, validateGu } = require("../configs/validate.js");
+const {
+  validateEmail,
+  validatePassword,
+  validateName,
+  validateBiography,
+  validateAge,
+  validateGender,
+  validatePreference,
+  validateHashtags,
+  validateSi,
+  validateGu,
+} = require("../configs/validate.js");
 const userProfileService = require("../services/user.profile.service.js");
 
 const logger = require("../configs/logger.js");
@@ -81,6 +92,7 @@ router.put("/update", verifyAllprocess, async function (req, res, next) {
       si: req.body.si || undefined,
       gu: req.body.gu || undefined,
       profileImages: req.body.profileImages || undefined,
+      isTwofa: req.body.isTwofa || undefined,
     };
 
     const requiredFields = [
@@ -139,7 +151,7 @@ router.put("/update", verifyAllprocess, async function (req, res, next) {
       const jwtToken = authService.generateJWT({
         id: req.jwtInfo.id,
         email: user.email,
-        isValid: user.isValid,
+        isValid: req.jwtInfo.isValid,
         isOauth: req.jwtInfo.isOauth,
         accessToken: req.jwtInfo.accessToken,
         twofaVerified: req.jwtInfo.twofaVerified,

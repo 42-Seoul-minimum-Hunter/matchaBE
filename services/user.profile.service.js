@@ -9,6 +9,8 @@ const userAlarmRepository = require("../repositories/user.alarm.repository");
 
 const userRepository = require("../repositories/user.repository");
 
+const authRepository = require("../repositories/auth.repository");
+
 const logger = require("../configs/logger");
 
 const getUserProfile = async (username, userId) => {
@@ -123,16 +125,28 @@ const getMyInfo = async (userId) => {
 
 const updateUser = async (UserUpdateDto, userId) => {
   try {
-    logger.info("user.profile.service.js updateUser: " + JSON.stringify(UserUpdateDto) + ", " + JSON.stringify(userId));
+    logger.info(
+      "user.profile.service.js updateUser: " +
+        JSON.stringify(UserUpdateDto) +
+        ", " +
+        JSON.stringify(userId)
+    );
     const userInfo = await userRepository.findUserByEmail(UserUpdateDto.email);
-    const hashed = await bcrypt.hash(UserCreateDto.password, 10);
-    UserCreateDto.password = hashed;
+    const hashed = await bcrypt.hash(UserUpdateDto.password, 10);
+    UserUpdateDto.password = hashed;
 
     if (!userInfo) {
       const error = new Error("User Not Found");
       error.status = 404;
       throw error;
     }
+
+    await authRepository.updateGpsAllowedById(
+      userId,
+      UserUpdateDto.isGpsAllowed
+    );
+
+    await authRepository.updateTwoFactorById(userId, UserUpdateDto.isTwofa);
 
     await userRepository.updateUserById(UserUpdateDto, userId);
     await userHashtagRepository.saveHashtagById(UserUpdateDto.hashtags, userId);

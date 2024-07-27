@@ -104,6 +104,16 @@ app.listen(port, async () => {
 
     logger.info("users mock data inserted successfully!");
 
+    // mock 데이터 삽입
+    const authMockQuery = fs.readFileSync(
+      path.join(__dirname, "mocks", "auth.mock.sql"),
+      "utf8"
+    );
+
+    await client.query(authMockQuery);
+
+    logger.info("auth mock data inserted successfully!");
+
     const profileMockQuery = fs.readFileSync(
       path.join(__dirname, "mocks", "user.profileImages.mock.sql"),
       "utf8"

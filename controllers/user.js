@@ -49,7 +49,7 @@ profileImages : String 사용자 프로필 이미지 => BASE64로 반환 예정
 
 router.post("/create", async function (req, res, next) {
   try {
-    logger.info("user.js POST /user/create: " + JSON.stringify(user));
+    logger.info("user.js POST /user/create: " + JSON.stringify(req.body));
     const user = {
       email: req.body.email || undefined,
       username: req.body.username || undefined,
@@ -134,13 +134,15 @@ router.post("/create", async function (req, res, next) {
     }
     user.id = user_id;
 
+    const authInfo = await authService.findAuthInfoById(user.id);
+
     let jwtToken;
     if (req.jwtInfo && req.jwtInfo.isOauth && req.jwtInfo.accessToken) {
       jwtToken = authService.generateJWT({
         id: user.id,
         email: user.email,
         isValid: false,
-        isOauth: user.isOauth,
+        isOauth: authInfo.is_oauth,
         accessToken: req.jwtInfo.accessToken,
         twofaVerified: false,
       });
@@ -149,7 +151,7 @@ router.post("/create", async function (req, res, next) {
         id: user.id,
         email: user.email,
         isValid: false,
-        isOauth: user.isOauth,
+        isOauth: authInfo.is_oauth,
         accessToken: null,
         twofaVerified: false,
       });

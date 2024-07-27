@@ -16,7 +16,9 @@ client.connect();
 
 const createUser = async (UserCreateDto) => {
   try {
-    logger.info("user.repository.js createUser: " + UserCreateDto);
+    logger.info(
+      "user.repository.js createUser: " + JSON.stringify(UserCreateDto)
+    );
     const {
       email,
       username,
@@ -27,8 +29,6 @@ const createUser = async (UserCreateDto) => {
       preference,
       biography,
       age,
-      isGpsAllowed,
-      isOauth,
     } = UserCreateDto;
 
     const result = await client.query(
@@ -42,14 +42,11 @@ const createUser = async (UserCreateDto) => {
                 preference,
                 biography,
                 age,
-                is_oauth,
-                is_valid,
-                is_gps_allowed,
                 connected_at,
                 created_at,
                 deleted_at,
                 updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, now(), now(), null, now())
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, now(), now(), null, now())
             RETURNING *`,
       [
         email,
@@ -61,9 +58,6 @@ const createUser = async (UserCreateDto) => {
         preference,
         biography,
         age,
-        isOauth,
-        false,
-        isGpsAllowed,
       ]
     );
 
@@ -432,7 +426,12 @@ const findUserById = async (id) => {
 
 const updateUserById = async (UserUpdateDto, id) => {
   try {
-    logger.info("user.repository.js updateUserById: " + JSON.stringify(UserUpdateDto) + ", " + id);
+    logger.info(
+      "user.repository.js updateUserById: " +
+        JSON.stringify(UserUpdateDto) +
+        ", " +
+        id
+    );
     const {
       email,
       password,
@@ -442,7 +441,6 @@ const updateUserById = async (UserUpdateDto, id) => {
       preference,
       biography,
       age,
-      isGpsAllowed,
     } = UserUpdateDto;
 
     await client.query(
@@ -456,8 +454,8 @@ const updateUserById = async (UserUpdateDto, id) => {
                 preference = $6,
                 biography = $7,
                 age = $8,
-                is_gps_allowed = $9
-            WHERE id = $10
+                updated_at = now()
+            WHERE id = $9
             RETURNING *
         `,
       [
@@ -469,7 +467,6 @@ const updateUserById = async (UserUpdateDto, id) => {
         preference,
         biography,
         age,
-        isGpsAllowed,
         id,
       ]
     );

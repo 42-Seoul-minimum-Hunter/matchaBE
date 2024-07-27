@@ -7,6 +7,7 @@ const userRegionRepository = require("../repositories/user.region.repository");
 const userBlockRepository = require("../repositories/user.block.repository");
 const userProfileImageRepository = require("../repositories/user.profileImage.repository");
 const userRateRepository = require("../repositories/user.rate.repository");
+const authRepository = require("../repositories/auth.repository");
 
 // https://goodmemory.tistory.com/137
 //https://jinyisland.kr/post/middleware/
@@ -36,6 +37,12 @@ const createUser = async (UserCreateDto) => {
       throw error;
     }
 
+    await authRepository.saveAuthInfoById(
+      userId,
+      UserCreateDto.isGpsAllowed,
+      UserCreateDto.isOauth
+    );
+
     await userHashtagRepository.saveHashtagById(UserCreateDto.hashtags, userId);
     await userRegionRepository.saveRegionById(
       UserCreateDto.si,
@@ -49,7 +56,7 @@ const createUser = async (UserCreateDto) => {
 
     return userId;
   } catch (error) {
-    info.error("user.service.js createUser: " + error.message);
+    logger.error("user.service.js createUser: " + error.message);
     throw error;
   }
 };

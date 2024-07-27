@@ -1,10 +1,15 @@
 INSERT INTO users 
 (email, username, password, last_name, first_name,
-gender, preference, biography, age, is_oauth, is_valid, is_gps_allowed, connected_at,
+gender, preference, biography, age, connected_at,
 updated_at, created_at, deleted_at)
 VALUES 
 ('koryum30@gmail.com', 'User1', 'password', 'min', 'yeomin', 'Male', 'Female',
-'hello, world!', '22', 'false', 'true', 'true', '2020-01-01 00:00:00', '2020-01-01 00:00:00', '2020-01-01 00:00:00', NULL);
+'hello, world!', '22', '2020-01-01 00:00:00', '2020-01-01 00:00:00', '2020-01-01 00:00:00', NULL);
+
+INSERT INTO auth
+(id, user_id, is_oauth, is_valid, is_gps_allowed, is_twofa, updated_at)
+VALUES
+(701, 701, false, true, true, true, '2020-01-01 00:00:00');
 
 INSERT INTO user_hashtags
 (user_id, hashtags, updated_at)
@@ -23,11 +28,18 @@ VALUES
 
 INSERT INTO users 
 (email, username, password, last_name, first_name,
-gender, preference, biography, age, is_oauth, is_valid, is_gps_allowed, connected_at,
+gender, preference, biography, age,connected_at,
 updated_at, created_at, deleted_at)
 VALUES 
 ('miyu@student.42seoul.kr', 'User2', 'password', 'min', 'yeomin', 'Female', 'Male',
-'hello, world!', '22', 'false', 'true', 'true', '2020-01-01 00:00:00', '2020-01-01 00:00:00', '2020-01-01 00:00:00', NULL);
+'hello, world!', '22', '2020-01-01 00:00:00', '2020-01-01 00:00:00', '2020-01-01 00:00:00', NULL);
+
+INSERT INTO auth
+(
+id, user_id, is_oauth, is_valid, is_gps_allowed, is_twofa, updated_at
+)
+VALUES
+(702, 702, false, true, true, true, '2020-01-01 00:00:00');
 
 INSERT INTO user_hashtags
 (user_id, hashtags, updated_at)
@@ -46,11 +58,18 @@ VALUES
 
 INSERT INTO users 
 (email, username, password, last_name, first_name,
-gender, preference, biography, age, is_oauth, is_valid, is_gps_allowed, connected_at,
+gender, preference, biography, age, connected_at,
 updated_at, created_at, deleted_at)
 VALUES 
 ('yeomin@student.42seoul.kr', 'User3', 'password', 'min', 'yeomin', 'Male', 'Female',
-'hello, world!', '22', 'false', 'true', 'true', '2020-01-01 00:00:00', '2020-01-01 00:00:00', '2020-01-01 00:00:00', NULL);
+'hello, world!', '22', '2020-01-01 00:00:00', '2020-01-01 00:00:00', '2020-01-01 00:00:00', NULL);
+
+INSERT INTO auth
+(
+id, user_id, is_oauth, is_valid, is_gps_allowed, is_twofa, updated_at
+)
+VALUES
+(703, 703, false, true, true, true, '2020-01-01 00:00:00');
 
 INSERT INTO user_hashtags
 (user_id, hashtags, updated_at)
@@ -69,11 +88,18 @@ VALUES
 
 INSERT INTO users 
 (email, username, password, last_name, first_name,
-gender, preference, biography, age, is_oauth, is_valid, is_gps_allowed, connected_at,
+gender, preference, biography, age, connected_at,
 updated_at, created_at, deleted_at)
 VALUES 
 ('oooo0413@naver.com', 'User4', 'password', 'min', 'yeomin', 'Male', 'Female',
-'hello, world!', '22', 'false', 'true', 'true', '2020-01-01 00:00:00', '2020-01-01 00:00:00', '2020-01-01 00:00:00', NULL);
+'hello, world!', '22', '2020-01-01 00:00:00', '2020-01-01 00:00:00', '2020-01-01 00:00:00', NULL);
+
+INSERT INTO auth
+(
+id, user_id, is_oauth, is_valid, is_gps_allowed, is_twofa, updated_at
+)
+VALUES
+(704, 704, false, true, true, true, '2020-01-01 00:00:00');
 
 INSERT INTO user_hashtags
 (user_id, hashtags, updated_at)
