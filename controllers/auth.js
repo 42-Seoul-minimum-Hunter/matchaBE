@@ -144,7 +144,7 @@ router.post("/login", async function (req, res, next) {
       twofaVerified: false,
     };
 
-    if (authInfo.is_twofa === true) {
+    if (authInfo.is_twofa === false) {
       jwtToken.twofaVerified = true;
     }
 
