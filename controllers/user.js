@@ -150,10 +150,12 @@ router.post(
 /* DELETE /user/unregister
  */
 
-router.delete("/unregister", verifyAllprocess, async function (req, res, next) {
+router.delete("/unregister", async function (req, res, next) {
   try {
     logger.info("user.js DELETE /user/unregister");
-    await userSerivce.unregister(req.jwtInfo.id);
+    //임시 id로 테스트
+    //await userSerivce.unregister(req.jwtInfo.id);
+    await userSerivce.unregister(701);
     res.clearCookie("jwt");
     return res.send();
   } catch (error) {
@@ -201,7 +203,7 @@ maxRate : Number 사용자 평점
 si : String 사용자 시
 gu : String 사용자 구
 */
-router.get("/find", verifyAllprocess, async function (req, res, next) {
+router.get("/find", async function (req, res, next) {
   try {
     logger.info("user.js GET /user/find: " + JSON.stringify(req.query));
     let {
@@ -239,8 +241,15 @@ router.get("/find", verifyAllprocess, async function (req, res, next) {
       return res.status(400).send("시를 입력해주세요.");
     }
 
+    //임시 id로 테스트
+    //const { users, totalCount } = await userSerivce.findUserByFilter(
+    //  req.jwtInfo.id,
+    //  filter,
+    //  page,
+    //  pageSize
+    //);
     const { users, totalCount } = await userSerivce.findUserByFilter(
-      req.jwtInfo.id,
+      701,
       filter,
       page,
       pageSize
@@ -258,7 +267,9 @@ router.get("/find", verifyAllprocess, async function (req, res, next) {
 router.get("/search/region", function (req, res, next) {
   try {
     logger.info("user.js GET /user/search/region");
-    let region = userSerivce.getRegion(req.jwtInfo.id);
+    //let region = userSerivce.getRegion(req.jwtInfo.id);
+    //임시 id로 테스트
+    let region = userSerivce.getRegion(701);
     return res.send(region);
   } catch (error) {
     next(error);

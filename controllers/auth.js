@@ -204,11 +204,13 @@ router.get("/callback", async function (req, res, next) {
 
 /* POST /auth/twofactor/create
  */
-router.post("/twofactor/create", verifyTwoFA, async function (req, res, next) {
+router.post("/twofactor/create", async function (req, res, next) {
   try {
     logger.info("auth.js POST /auth/twofactor/create");
 
-    const authInfo = await authService.findAuthInfoById(req.jwtInfo.id);
+    //임시 id로 테스트
+    //const authInfo = await authService.findAuthInfoById(req.jwtInfo.id);
+    const authInfo = await authService.findAuthInfoById(701);
 
     if (!authInfo) {
       return res.status(400).send("AuthInfo not found.");
@@ -246,12 +248,15 @@ router.post("/twofactor/create", verifyTwoFA, async function (req, res, next) {
 /* POST /auth/twoFactor/verify
 code : String 2FA 인증 코드
 */
-router.post("/twofactor/verify", verifyTwoFA, function (req, res, next) {
+router.post("/twofactor/verify", function (req, res, next) {
   try {
     logger.info(
       "auth.js POST /auth/twofactor/verify: " + JSON.stringify(req.body)
     );
-    const email = req.jwtInfo.email;
+    //임시 email로 테스트
+    //const email = req.jwtInfo.email;
+
+    const email = "koryum30@gmail.com";
     const code = req.body.code;
 
     if (!code) {
@@ -269,12 +274,20 @@ router.post("/twofactor/verify", verifyTwoFA, function (req, res, next) {
     if (result === false) {
       return res.status(400).send("Invalid code.");
     } else {
+      //const jwtToken = authService.generateJWT({
+      //  id: req.jwtInfo.id,
+      //  email: req.jwtInfo.email,
+      //  isValid: req.jwtInfo.isValid,
+      //  isOauth: req.jwtInfo.isOauth,
+      //  accessToken: req.jwtInfo.accessToken,
+      //  twofaVerified: true,
+      //});
+
       const jwtToken = authService.generateJWT({
-        id: req.jwtInfo.id,
-        email: req.jwtInfo.email,
-        isValid: req.jwtInfo.isValid,
-        isOauth: req.jwtInfo.isOauth,
-        accessToken: req.jwtInfo.accessToken,
+        id: 701,
+        email: "koryum30@gmail.com",
+        isOauth: false,
+        accessToken: null,
         twofaVerified: true,
       });
 

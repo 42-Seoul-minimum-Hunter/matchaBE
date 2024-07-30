@@ -9,14 +9,16 @@ const userBlockSerivce = require("../services/user.block.service.js");
 blockUsername : String 차단 대상사용자 닉네임
 */
 
-router.post("/", verifyAllprocess, async function (req, res, next) {
+router.post("/", async function (req, res, next) {
   try {
-    logger.info("user.block.js POST /user/block")
+    logger.info("user.block.js POST /user/block");
     const blockUsername = req.body.blockUsername;
     if (!blockUsername) {
       return res.status(400).send("blockUsername is required.");
     } else {
-      await userBlockSerivce.addBlockUser(blockUsername, req.jwtInfo.id);
+      //await userBlockSerivce.addBlockUser(blockUsername, req.jwtInfo.id);
+      //임시 id로 테스트
+      await userBlockSerivce.addBlockUser(blockUsername, 701);
       return res.send();
     }
   } catch (error) {
@@ -28,14 +30,16 @@ router.post("/", verifyAllprocess, async function (req, res, next) {
 blockUsername : String 차단 대상사용자 닉네임
 */
 
-router.delete("/", verifyAllprocess, async function (req, res, next) {
+router.delete("/", async function (req, res, next) {
   try {
-    logger.info("user.block.js DELETE /user/block")
+    logger.info("user.block.js DELETE /user/block");
     const blockUsername = req.body.blockUsername;
     if (!blockUsername) {
       return res.status(400).send("blockUsername is required.");
     } else {
-      await userBlockSerivce.deleteBlockUser(blockUsername, req.jwtInfo.id);
+      //await userBlockSerivce.deleteBlockUser(blockUsername, req.jwtInfo.id);
+      //임시 id로 테스트
+      await userBlockSerivce.deleteBlockUser(blockUsername, 701);
       return res.send();
     }
   } catch (error) {
