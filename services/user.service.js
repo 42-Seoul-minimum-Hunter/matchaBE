@@ -11,25 +11,24 @@ const authRepository = require("../repositories/auth.repository");
 
 // https://goodmemory.tistory.com/137
 //https://jinyisland.kr/post/middleware/
-const createUser = async (UserCreateDto) => {
+const createUser = async (userInfo, email, password) => {
   try {
-    logger.info("user.service.js createUser: " + JSON.stringify(UserCreateDto));
-    const hashed = await bcrypt.hash(UserCreateDto.password, 10);
-    UserCreateDto.password = hashed;
+    logger.info(
+      "user.service.js createUser: " +
+        JSON.stringify(userInfo) +
+        ", " +
+        email +
+        ", " +
+        password
+    );
 
-    if (await userRepository.findUserByEmail(UserCreateDto.email)) {
-      const error = new Error("It has already been registered email");
-      error.status = 409;
-      throw error;
-    } else if (
-      await userRepository.findUserByUsername(UserCreateDto.username)
-    ) {
+    if (await userRepository.findUserByUsername(userInfo.username)) {
       const error = new Error("It has already been registered username");
       error.status = 409;
       throw error;
     }
 
-    const userId = await userRepository.createUser(UserCreateDto);
+    const userId = await userRepository.createUser(userInfo, email, password);
 
     if (!userId) {
       const error = new Error("User creation failed");
@@ -39,18 +38,14 @@ const createUser = async (UserCreateDto) => {
 
     await authRepository.saveAuthInfoById(
       userId,
-      UserCreateDto.isGpsAllowed,
-      UserCreateDto.isOauth
+      userInfo.isGpsAllowed,
+      userInfo.isOauth
     );
 
-    await userHashtagRepository.saveHashtagById(UserCreateDto.hashtags, userId);
-    await userRegionRepository.saveRegionById(
-      UserCreateDto.si,
-      UserCreateDto.gu,
-      userId
-    );
+    await userHashtagRepository.saveHashtagById(userInfo.hashtags, userId);
+    await userRegionRepository.saveRegionById(userInfo.si, userInfo.gu, userId);
     await userProfileImageRepository.saveProfileImagesById(
-      UserCreateDto.profileImages,
+      userInfo.profileImages,
       userId
     );
 
@@ -152,6 +147,16 @@ const findOneUserById = async (id) => {
   }
 };
 
+const findOneUserByEmail = async (email) => {
+  try {
+    logger.info("user.service.js findOneUserByEmail: " + email);
+    return await userRepository.findUserByEmail(email);
+  } catch (error) {
+    logger.error("user.service.js findOneUserByEmail: " + error.message);
+    throw error;
+  }
+};
+
 module.exports = {
   createUser,
   unregister,
@@ -159,4 +164,5 @@ module.exports = {
   findUserByFilter,
   findOneUserByUsername,
   findOneUserById,
+  findOneUserByEmail,
 };

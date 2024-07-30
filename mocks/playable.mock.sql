@@ -86,35 +86,35 @@ INSERT INTO user_regions
 VALUES
 (703, '서울', '강남구', '2020-01-01 00:00:00');
 
-INSERT INTO users 
-(email, username, password, last_name, first_name,
-gender, preference, biography, age, connected_at,
-updated_at, created_at, deleted_at)
-VALUES 
-('oooo0413@naver.com', 'User4', 'password', 'min', 'yeomin', 'Male', 'Female',
-'hello, world!', '22', '2020-01-01 00:00:00', '2020-01-01 00:00:00', '2020-01-01 00:00:00', NULL);
+--INSERT INTO users 
+--(email, username, password, last_name, first_name,
+--gender, preference, biography, age, connected_at,
+--updated_at, created_at, deleted_at)
+--VALUES 
+--('oooo0413@naver.com', 'User4', 'password', 'min', 'yeomin', 'Male', 'Female',
+--'hello, world!', '22', '2020-01-01 00:00:00', '2020-01-01 00:00:00', '2020-01-01 00:00:00', NULL);
 
-INSERT INTO auth
-(
-id, user_id, is_oauth, is_valid, is_gps_allowed, is_twofa, updated_at
-)
-VALUES
-(704, 704, false, true, true, true, '2020-01-01 00:00:00');
+--INSERT INTO auth
+--(
+--id, user_id, is_oauth, is_valid, is_gps_allowed, is_twofa, updated_at
+--)
+--VALUES
+--(704, 704, false, true, true, true, '2020-01-01 00:00:00');
 
-INSERT INTO user_hashtags
-(user_id, hashtags, updated_at)
-VALUES
-(704, ARRAY['달리기', '사업'], '2020-01-01 00:00:00');
+--INSERT INTO user_hashtags
+--(user_id, hashtags, updated_at)
+--VALUES
+--(704, ARRAY['달리기', '사업'], '2020-01-01 00:00:00');
 
-INSERT INTO user_profile_images
-(user_id, profile_images, updated_at)
-VALUES
-(704, ARRAY['http://dummyimage.com/154x100.png/dddddd/00000', 'http://dummyimage.com/154x100.png/dddddd/00000', 'http://dummyimage.com/154x100.png/dddddd/00000'], '2020-01-01 00:00:00');
+--INSERT INTO user_profile_images
+--(user_id, profile_images, updated_at)
+--VALUES
+--(704, ARRAY['http://dummyimage.com/154x100.png/dddddd/00000', 'http://dummyimage.com/154x100.png/dddddd/00000', 'http://dummyimage.com/154x100.png/dddddd/00000'], '2020-01-01 00:00:00');
 
-INSERT INTO user_regions
-(user_id, si, gu, updated_at)
-VALUES
-(704, '서울', '강남구', '2020-01-01 00:00:00');
+--INSERT INTO user_regions
+--(user_id, si, gu, updated_at)
+--VALUES
+--(704, '서울', '강남구', '2020-01-01 00:00:00');
 
 INSERT INTO user_ratings
 (user_id, rated_id, rate_score, rated_at)

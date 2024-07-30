@@ -21,7 +21,7 @@ const {
 } = require("../configs/validate.js");
 
 const {
-  checkOauthLogin,
+  verifyCreateUserSession,
   verifyAllprocess,
   verifyChangePassword,
 } = require("../configs/middleware.js");
@@ -47,132 +47,105 @@ profileImages : String 사용자 프로필 이미지 => BASE64로 반환 예정
 }
 */
 
-router.post("/create", async function (req, res, next) {
-  try {
-    logger.info("user.js POST /user/create: " + JSON.stringify(req.body));
-    const user = {
-      email: req.body.email || undefined,
-      username: req.body.username || undefined,
-      password: req.body.password || undefined,
-      lastName: req.body.lastName || undefined,
-      firstName: req.body.firstName || undefined,
-      gender: req.body.gender || undefined,
-      preference: req.body.preference || undefined,
-      biography: req.body.biography || undefined,
-      age: req.body.age || undefined,
-      isGpsAllowed: req.body.isGpsAllowed,
-      hashtags: req.body.hashtags || undefined,
-      si: req.body.si || undefined,
-      gu: req.body.gu || undefined,
-      profileImages: req.body.profileImages || undefined,
-    };
+router.post(
+  "/create",
+  verifyCreateUserSession,
+  async function (req, res, next) {
+    try {
+      logger.info("user.js POST /user/create: " + JSON.stringify(req.body));
 
-    const requiredFields = [
-      "email",
-      "username",
-      "password",
-      "lastName",
-      "firstName",
-      "gender",
-      "preference",
-      "biography",
-      "age",
-      "isGpsAllowed",
-      "hashtags",
-      "si",
-      "gu",
-      "profileImages",
-    ];
+      const userInfo = {
+        username: req.body.username || undefined,
+        lastName: req.body.lastName || undefined,
+        firstName: req.body.firstName || undefined,
+        gender: req.body.gender || undefined,
+        preference: req.body.preference || undefined,
+        biography: req.body.biography || undefined,
+        age: req.body.age || undefined,
+        isGpsAllowed: req.body.isGpsAllowed,
+        hashtags: req.body.hashtags || undefined,
+        si: req.body.si || undefined,
+        gu: req.body.gu || undefined,
+        profileImages: req.body.profileImages || undefined,
+      };
 
-    for (const field of requiredFields) {
-      if (user[field] === undefined) {
-        return res.status(400).send(`Please enter the ${field} field.`);
+      const requiredFields = [
+        "username",
+        "lastName",
+        "firstName",
+        "gender",
+        "preference",
+        "biography",
+        "age",
+        "isGpsAllowed",
+        "hashtags",
+        "si",
+        "gu",
+        "profileImages",
+      ];
+
+      for (const field of requiredFields) {
+        if (userInfo[field] === undefined) {
+          return res.status(400).send(`Please enter the ${field} field.`);
+        }
       }
-    }
 
-    if (!validateEmail(user.email)) {
-      return res.status(400).send("Please enter a valid email.");
-    } else if (!validateUsername(user.username)) {
-      return res
-        .status(400)
-        .send("Please enter a valid username. (4~15 characters)");
-    } else if (!validatePassword(user.password)) {
-      return res
-        .status(400)
-        .send("Please enter a valid password. (8~15 characters)");
-    } else if (!validateName(user.lastName) || !validateName(user.firstName)) {
-      return res
-        .status(400)
-        .send("Please enter a valid name. (4~10 characters)");
-    } else if (!validateBiography(user.biography)) {
-      return res
-        .status(400)
-        .send("Please enter a valid biography. (1~100 characters)");
-    } else if (!validateAge(user.age)) {
-      return res.status(400).send("Please enter a valid age. (1~100)");
-    } else if (!validateGender(user.gender)) {
-      return res.status(400).send("Please enter a valid gender.");
-    } else if (!validatePreference(user.preference)) {
-      return res.status(400).send("Please enter a valid preference.");
-    } else if (!validateHashtags(user.hashtags)) {
-      return res.status(400).send("Please enter a valid hashtags.");
-    } else if (!validateSi(user.si)) {
-      return res.status(400).send("Please enter a valid si.");
-    } else if (!validateGu(user.si, user.gu)) {
-      return res.status(400).send("Please enter a valid gu.");
-    }
+      if (!validateUsername(userInfo.username)) {
+        return res
+          .status(400)
+          .send("Please enter a valid username. (4~15 characters)");
+      } else if (
+        !validateName(userInfo.lastName) ||
+        !validateName(userInfo.firstName)
+      ) {
+        return res
+          .status(400)
+          .send("Please enter a valid name. (4~10 characters)");
+      } else if (!validateBiography(userInfo.biography)) {
+        return res
+          .status(400)
+          .send("Please enter a valid biography. (1~100 characters)");
+      } else if (!validateAge(userInfo.age)) {
+        return res.status(400).send("Please enter a valid age. (1~100)");
+      } else if (!validateGender(userInfo.gender)) {
+        return res.status(400).send("Please enter a valid gender.");
+      } else if (!validatePreference(userInfo.preference)) {
+        return res.status(400).send("Please enter a valid preference.");
+      } else if (!validateHashtags(userInfo.hashtags)) {
+        return res.status(400).send("Please enter a valid hashtags.");
+      } else if (!validateSi(userInfo.si)) {
+        return res.status(400).send("Please enter a valid si.");
+      } else if (!validateGu(userInfo.si, userInfo.gu)) {
+        return res.status(400).send("Please enter a valid gu.");
+      }
 
-    if (req.jwtInfo && req.jwtInfo.isOauth && req.jwtInfo.accessToken) {
-      user.isOauth = true;
-    } else {
-      user.isOauth = false;
-    }
+      const { email, password, isOauth, accessToken } = req.userInfo;
 
-    const user_id = await userSerivce.createUser(user);
-    if (!user_id) {
-      return res.status(400).send("Bad Request");
-    }
-    user.id = user_id;
+      userInfo.isOauth = isOauth;
 
-    const authInfo = await authService.findAuthInfoById(user.id);
+      const user_id = await userSerivce.createUser(userInfo, email, password);
+      if (!user_id) {
+        return res.status(400).send("Bad Request");
+      }
+      user.id = user_id;
 
-    let jwtToken;
-    if (req.jwtInfo && req.jwtInfo.isOauth && req.jwtInfo.accessToken) {
-      jwtToken = authService.generateJWT({
+      const jwtToken = authService.generateJWT({
         id: user.id,
-        email: user.email,
-        isValid: false,
-        isOauth: authInfo.is_oauth,
-        accessToken: req.jwtInfo.accessToken,
-        twofaVerified: false,
+        email: email,
+        isOauth: isOauth,
+        accessToken: accessToken,
+        twofaVerified: true,
       });
-    } else {
-      jwtToken = authService.generateJWT({
-        id: user.id,
-        email: user.email,
-        isValid: false,
-        isOauth: authInfo.is_oauth,
-        accessToken: null,
-        twofaVerified: false,
-      });
+
+      res.cookie("jwt", jwtToken, {});
+
+      res.set("Authorization", `Bearer ${jwtToken}`);
+      return res.send();
+    } catch (error) {
+      next(error);
     }
-
-    //res.cookie("jwt", jwtToken, {
-    //  sameSite: "none",
-    //  secure: true,
-    //  httpOnly: true,
-    //});
-
-    res.cookie("jwt", jwtToken, {
-      //sameSite: "none", // 크로스 사이트 요청 위험을 방지하기 위해 설정
-    });
-
-    res.set("Authorization", `Bearer ${jwtToken}`);
-    return res.send(user);
-  } catch (error) {
-    next(error);
   }
-});
+);
 
 /* DELETE /user/unregister
  */
@@ -188,37 +161,36 @@ router.delete("/unregister", verifyAllprocess, async function (req, res, next) {
   }
 });
 
-// 임시 쿠키로 변경확인
 /* POST /user/change/password
 password : String 사용자 비밀번호
 */
-router.post(
-  "/change/password",
-  verifyChangePassword,
-  async function (req, res, next) {
-    try {
-      logger.info(
-        "user.js POST /user/change/password: " + JSON.stringify(req.body)
-      );
-      let password = req.body.password;
-      const { email, expirationDate } = req.jwtInfo.email;
+router.post("/change/password", async function (req, res, next) {
+  try {
+    logger.info(
+      "user.js POST /user/change/password: " + JSON.stringify(req.body)
+    );
+    let password = req.body.password;
 
-      if (!password || !validatePassword(password)) {
-        return res.status(400).send("Please enter the password field.");
-      } else if (!email) {
-        return res.status(400).send("Please enter the email field.");
-      } else if (expirationDate < new Date()) {
-        return res.status(400).send("The link has expired. Please try again.");
-      }
+    const { email, expirationDate } = req.session.resetPasswordEmail;
 
-      await userSerivce.changePassword(password, email);
-      res.clearCookie("jwt");
-      return res.send();
-    } catch (error) {
-      next(error);
+    if (!email) {
+      return res.status(400).send("Bad Request");
+    } else if (!password || !validatePassword(password)) {
+      return res.status(400).send("Please enter the password field.");
+    } else if (!validateEmail(email)) {
+      return res.status(400).send("Please enter a valid email.");
+    } else if (expirationDate < new Date()) {
+      return res.status(400).send("The link has expired. Please try again.");
     }
+
+    await userSerivce.changePassword(password, email);
+
+    req.session.destroy();
+    return res.send();
+  } catch (error) {
+    next(error);
   }
-);
+});
 
 /* GET /user/find
 hashtags : String 사용자 해시태그

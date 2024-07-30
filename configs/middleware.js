@@ -45,8 +45,6 @@ function verifyTwoFA(req, res, next) {
 
     if (decoded.twofaVerified === true) {
       return res.status(401).send("Two Factor Authentication is not verified.");
-    } else if (decoded.isValid === false) {
-      return res.status(401).send("User is not verified.");
     }
 
     req.jwtInfo = decoded; // 검증된 토큰 정보를 req.user에 저장합니다.
@@ -83,7 +81,7 @@ function verifyValid(req, res, next) {
     next(); // 다음 미들웨어로 진행합니다.
   } catch (error) {
     // 토큰 검증에 실패한 경우 401 Unauthorized 응답을 보냅니다.
-    logger.error("middleware verifyValid error")
+    logger.error("middleware verifyValid error");
     return res.status(401).send(error.message);
   }
 }
@@ -197,30 +195,22 @@ function verifyChangePassword(req, res, next) {
   }
 }
 
-function verifySocket(socket) {
+function verifyCreateUserSession(req, res, next) {
   try {
-    logger.info("middleware verifySocket");
-    if (!socket.handshake.auth.authorization) {
-      return res.status(400).send("Bad Access");
-    }
-    const token = socket.handshake.auth.authorization;
+    logger.info("middleware verifyCreateUserSession");
 
-    if (!token) {
+    if (!req.session.userInfo) {
       return res.status(400).send("Bad Access");
+    } else if (req.session.userInfo.isValid === false) {
+      return res.status(400).send("InValid User");
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.userInfo = req.session.userInfo;
 
-    if (decoded.isValid === false) {
-      return res.status(400).send("Bad Access");
-    } else if (decoded.twofaVerified === false) {
-      return res.status(400).send("Bad Access");
-    }
-
-    socket.jwtInfo = decoded;
+    next();
   } catch (error) {
-    logger.error("middleware verifySocket error");
-    throw error;
+    logger.error("middleware verifyCreateUserSession error");
+    return res.status(400).send("Bad Access");
   }
 }
 
@@ -229,7 +219,7 @@ module.exports = {
   verifyTwoFA,
   verifyValid,
   verifyAllprocess,
-  verifySocket,
+  verifyCreateUserSession,
 
   verifyResetPassword,
 

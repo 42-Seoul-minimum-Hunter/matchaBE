@@ -9,8 +9,7 @@ const cookieParser = require("cookie-parser");
 const { Client } = require("pg");
 const fs = require("fs");
 const path = require("path");
-
-const verifySocket = require("./configs/middleware.js");
+const session = require("express-session");
 
 require("dotenv").config();
 
@@ -38,7 +37,18 @@ app.use(
 );
 
 //cookie 설정
-app.use(cookieParser("cookie_secret"));
+app.use(cookieParser(process.env.COOKIE_SECRET));
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+      maxAge: 1000 * 60 * 30, // 30분 (밀리초 단위)
+    },
+  })
+);
 
 // 포트 정보
 const port = 3000;
@@ -84,6 +94,7 @@ app.listen(port, async () => {
   client.connect();
 
   try {
+    // 테이블 및 목 데이터 생성
     // schema.sql 파일 읽기
     const schemaQuery = fs.readFileSync(
       path.join(__dirname, "configs", "schema.sql"),

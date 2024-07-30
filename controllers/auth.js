@@ -2,115 +2,26 @@ const express = require("express");
 const router = express.Router();
 const {
   verifyTwoFA,
-  verifyValid,
   verifyResetPassword,
 } = require("../configs/middleware.js");
 const authService = require("../services/auth.service.js");
+const userService = require("../services/user.service.js");
+const bcypt = require("bcrypt");
+const moment = require("moment-timezone");
+const jwt = require("jsonwebtoken");
 
-const {
-  validateUsername,
-  validatePassword,
-} = require("../configs/validate.js");
+const { validateEmail, validatePassword } = require("../configs/validate.js");
 
 const logger = require("../configs/logger.js");
 
 require("dotenv").config();
 
-/* 일반 회원가입 
-1. 회원가입 후 JWT 발급, 쿠키에 담기
-        id: user.id,
-        email: user.email,
-        isValid: false,
-        isOauth: false,
-        accessToken: null,
-        twofaVerified: false
+/*
+  POST /auth/login
 
-        return user
-
-2. 이메일 인증 후 (세션으로 확인)
-        id: user.id,
-        email: user.email,
-        isValid: true,
-        isOauth: false,
-        accessToken: null,
-        twofaVerified: false
-
-        return 200 -> search redirect
-
-3. 2FA 인증 후 (세션으로 확인)
-        id: user.id,
-        email: user.email,
-        isValid: true,
-        isOauth: false,
-        accessToken: null,
-        twofaVerified: true       
-        
-        return 200
+  username : String 사용자 이름
+  password : String 사용자 비밀번호
 */
-
-/*OAUTH 회원가입
-1. OAUTH 로그인 후 JWT 발급, 쿠키에 담기, 회원가입 페이지로 리다이렉트
-    id: null
-    email: <oauth email>,
-    isValid: false,
-    isOauth: true,
-    accessToken: <accessToken>,
-    twofaVerified: false
-
-    return email
-
-2. 회원가입 후 JWT 발급, 쿠키에 담기
-    id: user.id,
-    email: user.email,
-    isValid: false,
-    isOauth: true,
-    accessToken: <accessToken>,
-    twofaVerified: false
-
-    return user
-
-3. 이메일 인증 후 (세션으로 확인)
-        id: user.id,
-        email: user.email,
-        isValid: true,
-        isOauth: true,
-        accessToken: <accessToken>,
-        twofaVerified: false
-
-        return 200
-
-4. 2FA 인증 후 (세션으로 확인)
-    id: user.id,
-    email: user.email,
-    isValid: true,
-    isOauth: true,
-    accessToken: <accessToken>,
-    twofaVerified: true
-
-    return 200
-*/
-
-/* POST /auth/login
-username : String 사용자 닉네임
-password : String 사용자 비밀번호
-*/
-
-//최초 회원가입 -> 이메일인증 -> search
-//로그인 -> 2fa  -> search
-
-// 최초 인데 그냥 회원가입(jwt 없음)
-// oauth(/auth/callback 확인해서 처음 온 유저다) jwt oauth 관련한 정보를 쿠키로 담아서
-// 회원가입 페이지로 리다이렉트
-
-//회원가입 미들웨어 signup
-// jwt X -> 일반유저
-// jwt O && isOauth == true && acessToken != null -> oauth 유저
-
-// 회원가입(jwt cookie 재갱신) -> email 인증 -> search
-
-// 일반로그인 -> 2fa -> search
-// oauth 로그인(이미 가입한 유저다 ) -> 2fa -> search
-
 router.post("/login", async function (req, res, next) {
   try {
     logger.info("auth.js POST /auth/login: " + JSON.stringify(req.body));
@@ -135,10 +46,15 @@ router.post("/login", async function (req, res, next) {
 
     const authInfo = await authService.findAuthInfoById(user.id);
 
+    if (authInfo.is_oauth === true) {
+      return res
+        .status(400)
+        .send("OAuth user cannot login with username and password");
+    }
+
     let jwtToken = {
       id: user.id,
       email: user.email,
-      isValid: authInfo.is_valid,
       isOauth: false,
       accessToken: null,
       twofaVerified: false,
@@ -154,12 +70,59 @@ router.post("/login", async function (req, res, next) {
 
     res.set("Authorization", `Bearer ${cookie}`);
 
-    const validComponent = {
-      isValid: authInfo.is_valid,
-      isTwofa: authInfo.is_twofa,
+    return res.send(authInfo.is_twofa);
+  } catch (error) {
+    next(error);
+  }
+});
+
+/*
+  POST /auth/register
+
+  email : String 사용자 이메일
+  password : String 사용자 비밀번호
+  confirmedPassword : String 비밀번호 확인
+*/
+
+router.post("/register", async function (req, res, next) {
+  try {
+    logger.info("auth.js POST /auth/register: " + JSON.stringify(req.body));
+
+    const { email, password, confirmedPassword } = req.body;
+
+    if (!email || !password || !confirmedPassword) {
+      return res.status(400).send("Email or password not found.");
+    } else if (password !== confirmedPassword) {
+      return res.status(400).send("Password not matched.");
+    } else if (!validateEmail(email)) {
+      return res.status(400).send("Please enter a valid email.");
+    } else if (!validatePassword(password)) {
+      return res
+        .status(400)
+        .send("Please enter a valid password. (8~15 characters)");
+    }
+
+    const result = await userService.findOneUserByEmail(email);
+
+    if (result) {
+      return res.status(409).send("User already exists.");
+    }
+
+    const hashedPassword = await bcypt.hash(password, 10);
+
+    req.session.userInfo = {
+      email,
+      password: hashedPassword,
+      isOauth: false,
+      accessToken: null,
+      isValid: false,
     };
 
-    return res.send(validComponent);
+    req.session.save();
+
+    //console.log(req.session.userInfo);
+
+    return res.send();
   } catch (error) {
     next(error);
   }
@@ -181,7 +144,6 @@ router.delete("/logout", function (req, res, next) {
 /* GET /auth/callback
 code : String OAuth 인증 코드
 */
-
 router.get("/callback", async function (req, res, next) {
   try {
     logger.info(
@@ -202,21 +164,15 @@ router.get("/callback", async function (req, res, next) {
 
     let jwtToken = null;
     if (!user) {
-      jwtToken = authService.generateJWT({
-        id: null,
+      //user REGISTRATION_URL
+      req.session.userInfo = {
         email: oauthInfo.email,
-        isValid: false,
+        password: null,
         isOauth: true,
         accessToken: oauthInfo.accessToken,
-        twofaVerified: false,
-      });
+        isValid: true,
+      };
 
-      res.cookie("jwt", jwtToken, {
-        //httpOnly: true,
-        //secure: false,
-      });
-
-      res.set("Authorization", `Bearer ${jwtToken}`);
       return res.redirect(process.env.OAUTH_USER_REGISTRATION_URL);
     } else {
       const authInfo = await authService.findAuthInfoById(user.id);
@@ -224,11 +180,14 @@ router.get("/callback", async function (req, res, next) {
       jwtToken = authService.generateJWT({
         id: user.id,
         email: user.email,
-        isValid: authInfo.is_valid,
         isOauth: true,
         accessToken: oauthInfo.accessToken,
         twofaVerified: false,
       });
+
+      if (authInfo.is_twofa === false) {
+        jwtToken.twofaVerified = true;
+      }
 
       res.cookie("jwt", jwtToken, {
         //httpOnly: true,
@@ -236,20 +195,14 @@ router.get("/callback", async function (req, res, next) {
       });
 
       res.set("Authorization", `Bearer ${jwtToken}`);
-      if (authInfo.is_twofa === true) {
-        return res.send();
-      } else if (authInfo.is_valid === true) {
-        return res.redirect(process.env.FE_TWOFACTOR_URL);
-      } else {
-        return res.redirect("http://localhost:5173/email");
-      }
+      return res.send(authInfo.is_twofa);
     }
   } catch (error) {
     next(error);
   }
 });
 
-/* POST /auth/twoFactor/create
+/* POST /auth/twofactor/create
  */
 router.post("/twofactor/create", verifyTwoFA, async function (req, res, next) {
   try {
@@ -257,17 +210,33 @@ router.post("/twofactor/create", verifyTwoFA, async function (req, res, next) {
 
     const authInfo = await authService.findAuthInfoById(req.jwtInfo.id);
 
-    if (authInfo.is_twofa === false) {
+    if (!authInfo) {
+      return res.status(400).send("AuthInfo not found.");
+    } else if (authInfo.is_twofa === false) {
       return res.status(400).send("2FA is not enabled.");
     }
 
     const email = req.jwtInfo.email;
 
-    //const email = req.body.email;
     if (!email) {
       res.status(400).send("Email not found.");
     }
-    await authService.createTwofactorCode(email);
+    const code = await authService.createTwofactorCode(email);
+
+    const userTimezone = "Asia/Seoul"; // 사용자의 시간대
+    const expirationDate = moment().tz(userTimezone).add(2, "minutes").toDate(); // 5분 후 만료
+
+    if (req.session.twofactorComponents) {
+      req.session.twofactorComponents = null;
+    }
+
+    req.session.twofactorComponents = {
+      code: code,
+      expirationDate: expirationDate,
+    };
+
+    req.session.save();
+
     res.send();
   } catch (error) {
     next(error);
@@ -289,6 +258,10 @@ router.post("/twofactor/verify", verifyTwoFA, function (req, res, next) {
       return res.status(400).send("Code not found.");
     } else if (!email) {
       return res.status(400).send("Email not found.");
+    } else if (!req.session.twofactorComponents) {
+      return res.status(400).send("Session not found.");
+    } else if (req.session.twofactorComponents.expirationDate < new Date()) {
+      return res.status(400).send("Code expired.");
     }
 
     const result = authService.verifyTwoFactorCode(code);
@@ -312,6 +285,8 @@ router.post("/twofactor/verify", verifyTwoFA, function (req, res, next) {
 
       res.set("Authorization", `Bearer ${jwtToken}`);
 
+      req.session.destroy();
+
       return res.send();
     }
   } catch (error) {
@@ -324,24 +299,25 @@ router.post("/twofactor/verify", verifyTwoFA, function (req, res, next) {
 /* POST /auth/register/email/send
  */
 
-router.post(
-  "/register/email/send",
-  verifyValid,
-  async function (req, res, next) {
-    try {
-      logger.info("auth.js POST /auth/register/email/send");
-      //const email = req.body.email;
-      const email = req.jwtInfo.email;
-      if (!email) {
-        return res.status(400).send("Email not found.");
-      }
-      await authService.createRegistURL(email);
-      return res.send();
-    } catch (error) {
-      next(error);
+router.post("/register/email/send", async function (req, res, next) {
+  try {
+    logger.info("auth.js POST /auth/register/email/send");
+
+    if (!req.session.userInfo) {
+      return res.status(400).send("User info not found.");
+    } else if (!req.session.userInfo.email) {
+      return res.status(400).send("Email not found.");
     }
+
+    const { email } = req.session.userInfo;
+
+    await authService.createRegistURL(email, req.session.userInfo);
+
+    return res.send();
+  } catch (error) {
+    next(error);
   }
-);
+});
 
 /* GET /auth/register/email/verify
 code : String 인증 코드
@@ -353,44 +329,39 @@ router.get("/register/email/verify", async function (req, res, next) {
       "auth.js GET /auth/register/email/verify: " +
         JSON.stringify(req.query.code)
     );
+
     const code = req.query.code;
+
+    //console.log(code);
 
     if (!code) {
       return res.status(400).send("Code not found.");
     }
 
-    const result = await authService.verifyRegistURL(code);
+    const decoded = jwt.verify(code, process.env.JWT_SECRET);
 
-    if (!result) {
-      return res.status(400).send("Invalid code OR Code expired.");
+    //console.log(decoded);
+
+    if (!decoded) {
+      return res.status(400).send("Invalid code.");
+    } else if (decoded.expirationDate < new Date()) {
+      return res.status(400).send("Code expired.");
+    } else if (decoded.isValid === true) {
+      return res.status(400).send("Code already verified.");
     }
 
-    const authInfo = await authService.findAuthInfoById(result.id);
-
-    let jwtInfo = {
-      id: result.id,
-      email: result.email,
+    req.session.userInfo = {
+      email: decoded.email,
+      password: decoded.password,
+      isOauth: decoded.isOauth,
+      accessToken: decoded.accessToken,
       isValid: true,
-      isOauth: authInfo.is_oauth,
-      accessToken: null,
-      twofaVerified: true,
     };
 
-    if (jwtInfo.isOauth === true) {
-      const { oauthInfo } = await authService.getOauthInfo(result.email);
-      jwtInfo.accessToken = oauthInfo.accessToken;
-    }
+    //console.log(req.session.userInfo);
+    req.session.save();
 
-    const jwtToken = authService.generateJWT(jwtInfo);
-
-    await authService.updateVerificationById(result.email);
-
-    res.cookie("jwt", jwtToken, {
-      //httpOnly: true,
-      //secure: false,
-    });
-
-    return res.redirect(process.env.FE_SEARCH_URL);
+    return res.send(req.session.userInfo.email);
   } catch (error) {
     next(error);
   }
@@ -411,14 +382,7 @@ router.post("/reset/email/create", async function (req, res, next) {
     if (!email) {
       res.status(400).send("Email not found.");
     }
-    const resetPasswordJwt = await authService.createResetPasswordURL(email);
-
-    res.cookie("jwt", resetPasswordJwt, {
-      //httpOnly: true,
-      //secure: false,
-    });
-
-    res.set("Authorization", `Bearer ${resetPasswordJwt}`);
+    await authService.createResetPasswordURL(email);
 
     return res.send();
   } catch (error) {
@@ -430,43 +394,35 @@ router.post("/reset/email/create", async function (req, res, next) {
 /* GET /auth/reset/email/verify
 code : String 인증 코드
 */
-router.get(
-  "/reset/email/verify",
-  verifyResetPassword,
-  async function (req, res, next) {
-    try {
-      logger.info(
-        "auth.js GET /auth/reset/email/verify: " +
-          JSON.stringify(req.query.code)
-      );
-      const email = req.jwtInfo.email;
-      if (!code || !email) {
-        res.status(400).send("Code not found.");
-      }
-      const result = authService.verifyResetPasswordURL(code);
+router.get("/reset/email/verify", async function (req, res, next) {
+  try {
+    logger.info(
+      "auth.js GET /auth/reset/email/verify: " + JSON.stringify(req.query.code)
+    );
 
-      if (!result) {
-        return res.status(400).send("Invalid code OR Code expired.");
-      }
+    const code = req.query.code;
 
-      const jwtToken = authService.generateJWT({
-        email: email,
-        expirationDate: new Date(Date.now() + 30 * 60 * 1000), //30분 뒤에 만료
-        isPasswordResetVerified: true,
-      });
-
-      res.cookie("jwt", jwtToken, {});
-
-      res.set("Authorization", `Bearer ${jwtToken}`);
-
-      return res.send("redirect");
-
-      //res.redirect(FE_RESET_PASSWORD_URL);
-    } catch (error) {
-      next(error);
+    if (!code) {
+      return res.status(400).send("Code not found.");
     }
+
+    const decoded = jwt.verify(code, process.env.JWT_SECRET);
+
+    if (!decoded) {
+      return res.status(400).send("Invalid code.");
+    } else if (decoded.expirationDate < new Date()) {
+      return res.status(400).send("Code expired.");
+    }
+
+    req.session.resetPasswordEmail = decoded;
+
+    req.session.save();
+
+    return res.redirect(process.env.RESET_PASSWORD_URL);
+  } catch (error) {
+    next(error);
   }
-);
+});
 
 module.exports = router;
 

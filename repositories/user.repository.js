@@ -1,6 +1,7 @@
 const { Client } = require("pg");
 const fs = require("fs");
 const logger = require("../configs/logger.js");
+const userRegionRepository = require("./user.region.repository.js");
 
 require("dotenv").config();
 
@@ -14,22 +15,25 @@ const client = new Client({
 
 client.connect();
 
-const createUser = async (UserCreateDto) => {
+const createUser = async (userInfo, email, password) => {
   try {
     logger.info(
-      "user.repository.js createUser: " + JSON.stringify(UserCreateDto)
+      "user.repository.js createUser: " +
+        JSON.stringify(userInfo) +
+        ", " +
+        email +
+        ", " +
+        password
     );
     const {
-      email,
       username,
-      password,
       lastName,
       firstName,
       gender,
       preference,
       biography,
       age,
-    } = UserCreateDto;
+    } = userInfo;
 
     const result = await client.query(
       `INSERT INTO users (
@@ -227,6 +231,8 @@ const findUserByDefaultFilter = async (
             hashtags.includes(value)
           ).length;
 
+          const userRegions = userRegionRepository.findRegionById(userInfo.id);
+
           return {
             id: userInfo.id,
             username: userInfo.username,
@@ -234,6 +240,8 @@ const findUserByDefaultFilter = async (
             profileImages: profileImages ? profileImages[0] : null,
             rate: userInfo.rate,
             commonHashtags: commonHashtags,
+            si: userRegions[0].si,
+            gu: userRegions[0].gu,
           };
         })
     );
@@ -347,12 +355,16 @@ const findUserByFilter = async (filter, page, pageSize) => {
           );
           const profileImages = rows.length > 0 ? rows[0].profile_images : null;
 
+          const userRegions = userRegionRepository.findRegionById(userInfo.id);
+
           return {
             id: userInfo.id,
             username: userInfo.username,
             age: userInfo.age,
             profileImages: profileImages ? profileImages[0] : null,
             rate: userInfo.rate,
+            si: userRegions[0].si,
+            gu: userRegions[0].gu,
           };
         })
     );

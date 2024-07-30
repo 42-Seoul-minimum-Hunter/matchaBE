@@ -5,14 +5,9 @@ const authRepository = require("../repositories/auth.repository");
 const userRepository = require("../repositories/user.repository");
 const sendEmail = require("../configs/sendEmail.js");
 const { totp } = require("otplib");
-const moment = require("moment-timezone");
 const axios = require("axios");
-const bcypt = require("bcrypt");
 const logger = require("../configs/logger.js");
-
-const registerationCode = new Map();
-const twoFactorCode = new Map();
-const resetPasswordCode = new Map();
+const bcrypt = require("bcrypt");
 
 const loginByUsernameAndPassword = async (username, password) => {
   try {
@@ -22,18 +17,18 @@ const loginByUsernameAndPassword = async (username, password) => {
         ", " +
         password
     );
+
     const userInfo = await userRepository.findUserByUsername(username);
 
     if (!userInfo) {
       const error = new Error("User not found");
       error.status = 404;
       throw error;
+    } else if (bcrypt.compare(password, userInfo.password) === false) {
+      const error = new Error("Password not match");
+      error.status = 400;
+      throw error;
     }
-    //else if (bcypt.compare(password, userInfo.password)) {
-    //  const error = new Error("Password not match");
-    //  error.status = 400;
-    //  throw error;
-    //}
 
     return userInfo;
   } catch (error) {
@@ -46,17 +41,7 @@ const loginByUsernameAndPassword = async (username, password) => {
 
 const findAuthInfoById = async (id) => {
   try {
-    const authInfo = await authRepository.findAuthInfoById(id);
-
-    if (authInfo.is_oauth === true) {
-      const error = new Error(
-        "OAuth user cannot login with username and password"
-      );
-      error.status = 400;
-      throw error;
-    }
-
-    return authInfo;
+    return await authRepository.findAuthInfoById(id);
   } catch (error) {
     logger.error("auth.service.js findAuthInfoById: " + error.message);
     throw error;
@@ -73,6 +58,13 @@ const getOauthInfo = async (code) => {
     if (!user) {
       return { user: null, oauthInfo };
     } else {
+      const authInfo = await authRepository.findAuthInfoById(user.id);
+      // oauth 사용자가 아닌 경우
+      if (authInfo.isOauth === false) {
+        const error = new Error("Not oauth user");
+        error.status = 400;
+        throw error;
+      }
       const profileImageInfo =
         await userProfileImageRepository.findProfileImagesById(user.id);
       user.profileImage = profileImageInfo[0][0];
@@ -104,11 +96,7 @@ const createTwofactorCode = async (email) => {
       text: emailContent,
     });
 
-    const userTimezone = "Asia/Seoul"; // 사용자의 시간대
-    const expirationDate = moment().tz(userTimezone).add(5, "minutes").toDate(); // 5분 후 만료
-
-    twoFactorCode.set(code, expirationDate);
-    // twoFactorCode[code] = expirationDate;
+    return code;
   } catch (error) {
     logger.error("auth.service.js createTwofactorCode: " + error.message);
     throw error;
@@ -119,16 +107,11 @@ const verifyTwoFactorCode = (code) => {
   try {
     logger.info("auth.service.js verifyTwoFactorCode: " + code);
     const secret = process.env.TWOFACTOR_SECRET;
-    const expirationDate = twoFactorCode.get(code);
 
-    if (!expirationDate) {
-      return false;
-    } else if (expirationDate < new Date()) {
-      twoFactorCode.delete(code);
-      return false;
-    } else if (totp.verify({ secret, code })) {
-      delete req.session.twoFactorCode;
+    if (totp.verify({ secret, code })) {
       return true;
+    } else {
+      return false;
     }
   } catch (error) {
     logger.error("auth.service.js verifyTwoFactorCode: " + error.message);
@@ -136,12 +119,16 @@ const verifyTwoFactorCode = (code) => {
   }
 };
 
-const createRegistURL = async (email) => {
+const createRegistURL = async (email, sessionInfo) => {
   try {
     logger.info("auth.service.js createRegistURL: " + email);
-    const code = crypto.randomBytes(20).toString("hex");
+    //const code = crypto.randomBytes(20).toString("hex");
     const userTimezone = "Asia/Seoul"; // 사용자의 시간대
     const expirationDate = moment().tz(userTimezone).add(5, "minutes").toDate(); // 5분 후 만료
+
+    sessionInfo.expirationDate = expirationDate;
+
+    const code = generateJWT(sessionInfo);
 
     // 이메일 내용 구성
     const emailContent = `안녕하세요
@@ -157,31 +144,8 @@ const createRegistURL = async (email) => {
       subject: "[MATCHA] 회원가입 인증 URL",
       text: emailContent,
     });
-
-    registerationCode.set(code, { expirationDate, email });
   } catch (error) {
     logger.error("auth.service.js createRegistURL: " + error.message);
-    throw error;
-  }
-};
-
-const verifyRegistURL = async (code) => {
-  try {
-    logger.info("auth.service.js verifyRegistURL: " + code);
-    const { expirationDate, email } = registerationCode.get(code);
-    if (!expirationDate) {
-      return false;
-    } else if (expirationDate < new Date()) {
-      registerationCode.delete(code);
-      return false;
-    } else {
-      registerationCode.delete(code);
-      await userRepository.updateUserValidByEmail(email);
-      const userInfo = await userRepository.findUserByEmail(email);
-      return userInfo;
-    }
-  } catch (error) {
-    logger.error("auth.service.js verifyRegistURL: " + error.message);
     throw error;
   }
 };
@@ -197,12 +161,19 @@ const createResetPasswordURL = async (email) => {
       throw error;
     }
 
-    const code = crypto.randomBytes(20).toString("hex");
+    //const code = crypto.randomBytes(20).toString("hex");
     const userTimezone = "Asia/Seoul"; // 사용자의 시간대
     const expirationDate = moment()
       .tz(userTimezone)
       .add(30, "minutes")
-      .toDate(); // 5분 후 만료
+      .toDate(); // 30분 후 만료
+
+    const jwtToken = {
+      email: email,
+      expirationDate: expirationDate,
+    };
+
+    const code = generateJWT(jwtToken);
 
     // 이메일 내용 구성
     const emailContent = `안녕하세요
@@ -218,40 +189,8 @@ const createResetPasswordURL = async (email) => {
       subject: "[MATCHA] 비밀번호 초기화 URL",
       text: emailContent,
     });
-
-    const authInfo = await authRepository.findAuthInfoById(userInfo.id);
-
-    const resetPasswordInfo = {
-      email,
-      isPasswordResetVerified: false,
-      isValid: authInfo.is_valid,
-    };
-
-    // resetPasswordCode[code] = expirationDate;
-    resetPasswordCode.set(code, expirationDate);
-
-    return resetPasswordInfo;
   } catch (error) {
     logger.error("auth.service.js createResetPasswordURL: " + error.message);
-    throw error;
-  }
-};
-
-const verifyResetPasswordURL = (code) => {
-  try {
-    logger.info("auth.service.js verifyResetPasswordURL: " + code);
-    const expirationDate = resetPasswordCode.get(code);
-    if (!expirationDate) {
-      return false;
-    } else if (expirationDate < new Date()) {
-      resetPasswordCode.delete(code);
-      return false;
-    } else {
-      resetPasswordCode.delete(code);
-      return true;
-    }
-  } catch (error) {
-    logger.error("auth.service.js verifyResetPasswordURL: " + error.message);
     throw error;
   }
 };
@@ -353,10 +292,8 @@ module.exports = {
   verifyTwoFactorCode,
 
   createRegistURL,
-  verifyRegistURL,
 
   createResetPasswordURL,
-  verifyResetPasswordURL,
 
   updateVerificationById,
 };
