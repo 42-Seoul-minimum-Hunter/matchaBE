@@ -272,7 +272,6 @@ router.post("/twofactor/verify", verifyTwoFA, function (req, res, next) {
       const jwtToken = authService.generateJWT({
         id: req.jwtInfo.id,
         email: req.jwtInfo.email,
-        isValid: req.jwtInfo.isValid,
         isOauth: req.jwtInfo.isOauth,
         accessToken: req.jwtInfo.accessToken,
         twofaVerified: true,

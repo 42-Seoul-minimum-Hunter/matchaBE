@@ -256,7 +256,6 @@ const getOAuthInfo = async (accessToken) => {
     const oauthInfo = {
       id: null,
       email: response.data.email,
-      isValid: null,
       isOauth: true,
       accessToken: accessToken,
       twofaVerified: false,
