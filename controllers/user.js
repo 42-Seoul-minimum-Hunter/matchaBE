@@ -231,11 +231,11 @@ router.get("/find", async function (req, res, next) {
       si: si || undefined,
       gu: gu || undefined,
     };
-    if (minAge && maxAge && minAge > maxAge) {
+    if (minAge && maxAge && Number(minAge) > Number(maxAge)) {
       return res.status(400).send("최소 나이가 최대 나이보다 큽니다.");
-    } else if (minAge && minAge < 0) {
+    } else if (minAge && Number(minAge) < 0) {
       return res.status(400).send("최소 나이가 0보다 작습니다.");
-    } else if (minRate && maxRate && minRate > maxRate) {
+    } else if (minRate && maxRate && Number(minRate) > Number(maxRate)) {
       return res.status(400).send("최소 평점이 최대 평점보다 큽니다.");
     } else if (si === undefined && gu !== undefined) {
       return res.status(400).send("시를 입력해주세요.");
