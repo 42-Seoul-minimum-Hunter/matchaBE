@@ -240,8 +240,8 @@ const findUserByDefaultFilter = async (
             profileImages: profileImages ? profileImages[0] : null,
             rate: userInfo.rate,
             commonHashtags: commonHashtags,
-            si: userRegions[0].si,
-            gu: userRegions[0].gu,
+            si: userRegions.si,
+            gu: userRegions.gu,
           };
         })
     );
@@ -260,7 +260,7 @@ const findUserByFilter = async (filter, page, pageSize) => {
   try {
     logger.info(
       "user.repository.js findUserByFilter: " +
-        filter +
+        JSON.stringify(filter) +
         ", " +
         page +
         ", " +
@@ -268,8 +268,6 @@ const findUserByFilter = async (filter, page, pageSize) => {
     );
 
     const { hashtags, minAge, maxAge, si, gu } = filter;
-
-    console.log(hashtags);
 
     let query = "SELECT u.* FROM users u";
     const params = [];
@@ -310,6 +308,8 @@ const findUserByFilter = async (filter, page, pageSize) => {
 
     console.log(query);
     const userInfos = await client.query(query, params);
+
+    console.log(userInfos.rows);
 
     // 전체 사용자 수 계산
     const totalCountQuery =
@@ -363,8 +363,8 @@ const findUserByFilter = async (filter, page, pageSize) => {
             age: userInfo.age,
             profileImages: profileImages ? profileImages[0] : null,
             rate: userInfo.rate,
-            si: userRegions[0].si,
-            gu: userRegions[0].gu,
+            si: userRegions.si,
+            gu: userRegions.gu,
           };
         })
     );
