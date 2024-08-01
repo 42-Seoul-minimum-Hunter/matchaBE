@@ -239,6 +239,10 @@ router.get("/find", async function (req, res, next) {
       return res.status(400).send("최소 평점이 최대 평점보다 큽니다.");
     } else if (si === undefined && gu !== undefined) {
       return res.status(400).send("시를 입력해주세요.");
+    } else if (page && page < 1) {
+      return res.status(400).send("페이지는 1 이상이어야 합니다.");
+    } else if (pageSize && pageSize < 1) {
+      return res.status(400).send("페이지 크기는 1 이상이어야 합니다.");
     }
 
     //임시 id로 테스트
