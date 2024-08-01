@@ -114,12 +114,14 @@ const findUserByFilter = async (id, filter, page, pageSize) => {
         pageSize
       );
     }
+
+    console.log("filteredInfo: " + JSON.stringify(filteredInfo));
     users = filteredInfo.users;
     totalCount = filteredInfo.totalCount;
     filteredByBlock = await userBlockRepository.filterBlockedUser(id, users);
     return {
       users: filteredByBlock,
-      totalCount: totalCount,
+      totalCount: filteredByBlock.length,
     };
   } catch (error) {
     logger.error("user.service.js findUserByFilter: " + error.message);

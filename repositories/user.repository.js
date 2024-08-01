@@ -267,46 +267,64 @@ const findUserByFilter = async (filter, page, pageSize) => {
         pageSize
     );
 
-    const { hashtags, minAge, maxAge, si, gu } = filter;
+    const { hashtags, minAge, maxAge, si, gu, minRate, maxRate } = filter;
 
     let query = "SELECT u.* FROM users u";
     const params = [];
 
+    // JOIN 추가
     query += " JOIN user_hashtags uh ON u.id = uh.user_id";
     query += " JOIN user_regions ur ON u.id = ur.user_id";
-    query += " WHERE $1 <@ uh.hashtags";
-    params.push(hashtags);
 
-    query += " AND ur.si = $" + (params.length + 1);
-    params.push(si);
+    // WHERE 조건 생성
+    let whereClauses = [];
 
+    // hashtags 조건
+    if (hashtags) {
+      whereClauses.push("$1 <@ uh.hashtags");
+      params.push(hashtags);
+    }
+
+    // si 조건
+    if (si) {
+      whereClauses.push("ur.si = $" + (params.length + 1));
+      params.push(si);
+    }
+
+    // gu 조건
     if (gu) {
-      query += " AND ur.gu = $" + (params.length + 1);
+      whereClauses.push("ur.gu = $" + (params.length + 1));
       params.push(gu);
     }
 
+    // minAge 및 maxAge 조건
     if (minAge && maxAge) {
-      query +=
-        " AND u.age >= $" +
-        (params.length + 1) +
-        " AND u.age <= $" +
-        (params.length + 2);
-      params.push(minAge);
-      params.push(maxAge);
+      whereClauses.push(
+        "u.age >= $" +
+          (params.length + 1) +
+          " AND u.age <= $" +
+          (params.length + 2)
+      );
+      params.push(minAge, maxAge);
     } else if (minAge) {
-      query += " AND u.age >= $" + (params.length + 1);
+      whereClauses.push("u.age >= $" + (params.length + 1));
       params.push(minAge);
     } else if (maxAge) {
-      query += " AND u.age <= $" + (params.length + 1);
+      whereClauses.push("u.age <= $" + (params.length + 1));
       params.push(maxAge);
     }
 
+    // WHERE 절 추가
+    if (whereClauses.length > 0) {
+      query += " WHERE " + whereClauses.join(" AND ");
+    }
+
+    // LIMIT 및 OFFSET 추가
     query +=
       " LIMIT $" + (params.length + 1) + " OFFSET $" + (params.length + 2);
-    params.push(pageSize);
-    params.push((page - 1) * pageSize);
+    params.push(pageSize, (page - 1) * pageSize);
 
-    console.log(query);
+    console.log(query); // 최종 쿼리 출력
     const userInfos = await client.query(query, params);
 
     console.log(userInfos.rows);
@@ -316,7 +334,6 @@ const findUserByFilter = async (filter, page, pageSize) => {
       "SELECT COUNT(*) AS total_count FROM (" + query + ") AS subquery";
     const totalCountResult = await client.query(totalCountQuery, params);
     const totalCount = totalCountResult.rows[0].total_count;
-
     // 사용자 평균 평점 계산 및 필터링
     const filteredUserInfos = [];
     for (const userInfo of userInfos.rows) {
@@ -333,13 +350,34 @@ const findUserByFilter = async (filter, page, pageSize) => {
         rate = totalScore / ratingInfo.rows.length;
       }
 
-      if (rate >= minRate && rate <= maxRate) {
+      // minRate와 maxRate에 따른 필터링 로직
+      const isMinRateValid = minRate !== undefined;
+      const isMaxRateValid = maxRate !== undefined;
+
+      if (!isMinRateValid && !isMaxRateValid) {
+        // 두 값 모두 없음: 모든 사용자 추가
         userInfo.rate = rate;
         filteredUserInfos.push(userInfo);
+      } else if (isMinRateValid && !isMaxRateValid) {
+        // minRate만 있음: minRate 이상인 사용자 추가
+        if (rate >= minRate) {
+          userInfo.rate = rate;
+          filteredUserInfos.push(userInfo);
+        }
+      } else if (!isMinRateValid && isMaxRateValid) {
+        // maxRate만 있음: maxRate 이하인 사용자 추가
+        if (rate <= maxRate) {
+          userInfo.rate = rate;
+          filteredUserInfos.push(userInfo);
+        }
+      } else if (isMinRateValid && isMaxRateValid) {
+        // 둘 다 있을 때: minRate 이상 maxRate 이하인 사용자 추가
+        if (rate >= minRate && rate <= maxRate) {
+          userInfo.rate = rate;
+          filteredUserInfos.push(userInfo);
+        }
       }
     }
-
-    //console.log('infologs: ' + filteredUserInfos);
 
     const UserInfo = await Promise.all(
       filteredUserInfos
