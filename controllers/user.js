@@ -219,7 +219,7 @@ router.get("/find", async function (req, res, next) {
     } = req.query;
 
     if (hashtags) {
-      hashtags = hashtags.split(",");
+      hashtags = hashtags.replace(/[\[\]']/g, "").split(",");
     }
 
     const filter = {
@@ -231,6 +231,7 @@ router.get("/find", async function (req, res, next) {
       si: si || undefined,
       gu: gu || undefined,
     };
+    console.log(hashtags);
     if (minAge && maxAge && Number(minAge) > Number(maxAge)) {
       return res.status(400).send("최소 나이가 최대 나이보다 큽니다.");
     } else if (minAge && Number(minAge) < 0) {
@@ -243,6 +244,12 @@ router.get("/find", async function (req, res, next) {
       return res.status(400).send("페이지는 1 이상이어야 합니다.");
     } else if (pageSize && pageSize < 1) {
       return res.status(400).send("페이지 크기는 1 이상이어야 합니다.");
+    } else if (hashtags && !validateHashtags(hashtags)) {
+      return res.status(400).send("해시태그가 올바르지 않습니다.");
+    } else if (minRate && !Number.isInteger(minRate) && minRate < 0) {
+      return res.status(400).send("평점은 정수로 입력해주세요.");
+    } else if (maxRate && !Number.isInteger(maxRate) && maxRate < 0) {
+      return res.status(400).send("평점은 정수로 입력해주세요.");
     }
 
     //임시 id로 테스트

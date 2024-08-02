@@ -14,7 +14,7 @@ VALUES
 INSERT INTO user_hashtags
 (user_id, hashtags, updated_at)
 VALUES
-(701, ARRAY['달리기', '사업'], '2020-01-01 00:00:00');
+(701, ARRAY['RUNNING', 'BUSINESS'], '2020-01-01 00:00:00');
 
 INSERT INTO user_profile_images
 (user_id, profile_images, updated_at)
@@ -44,7 +44,7 @@ VALUES
 INSERT INTO user_hashtags
 (user_id, hashtags, updated_at)
 VALUES
-(702, ARRAY['달리기', '사업'], '2020-01-01 00:00:00');
+(702, ARRAY['RUNNING', 'BUSINESS'], '2020-01-01 00:00:00');
 
 INSERT INTO user_profile_images
 (user_id, profile_images, updated_at)
@@ -74,7 +74,7 @@ VALUES
 INSERT INTO user_hashtags
 (user_id, hashtags, updated_at)
 VALUES
-(703, ARRAY['달리기', '사업'], '2020-01-01 00:00:00');
+(703, ARRAY['RUNNING', 'BUSINESS'], '2020-01-01 00:00:00');
 
 INSERT INTO user_profile_images
 (user_id, profile_images, updated_at)
@@ -104,7 +104,7 @@ VALUES
 --INSERT INTO user_hashtags
 --(user_id, hashtags, updated_at)
 --VALUES
---(704, ARRAY['달리기', '사업'], '2020-01-01 00:00:00');
+--(704, ARRAY['RUNNING', 'BUSINESS'], '2020-01-01 00:00:00');
 
 --INSERT INTO user_profile_images
 --(user_id, profile_images, updated_at)
