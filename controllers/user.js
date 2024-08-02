@@ -218,12 +218,16 @@ router.get("/find", async function (req, res, next) {
       pageSize = 20,
     } = req.query;
 
-    if (hashtags) {
+    console.log(hashtags);
+
+    if (hashtags === "[]") {
+      hashtags = undefined;
+    } else if (hashtags) {
       hashtags = hashtags.replace(/[\[\]']/g, "").split(",");
     }
 
     const filter = {
-      hashtags: hashtags || undefined,
+      hashtags: hashtags,
       minAge: minAge ? Number(minAge) : undefined,
       maxAge: maxAge ? Number(maxAge) : undefined,
       minRate: minRate ? Number(minRate) : undefined,

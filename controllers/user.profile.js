@@ -121,6 +121,12 @@ router.put("/update", async function (req, res, next) {
       }
     }
 
+    if (hashtags === "[]") {
+      hashtags = undefined;
+    } else if (hashtags) {
+      hashtags = hashtags.replace(/[\[\]']/g, "").split(",");
+    }
+
     if (!validateEmail(user.email)) {
       return res.status(400).send("Please enter a valid email.");
     } else if (!validatePassword(user.password)) {
