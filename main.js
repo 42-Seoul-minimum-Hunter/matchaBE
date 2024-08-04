@@ -65,6 +65,7 @@ const userBlockRouter = require("./controllers/user.block.js");
 
 const socketRouter = require("./controllers/user.socket.js");
 const logger = require("./configs/logger.js");
+const claudeApi = require("./controllers/claude.js");
 
 socketRouter(server, app);
 
@@ -80,6 +81,7 @@ app.use("/user/alarm", userAlarmRouter);
 app.use("/user/block", userBlockRouter);
 app.use("/user/chat", userChatRouter);
 app.use("/auth", authRouter);
+app.use("/claude", claudeApi);
 
 app.use((err, req, res, next) => {
   const status = err.status || 500;
