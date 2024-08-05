@@ -84,10 +84,23 @@ module.exports = (server, app) => {
       }
 
       // 유저 접속 상태
-      
+
       userActivate.set(userId, socket.id);
       await socket.join(socket.id);
 
+      // 유저가 채팅목록 불러올때
+      socket.on("getChatList", async () => {
+        try {
+          logger.info("user.socket.js getChatList");
+          const chatList = await userChatService.findAllChatRooms(userId);
+          return chatList;
+        } catch (error) {
+          logger.error("user.socket.js getChatList error: " + error.message);
+          return false;
+        }
+      });
+
+      // 유저가 채팅방에 들어갔을때
       socket.on("joinChatRoom", async (data) => {
         try {
           logger.info("user.socket.js joinChatRoom: " + data);
@@ -113,15 +126,13 @@ module.exports = (server, app) => {
             userInfo.id
           );
 
-
           if (!chatRoomInfo) {
             return;
             return;
           }
 
-          const chatHistories = await userChatService.findAllChatHistoriesByRoomId(
-            chatRoomInfo.id
-          );
+          const chatHistories =
+            await userChatService.findAllChatHistoriesByRoomId(chatRoomInfo.id);
 
           //TODO: 채팅 형태 논의필요
           if (chatHistories) {
@@ -133,12 +144,11 @@ module.exports = (server, app) => {
                 createdAt: chat.created_at,
               };
             });
-            
+
             await io.to(socketId).emit("joinChatRoom", chatHistory);
-          } 
+          }
 
           await socket.join(chatRoomInfo.id);
-          
         } catch (error) {
           logger.error("user.socket.js joinChatRoom error: " + error.message);
           throw error;
@@ -178,9 +188,9 @@ module.exports = (server, app) => {
 
         //TODO: 채팅 형태 논의필요
         const param = {
-          content: message,
+          message,
           username,
-          createdAt: new Date(),
+          time: new Date(),
         };
 
         await userChatService.saveSendedChatById(
@@ -214,7 +224,7 @@ module.exports = (server, app) => {
         const userInfo = await userReposiotry.findUserByUsername(username);
 
         if (!userInfo) {
-          return ;
+          return;
         } else if (userActivate.get(userInfo.id)) {
           io.to(userActivate.get(userId)).emit("onlineStatus", true);
         } else {

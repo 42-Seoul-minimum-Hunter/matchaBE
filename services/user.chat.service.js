@@ -26,16 +26,16 @@ const findAllChatRooms = async (userId) => {
       if (recentChat) {
         userChatInfo = {
           username: userInfo.username,
-          content: recentChat.content,
-          createdAt: recentChat.created_at,
           profileImage: userProfileImage[0][0],
+          lastContent: recentChat.content,
+          createdAt: recentChat.created_at,
         };
       } else {
         userChatInfo = {
           username: userInfo.username,
-          content: "No chat history",
-          createdAt: chat.created_at,
           profileImage: userProfileImage[0][0],
+          lastContent: "No chat history",
+          createdAt: chat.created_at,
         };
       }
       console.log("userChatInfo", userChatInfo);
