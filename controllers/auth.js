@@ -374,7 +374,7 @@ router.get("/register/email/verify", async function (req, res, next) {
     //console.log(req.session.userInfo);
     req.session.save();
 
-    return res.send(req.session.userInfo.email);
+    return res.redirect(process.env.REGISTRATION_URL);
   } catch (error) {
     next(error);
   }
@@ -431,7 +431,7 @@ router.get("/reset/email/verify", async function (req, res, next) {
 
     req.session.save();
 
-    return res.redirect(process.env.RESET_PASSWORD_URL);
+    return res.redirect(process.env.FE_RESET_PASSWORD_URL);
   } catch (error) {
     next(error);
   }

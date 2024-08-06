@@ -127,10 +127,10 @@ router.post(
       if (!user_id) {
         return res.status(400).send("Bad Request");
       }
-      user.id = user_id;
+      userInfo.id = user_id;
 
       const jwtToken = authService.generateJWT({
-        id: user.id,
+        id: userInfo.id,
         email: email,
         isOauth: isOauth,
         accessToken: accessToken,
@@ -165,6 +165,7 @@ router.delete("/unregister", async function (req, res, next) {
 
 /* POST /user/change/password
 password : String 사용자 비밀번호
+confirmedPassword : String 사용자 비밀번호 확인
 */
 router.post("/change/password", async function (req, res, next) {
   try {
@@ -172,6 +173,7 @@ router.post("/change/password", async function (req, res, next) {
       "user.js POST /user/change/password: " + JSON.stringify(req.body)
     );
     let password = req.body.password;
+    const confirmedPassword = req.body.confirmedPassword;
 
     const { email, expirationDate } = req.session.resetPasswordEmail;
 
@@ -179,10 +181,14 @@ router.post("/change/password", async function (req, res, next) {
       return res.status(400).send("Bad Request");
     } else if (!password || !validatePassword(password)) {
       return res.status(400).send("Please enter the password field.");
+    } else if (!confirmedPassword) {
+      return res.status(400).send("Please enter the confirmedPassword field.");
     } else if (!validateEmail(email)) {
       return res.status(400).send("Please enter a valid email.");
     } else if (expirationDate < new Date()) {
       return res.status(400).send("The link has expired. Please try again.");
+    } else if (password !== confirmedPassword) {
+      return res.status(400).send("Passwords do not match.");
     }
 
     await userSerivce.changePassword(password, email);
