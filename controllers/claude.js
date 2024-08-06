@@ -14,7 +14,7 @@ router.post("/", async function (req, res, next) {
       process.env.CLAUDE_API_URL,
       {
         model: "gpt-4o-mini",
-        messages: [{ role: "user", conwtent: message }],
+        messages: [{ role: "user", content: message }],
       },
       {
         headers: {
