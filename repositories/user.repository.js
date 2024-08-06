@@ -482,43 +482,24 @@ const updateUserById = async (UserUpdateDto, id) => {
         ", " +
         id
     );
-    const {
-      email,
-      password,
-      lastName,
-      firstName,
-      gender,
-      preference,
-      biography,
-      age,
-    } = UserUpdateDto;
+    const { email, lastName, firstName, gender, preference, biography, age } =
+      UserUpdateDto;
 
     await client.query(
       `
             UPDATE users
             SET email = $1,
-                password = $2,
-                last_name = $3,
-                first_name = $4,
-                gender = $5,
-                preference = $6,
-                biography = $7,
-                age = $8,
+                last_name = $2,
+                first_name = $3,
+                gender = $4,
+                preference = $5,
+                biography = $6,
+                age = $7,
                 updated_at = now()
-            WHERE id = $9
+            WHERE id = $8
             RETURNING *
         `,
-      [
-        email,
-        password,
-        lastName,
-        firstName,
-        gender,
-        preference,
-        biography,
-        age,
-        id,
-      ]
+      [email, lastName, firstName, gender, preference, biography, age, id]
     );
   } catch (error) {
     logger.error("user.repository.js updateUserById: " + error);

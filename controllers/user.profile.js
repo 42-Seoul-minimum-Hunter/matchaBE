@@ -61,6 +61,20 @@ router.get("/me", async function (req, res, next) {
   }
 });
 
+/* GET /user/profile/settings
+ */
+router.get("/settings", async function (req, res, next) {
+  try {
+    logger.info("user.profile.js GET /user/profile/settings");
+    //const user = await userProfileService.getSettings(req.jwtInfo.id);
+    //임시 id로 테스트
+    const user = await userProfileService.getSettingsInfo(701);
+    return res.send(user);
+  } catch (error) {
+    next(error);
+  }
+});
+
 /* PUT /user/profile/update
 email : String 사용자 이메일
 password : String 사용자 비밀번호 => hash로 변환 예정
@@ -84,7 +98,6 @@ router.put("/update", async function (req, res, next) {
     );
     const user = {
       email: req.body.email || undefined,
-      password: req.body.password || undefined,
       lastName: req.body.lastName || undefined,
       firstName: req.body.firstName || undefined,
       gender: req.body.gender || undefined,
@@ -101,7 +114,6 @@ router.put("/update", async function (req, res, next) {
 
     const requiredFields = [
       "email",
-      "password",
       "lastName",
       "firstName",
       "gender",
@@ -129,10 +141,6 @@ router.put("/update", async function (req, res, next) {
 
     if (!validateEmail(user.email)) {
       return res.status(400).send("Please enter a valid email.");
-    } else if (!validatePassword(user.password)) {
-      return res
-        .status(400)
-        .send("Please enter a valid password. (8~15 characters)");
     } else if (!validateName(user.lastName) || !validateName(user.firstName)) {
       return res
         .status(400)
