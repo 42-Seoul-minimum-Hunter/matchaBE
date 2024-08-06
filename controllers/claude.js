@@ -4,8 +4,6 @@ const router = express.Router();
 const axios = require("axios");
 const logger = require("../configs/logger.js");
 
-// console.log("CLAUDE_API_KEY", CLAUDE_API_KEY);
-
 // POST /claude
 // Request body: { message: string }
 router.post("/", async function (req, res, next) {
@@ -16,7 +14,7 @@ router.post("/", async function (req, res, next) {
       process.env.CLAUDE_API_URL,
       {
         model: "gpt-4o-mini",
-        messages: [{ role: "user", content: message }],
+        messages: [{ role: "user", conwtent: message }],
       },
       {
         headers: {

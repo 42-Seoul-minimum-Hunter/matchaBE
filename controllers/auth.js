@@ -10,7 +10,11 @@ const bcypt = require("bcrypt");
 const moment = require("moment-timezone");
 const jwt = require("jsonwebtoken");
 
-const { validateEmail, validatePassword } = require("../configs/validate.js");
+const {
+  validateEmail,
+  validatePassword,
+  validateUsername,
+} = require("../configs/validate.js");
 
 const logger = require("../configs/logger.js");
 
