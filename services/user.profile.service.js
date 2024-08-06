@@ -100,6 +100,8 @@ const getMyInfo = async (userId) => {
       rate = totalScore / rateInfo.length;
     }
 
+    const authInfo = await authRepository.findAuthInfoById(userId);
+
     const user = {
       username: userInfo.username,
       lastName: userInfo.last_name,
@@ -123,6 +125,54 @@ const getMyInfo = async (userId) => {
   }
 };
 
+const getSettingsInfo = async (userId) => {
+  try {
+    logger.info("user.profile.service.js getSettingsInfo: " + userId);
+    const userInfo = await userRepository.findUserById(userId);
+    const hashtagInfo = await userHashtagRepository.findHashtagById(userId);
+    const regionInfo = await userRegionRepository.findRegionById(userId);
+    const profileImageInfo =
+      await userProfileImageRepository.findProfileImagesById(userId);
+    const rateInfo = await userRateRepository.findRateInfoById(userId);
+
+    let rate;
+    if (!rateInfo || rateInfo.length === 0) {
+      rate = parseFloat(0);
+    } else {
+      const ratingScores = rateInfo.map((row) => row.rate_score);
+      const totalScore = ratingScores.reduce((acc, score) => acc + score, 0);
+      rate = totalScore / rateInfo.length;
+    }
+
+    const authInfo = await authRepository.findAuthInfoById(userId);
+
+    const user = {
+      email: userInfo.email,
+      username: userInfo.username,
+      lastName: userInfo.last_name,
+      firstName: userInfo.first_name,
+      gender: userInfo.gender,
+      preference: userInfo.preference,
+      biography: userInfo.biography,
+      age: userInfo.age,
+
+      hashtags: hashtagInfo[0],
+      profileImages: profileImageInfo[0],
+      si: regionInfo[0].si,
+      gu: regionInfo[0].gu,
+      rate: rate,
+
+      isGpsAllowed: authInfo.is_gps_allowed,
+      isTwofa: authInfo.is_twofa,
+    };
+
+    return user;
+  } catch (error) {
+    logger.error("user.profile.service.js getSettingsInfo: " + error.message);
+    throw error;
+  }
+};
+
 const updateUser = async (UserUpdateDto, userId) => {
   try {
     logger.info(
@@ -132,9 +182,6 @@ const updateUser = async (UserUpdateDto, userId) => {
         JSON.stringify(userId)
     );
     const userInfo = await userRepository.findUserByEmail(UserUpdateDto.email);
-    const hashed = await bcrypt.hash(UserUpdateDto.password, 10);
-    UserUpdateDto.password = hashed;
-
     if (!userInfo) {
       const error = new Error("User Not Found");
       error.status = 404;
@@ -169,4 +216,5 @@ module.exports = {
   getUserProfile,
   getMyInfo,
   updateUser,
+  getSettingsInfo,
 };
