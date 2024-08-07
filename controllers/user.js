@@ -274,18 +274,4 @@ router.get("/find", verifyAllprocess, async function (req, res, next) {
   }
 });
 
-/* GET /user/search/region
- */
-//TODO: jwt 토큰 확인 추가
-//TODO: isGpsAllowed 확인 상관없이 위치 확인
-router.get("/search/region", verifyAllprocess, function (req, res, next) {
-  try {
-    logger.info("user.js GET /user/search/region");
-    let region = userSerivce.getRegion(req.jwtInfo.id);
-    return res.send(region);
-  } catch (error) {
-    next(error);
-  }
-});
-
 module.exports = router;

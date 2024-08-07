@@ -11,8 +11,7 @@ reason : String(ENUM) 신고 사유
 */
 
 //TODO: reason ENUM 확인
-//TODO: 신고 시 사용자 차단 추가
-router.post("/", async function (req, res, next) {
+router.post("/", verifyAllprocess, async function (req, res, next) {
   try {
     logger.info(
       "user.report.js POST /user/report: " + JSON.stringify(req.body)

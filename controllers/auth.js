@@ -1,6 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const { verifyAllprocess } = require("../configs/middleware.js");
+const {
+  verifyAllprocess,
+  verifyRegistEmailSession,
+} = require("../configs/middleware.js");
 const authService = require("../services/auth.service.js");
 const userService = require("../services/user.service.js");
 const bcypt = require("bcrypt");
@@ -309,26 +312,29 @@ router.post("/twofactor/verify", verifyAllprocess, function (req, res, next) {
 /* POST /auth/register/email/send
  */
 
-//TODO: 세션확인 부분 추가
-router.post("/register/email/send", async function (req, res, next) {
-  try {
-    logger.info("auth.js POST /auth/register/email/send");
+router.post(
+  "/register/email/send",
+  verifyRegistEmailSession,
+  async function (req, res, next) {
+    try {
+      logger.info("auth.js POST /auth/register/email/send");
 
-    if (!req.session.userInfo) {
-      return res.status(400).send("User info not found.");
-    } else if (!req.session.userInfo.email) {
-      return res.status(400).send("Email not found.");
+      if (!req.session.userInfo) {
+        return res.status(400).send("User info not found.");
+      } else if (!req.session.userInfo.email) {
+        return res.status(400).send("Email not found.");
+      }
+
+      const { email } = req.session.userInfo;
+
+      await authService.createRegistURL(email, req.session.userInfo);
+
+      return res.send();
+    } catch (error) {
+      next(error);
     }
-
-    const { email } = req.session.userInfo;
-
-    await authService.createRegistURL(email, req.session.userInfo);
-
-    return res.send();
-  } catch (error) {
-    next(error);
   }
-});
+);
 
 /* GET /auth/register/email/verify
 code : String 인증 코드

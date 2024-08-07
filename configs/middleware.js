@@ -99,9 +99,27 @@ function verifyCreateUserSession(req, res, next) {
   }
 }
 
+function verifyRegistEmailSession(req, res, next) {
+  try {
+    logger.info("middleware verifyRegistEmailSession");
+
+    if (!req.session) {
+      return res.status(400).send("Session Not Found");
+    } else if (!req.session.userInfo) {
+      return res.status(400).send("Bad Access");
+    }
+
+    next();
+  } catch (error) {
+    logger.error("middleware verifyRegistEmailSession error");
+    return res.status(400).send("Bad Access");
+  }
+}
+
 module.exports = {
   verifyAllprocess,
   verifyCreateUserSession,
+  verifyRegistEmailSession,
 
   checkOauthLogin,
   verifyChangePassword,

@@ -134,7 +134,6 @@ module.exports = (server, app) => {
           const chatHistories =
             await userChatService.findAllChatHistoriesByRoomId(chatRoomInfo.id);
 
-          //TODO: 채팅 형태 논의필요
           if (chatHistories) {
             const chatHistory = chatHistories.map(async (chat) => {
               const userInfo = await userReposiotry.findUserById(chat.userId);
@@ -185,8 +184,6 @@ module.exports = (server, app) => {
         if (!chatRoomInfo) {
           return;
         }
-
-        //TODO: 채팅 형태 논의필요
         const param = {
           message,
           username,

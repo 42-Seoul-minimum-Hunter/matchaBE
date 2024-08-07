@@ -36,7 +36,7 @@ const getUserProfile = async (username, userId) => {
     const rateInfo = await userRateRepository.findRateInfoById(userInfo.id);
 
     let rate;
-    console.log("rateInfo", rateInfo);
+
     if (!rateInfo || rateInfo.length === 0) {
       rate = parseFloat(0);
     } else {
@@ -73,7 +73,9 @@ const getUserProfile = async (username, userId) => {
       isBlocked: isBlocked,
     };
 
-    await userAlarmRepository.saveAlarmById(userId, userInfo.id, "VISITED");
+    if (userId !== userInfo.id) {
+      await userAlarmRepository.saveAlarmById(userId, userInfo.id, "VISITED");
+    }
     return user;
   } catch (error) {
     logger.error("user.profile.service.js getUserProfile: " + error.message);

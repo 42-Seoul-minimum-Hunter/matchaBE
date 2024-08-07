@@ -22,11 +22,10 @@ const logger = require("../configs/logger.js");
 username : String 사용자 닉네임
 */
 
-//TODO: 조회 기록 저장 추가
 //TODO: 온라인 상태 확인 추가
 //TODO: 해당 유저 LIKE 정보
 //TODO: 매치 유무 확인
-router.get("/", async function (req, res, next) {
+router.get("/", verifyAllprocess, async function (req, res, next) {
   try {
     logger.info(
       "user.profile.js GET /user/profile: " + JSON.stringify(req.query)
@@ -47,7 +46,7 @@ router.get("/", async function (req, res, next) {
 
 /* GET /user/profile/me/
  */
-router.get("/me", async function (req, res, next) {
+router.get("/me", verifyAllprocess, async function (req, res, next) {
   try {
     logger.info("user.profile.js GET /user/profile/me");
     const user = await userProfileService.getMyInfo(req.jwtInfo.id);
@@ -59,7 +58,7 @@ router.get("/me", async function (req, res, next) {
 
 /* GET /user/profile/settings
  */
-router.get("/settings", async function (req, res, next) {
+router.get("/settings", verifyAllprocess, async function (req, res, next) {
   try {
     logger.info("user.profile.js GET /user/profile/settings");
     const user = await userProfileService.getSettings(req.jwtInfo.id);
