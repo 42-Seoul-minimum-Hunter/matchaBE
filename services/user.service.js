@@ -103,24 +103,24 @@ const findUserByFilter = async (id, filter, page, pageSize) => {
         userInfo.preference,
         userRegionInfo[0].si,
         userRegionInfo[0].gu,
-        userHashtagInfo[0],
-        page,
-        pageSize
+        userHashtagInfo[0]
       );
     } else {
-      filteredInfo = await userRepository.findUserByFilter(
-        filter,
-        page,
-        pageSize
-      );
+      filteredInfo = await userRepository.findUserByFilter(filter);
     }
 
     console.log("filteredInfo: " + JSON.stringify(filteredInfo));
     users = filteredInfo.users;
     totalCount = filteredInfo.totalCount;
     filteredByBlock = await userBlockRepository.filterBlockedUser(id, users);
+
+    // 페이지네이션 처리
+    const startIndex = (page - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const paginatedUsers = filteredByBlock.slice(startIndex, endIndex);
+
     return {
-      users: filteredByBlock,
+      users: paginatedUsers,
       totalCount: filteredByBlock.length,
     };
   } catch (error) {
