@@ -125,8 +125,6 @@ router.post("/register", async function (req, res, next) {
 
     req.session.save();
 
-    //console.log(req.session.userInfo);
-
     return res.send();
   } catch (error) {
     next(error);

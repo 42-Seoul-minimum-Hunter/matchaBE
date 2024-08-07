@@ -174,8 +174,6 @@ module.exports = (server, app) => {
           return;
         }
 
-        // TODO: 채팅을 보낼 수 있는 상황인지 확인
-
         const chatRoomInfo = await userChatService.findOneChatRoomById(
           id,
           userInfo.id
@@ -423,4 +421,8 @@ module.exports = (server, app) => {
     //  }
     //});
   });
+};
+
+socket.exports = {
+  userActivate,
 };

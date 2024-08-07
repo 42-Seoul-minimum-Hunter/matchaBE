@@ -9,7 +9,7 @@ VALUES
 INSERT INTO auth
 (id, user_id, is_oauth, is_valid, is_gps_allowed, is_twofa, updated_at)
 VALUES
-(701, 701, false, true, true, true, '2020-01-01 00:00:00');
+(701, 701, false, true, true, false, '2020-01-01 00:00:00');
 
 INSERT INTO user_hashtags
 (user_id, hashtags, updated_at)

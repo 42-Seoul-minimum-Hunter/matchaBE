@@ -89,16 +89,22 @@ const dislikeUserByUsername = async (likeUserId) => {
   }
 };
 
-const getLikeUserHistoriesById = async (id) => {
+const getLikeUserHistoryById = async (id, likedUserId) => {
   try {
-    logger.info("user.like.repository.js getLikeUserHistoriesById: " + id);
+    logger.info(
+      "user.like.repository.js getLikeUserHistoriesById: " +
+        id +
+        ", " +
+        likedUserId
+    );
+
     const likeUserHistories = await client.query(
       `
-            SELECT * 
+            SELECT *
             FROM user_like_histories
-            WHERE user_id = $1 AND deleted_at IS NULL
+            WHERE user_id = $1 AND liked_id = $2 AND deleted_at IS NULL
         `,
-      [id]
+      [id, likedUserId]
     );
 
     return likeUserHistories.rows;
@@ -158,7 +164,7 @@ module.exports = {
   likeUserById,
   dislikeUserByUsername,
 
-  getLikeUserHistoriesById,
+  getLikeUserHistoryById,
   updateLikeUserHistoriesById,
 
   checkUserLikeBoth,

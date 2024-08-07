@@ -15,14 +15,16 @@ const {
   validateGu,
 } = require("../configs/validate.js");
 const userProfileService = require("../services/user.profile.service.js");
+const authService = require("../services/auth.service.js");
 
 const logger = require("../configs/logger.js");
+
+const { userActivate } = require("./user.socket.js");
 
 /* GET /user/profile?username=john
 username : String 사용자 닉네임
 */
 
-//TODO: 온라인 상태 확인 추가
 //TODO: 해당 유저 LIKE 정보
 //TODO: 매치 유무 확인
 router.get("/", verifyAllprocess, async function (req, res, next) {
@@ -38,6 +40,7 @@ router.get("/", verifyAllprocess, async function (req, res, next) {
       username,
       req.jwtInfo.id
     );
+    user.isOnline = userActivate[req.jwtInfo.id] ? true : false;
     return res.send(user);
   } catch (error) {
     next(error);
@@ -102,7 +105,7 @@ router.post("/update", verifyAllprocess, async function (req, res, next) {
       si: req.body.si || undefined,
       gu: req.body.gu || undefined,
       profileImages: req.body.profileImages || undefined,
-      isTwofa: req.body.isTwofa || undefined,
+      isTwofa: req.body.isTwofa,
     };
 
     const requiredFields = [
@@ -118,6 +121,7 @@ router.post("/update", verifyAllprocess, async function (req, res, next) {
       "si",
       "gu",
       "profileImages",
+      "isTwofa",
     ];
 
     for (const field of requiredFields) {
@@ -126,12 +130,33 @@ router.post("/update", verifyAllprocess, async function (req, res, next) {
       }
     }
 
-    let hashtags = user.hashtags;
+    // hashtags 처리
+    if (Array.isArray(user.hashtags)) {
+      user.hashtags = user.hashtags
+        .map((tag) => tag.trim())
+        .filter((tag) => tag); // 각 태그의 공백 제거 및 빈 태그 필터링
+    } else if (typeof user.hashtags === "string") {
+      user.hashtags = user.hashtags
+        .replace(/[\[\]']/g, "")
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter((tag) => tag);
+    } else {
+      user.hashtags = undefined; // 다른 타입일 경우 undefined로 설정
+    }
 
-    if (hashtags === "[]") {
-      user.hashtags = undefined;
-    } else if (hashtags) {
-      user.hashtags = hashtags.replace(/[\[\]']/g, "").split(",");
+    // profileImages 처리
+    if (Array.isArray(user.profileImages)) {
+      user.profileImages = user.profileImages
+        .map((image) => image.trim())
+        .filter((image) => image); // 각 이미지의 공백 제거 및 빈 이미지 필터링
+    } else if (typeof user.profileImages === "string") {
+      user.profileImages = user.profileImages
+        .split(",")
+        .map((image) => image.trim())
+        .filter((image) => image);
+    } else {
+      user.profileImages = undefined; // 다른 타입일 경우 undefined로 설정
     }
 
     if (!validateEmail(user.email)) {
@@ -156,6 +181,10 @@ router.post("/update", verifyAllprocess, async function (req, res, next) {
       return res.status(400).send("Please enter a valid si.");
     } else if (!validateGu(user.si, user.gu)) {
       return res.status(400).send("Please enter a valid gu.");
+    } else if (typeof user.isTwofa === undefined) {
+      return res.status(400).send("Please enter a valid twofa.");
+    } else if (typeof user.isGpsAllowed === undefined) {
+      return res.status(400).send("Please enter a valid gps allowed.");
     }
 
     await userProfileService.updateUser(user, req.jwtInfo.id);

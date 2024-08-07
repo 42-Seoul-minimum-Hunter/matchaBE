@@ -6,6 +6,7 @@ const userRegionRepository = require("../repositories/user.region.repository");
 const userRateRepository = require("../repositories/user.rate.repository");
 const userBlockRepository = require("../repositories/user.block.repository");
 const userAlarmRepository = require("../repositories/user.alarm.repository");
+const userLikeRepository = require("../repositories/user.like.repository");
 
 const userRepository = require("../repositories/user.repository");
 
@@ -183,7 +184,7 @@ const updateUser = async (UserUpdateDto, userId) => {
         ", " +
         JSON.stringify(userId)
     );
-    const userInfo = await userRepository.findUserByEmail(UserUpdateDto.email);
+    const userInfo = await userRepository.findUserById(userId);
     if (!userInfo) {
       const error = new Error("User Not Found");
       error.status = 404;

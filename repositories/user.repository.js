@@ -485,6 +485,13 @@ const updateUserById = async (UserUpdateDto, id) => {
     const { email, lastName, firstName, gender, preference, biography, age } =
       UserUpdateDto;
 
+    const duplicatedEmail = await findUserByEmail(email);
+    if (duplicatedEmail) {
+      const error = new Error("Email already exists.");
+      error.status = 409;
+      throw error;
+    }
+
     await client.query(
       `
             UPDATE users
