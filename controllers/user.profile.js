@@ -35,12 +35,10 @@ router.get("/", async function (req, res, next) {
     if (!username) {
       return res.status(400).send("username is required.");
     }
-    //const user = await userProfileService.getUserProfile(
-    //  username,
-    //  req.jwtInfo.id
-    //);
-    //임시 id로 테스트
-    const user = await userProfileService.getUserProfile(username, 701);
+    const user = await userProfileService.getUserProfile(
+      username,
+      req.jwtInfo.id
+    );
     return res.send(user);
   } catch (error) {
     next(error);
@@ -52,9 +50,7 @@ router.get("/", async function (req, res, next) {
 router.get("/me", async function (req, res, next) {
   try {
     logger.info("user.profile.js GET /user/profile/me");
-    //const user = await userProfileService.getMyInfo(req.jwtInfo.id);
-    // 임시 id로 테스트
-    const user = await userProfileService.getMyInfo(701);
+    const user = await userProfileService.getMyInfo(req.jwtInfo.id);
     return res.send(user);
   } catch (error) {
     next(error);
@@ -66,9 +62,7 @@ router.get("/me", async function (req, res, next) {
 router.get("/settings", async function (req, res, next) {
   try {
     logger.info("user.profile.js GET /user/profile/settings");
-    //const user = await userProfileService.getSettings(req.jwtInfo.id);
-    //임시 id로 테스트
-    const user = await userProfileService.getSettingsInfo(701);
+    const user = await userProfileService.getSettings(req.jwtInfo.id);
     return res.send(user);
   } catch (error) {
     next(error);
@@ -91,7 +85,7 @@ profileImages : String 사용자 프로필 이미지 => BASE64로 반환 예정
 }
 */
 
-router.put("/update", async function (req, res, next) {
+router.put("/update", verifyAllprocess, async function (req, res, next) {
   try {
     logger.info(
       "user.profile.js PUT /user/profile/update: " + JSON.stringify(req.body)
@@ -166,21 +160,13 @@ router.put("/update", async function (req, res, next) {
     await userProfileService.updateUser(user, req.jwtInfo.id);
 
     if (user.email !== req.jwtInfo.email) {
-      //const jwtToken = authService.generateJWT({
-      //  id: req.jwtInfo.id,
-      //  email: user.email,
-      //  isValid: req.jwtInfo.isValid,
-      //  isOauth: req.jwtInfo.isOauth,
-      //  accessToken: req.jwtInfo.accessToken,
-      //  twofaVerified: req.jwtInfo.twofaVerified,
-      //});
-
       const jwtToken = authService.generateJWT({
-        id: 701,
-        email: "koryum30@gmail.com",
-        isOauth: false,
-        accessToken: null,
-        twofaVerified: true,
+        id: req.jwtInfo.id,
+        email: user.email,
+        isValid: req.jwtInfo.isValid,
+        isOauth: req.jwtInfo.isOauth,
+        accessToken: req.jwtInfo.accessToken,
+        twofaVerified: req.jwtInfo.twofaVerified,
       });
 
       res.cookie("jwt", jwtToken, {

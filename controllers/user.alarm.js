@@ -7,13 +7,11 @@ const logger = require("../configs/logger.js");
 
 /* GET /user/alarm
  */
-router.get("/", async function (req, res, next) {
+router.get("/", verifyAllprocess, async function (req, res, next) {
   try {
     logger.info("user.alarm.js GET /user/alarm");
 
-    //임시 id로 테스트
-    //const id = req.jwtInfo.id;
-    const id = 701;
+    const id = req.jwtInfo.id;
     const alarms = await userAlarmSerivce.findAllAlarmsById(id);
     return res.send(alarms);
   } catch (error) {

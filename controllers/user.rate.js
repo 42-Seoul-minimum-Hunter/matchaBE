@@ -9,7 +9,7 @@ rateScore : Float 평가 점수
 */
 
 //TODO: 정밀도 소수점 1자리
-router.post("/", async function (req, res, next) {
+router.post("/", verifyAllprocess, async function (req, res, next) {
   try {
     logger.info("user.rate.js POST /user/rate: " + JSON.stringify(req.body));
     const ratedUsername = req.body.ratedUsername;
@@ -21,12 +21,11 @@ router.post("/", async function (req, res, next) {
         .status(400)
         .send("rateScore는 0에서 5 사이의 값을 입력하세요.");
     } else {
-      //await userRateSerivce.rateUser(
-      //  ratedUsername,
-      //  parseFloat(rateScore),
-      //  req.jwtInfo.id
-      //);
-      await userRateSerivce.rateUser(ratedUsername, parseFloat(rateScore), 701);
+      await userRateSerivce.rateUser(
+        ratedUsername,
+        parseFloat(rateScore),
+        req.jwtInfo.id
+      );
       return res.send();
     }
   } catch (error) {

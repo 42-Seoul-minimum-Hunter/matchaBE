@@ -4,9 +4,11 @@ const router = express.Router();
 const axios = require("axios");
 const logger = require("../configs/logger.js");
 
+const { verifyAllprocess } = require("../configs/middleware.js");
+
 // POST /claude
 // Request body: { message: string }
-router.post("/", async function (req, res, next) {
+router.post("/", verifyAllprocess, async function (req, res, next) {
   try {
     logger.info("POST /claude");
     const { message } = req.body;

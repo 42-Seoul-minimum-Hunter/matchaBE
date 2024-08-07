@@ -22,12 +22,11 @@ router.post("/", async function (req, res, next) {
       return res.status(400).send("reportedUsername, reason를 입력하세요.");
     }
 
-    //await userReportSerivce.reportUser(
-    //  reportedUsername,
-    //  reason,
-    //  req.jwtInfo.id
-    //);
-    await userReportSerivce.reportUser(reportedUsername, reason, 701);
+    await userReportSerivce.reportUser(
+      reportedUsername,
+      reason,
+      req.jwtInfo.id
+    );
     return res.send();
   } catch (error) {
     next(error);

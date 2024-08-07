@@ -10,9 +10,7 @@ const userChatSerivce = require("../services/user.chat.service.js");
 router.get("/", async function (req, res, next) {
   try {
     logger.info("user.chat.js GET /user/chatRoom");
-    //const id = req.jwtInfo.id;
-    //임시 id로 테스트
-    const id = 701;
+    const id = req.jwtInfo.id;
 
     const chatInfo = await userChatSerivce.findAllChatRooms(id);
     return res.send(chatInfo);

@@ -1,9 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const {
-  verifyTwoFA,
-  verifyResetPassword,
-} = require("../configs/middleware.js");
+const { verifyAllprocess } = require("../configs/middleware.js");
 const authService = require("../services/auth.service.js");
 const userService = require("../services/user.service.js");
 const bcypt = require("bcrypt");
@@ -139,7 +136,7 @@ router.delete("/logout", function (req, res, next) {
   try {
     logger.info("auth.js DELETE /auth/logout");
     res.clearCookie("jwt");
-    res.send("로그아웃 되었습니다.");
+    res.send("Logout success.");
   } catch (error) {
     next(error);
   }
@@ -208,59 +205,64 @@ router.get("/callback", async function (req, res, next) {
 
 /* POST /auth/twofactor/create
  */
-router.post("/twofactor/create", async function (req, res, next) {
-  try {
-    logger.info("auth.js POST /auth/twofactor/create");
+router.post(
+  "/twofactor/create",
+  verifyAllprocess,
+  async function (req, res, next) {
+    try {
+      logger.info("auth.js POST /auth/twofactor/create");
 
-    //임시 id로 테스트
-    //const authInfo = await authService.findAuthInfoById(req.jwtInfo.id);
-    const authInfo = await authService.findAuthInfoById(701);
+      //임시 id로 테스트
+      const authInfo = await authService.findAuthInfoById(req.jwtInfo.id);
 
-    if (!authInfo) {
-      return res.status(400).send("AuthInfo not found.");
-    } else if (authInfo.is_twofa === false) {
-      return res.status(400).send("2FA is not enabled.");
+      if (!authInfo) {
+        return res.status(400).send("AuthInfo not found.");
+      } else if (authInfo.is_twofa === false) {
+        return res.status(400).send("2FA is not enabled.");
+      }
+
+      const email = req.jwtInfo.email;
+
+      if (!email) {
+        res.status(400).send("Email not found.");
+      }
+      const code = await authService.createTwofactorCode(email);
+
+      const userTimezone = "Asia/Seoul"; // 사용자의 시간대
+      const expirationDate = moment()
+        .tz(userTimezone)
+        .add(2, "minutes")
+        .toDate(); // 5분 후 만료
+
+      if (req.session.twofactorComponents) {
+        req.session.twofactorComponents = null;
+      }
+
+      req.session.twofactorComponents = {
+        code: code,
+        expirationDate: expirationDate,
+      };
+
+      req.session.save();
+
+      res.send();
+    } catch (error) {
+      next(error);
     }
-
-    const email = req.jwtInfo.email;
-
-    if (!email) {
-      res.status(400).send("Email not found.");
-    }
-    const code = await authService.createTwofactorCode(email);
-
-    const userTimezone = "Asia/Seoul"; // 사용자의 시간대
-    const expirationDate = moment().tz(userTimezone).add(2, "minutes").toDate(); // 5분 후 만료
-
-    if (req.session.twofactorComponents) {
-      req.session.twofactorComponents = null;
-    }
-
-    req.session.twofactorComponents = {
-      code: code,
-      expirationDate: expirationDate,
-    };
-
-    req.session.save();
-
-    res.send();
-  } catch (error) {
-    next(error);
   }
-});
+);
 
 /* POST /auth/twoFactor/verify
 code : String 2FA 인증 코드
 */
-router.post("/twofactor/verify", function (req, res, next) {
+router.post("/twofactor/verify", verifyAllprocess, function (req, res, next) {
   try {
     logger.info(
       "auth.js POST /auth/twofactor/verify: " + JSON.stringify(req.body)
     );
     //임시 email로 테스트
-    //const email = req.jwtInfo.email;
+    const email = req.jwtInfo.email;
 
-    const email = "koryum30@gmail.com";
     const code = req.body.code;
 
     if (!code) {
@@ -278,20 +280,11 @@ router.post("/twofactor/verify", function (req, res, next) {
     if (result === false) {
       return res.status(400).send("Invalid code.");
     } else {
-      //const jwtToken = authService.generateJWT({
-      //  id: req.jwtInfo.id,
-      //  email: req.jwtInfo.email,
-      //  isValid: req.jwtInfo.isValid,
-      //  isOauth: req.jwtInfo.isOauth,
-      //  accessToken: req.jwtInfo.accessToken,
-      //  twofaVerified: true,
-      //});
-
       const jwtToken = authService.generateJWT({
-        id: 701,
-        email: "koryum30@gmail.com",
-        isOauth: false,
-        accessToken: null,
+        id: req.jwtInfo.id,
+        email: req.jwtInfo.email,
+        isOauth: req.jwtInfo.isOauth,
+        accessToken: req.jwtInfo.accessToken,
         twofaVerified: true,
       });
 
@@ -316,6 +309,7 @@ router.post("/twofactor/verify", function (req, res, next) {
 /* POST /auth/register/email/send
  */
 
+//TODO: 세션확인 부분 추가
 router.post("/register/email/send", async function (req, res, next) {
   try {
     logger.info("auth.js POST /auth/register/email/send");
