@@ -113,6 +113,7 @@ const findUserByFilter = async (id, filter, page, pageSize) => {
     //console.log("filteredInfo: " + JSON.stringify(filteredInfo));
     users = filteredInfo.users;
     totalCount = filteredInfo.totalCount;
+    console.log("id : " + id);
     filteredByBlock = await userBlockRepository.filterBlockedUser(id, users);
 
     // 페이지네이션 처리

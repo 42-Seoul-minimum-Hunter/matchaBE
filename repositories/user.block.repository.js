@@ -94,12 +94,12 @@ const deleteBlockUser = async (blockedUserId, userId) => {
 
 const filterBlockedUser = async (userId, userInfos) => {
   try {
-    logger.info(
-      "user.block.repository.js filterBlockedUser: " +
-        userId +
-        ", " +
-        JSON.stringify(userInfos)
-    );
+    //logger.info(
+    //  "user.block.repository.js filterBlockedUser: " +
+    //    userId +
+    //    ", " +
+    //    JSON.stringify(userInfos)
+    //);
     const blockedUserInfos = await client.query(
       "SELECT blocked_id FROM user_block_histories WHERE user_id = $1 AND deleted_at IS NULL",
       [userId]
