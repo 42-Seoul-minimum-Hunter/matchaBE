@@ -224,8 +224,6 @@ router.get("/find", verifyAllprocess, async function (req, res, next) {
       pageSize = 20,
     } = req.query;
 
-    console.log(hashtags);
-
     if (hashtags === "[]") {
       hashtags = undefined;
     } else if (hashtags) {
@@ -268,7 +266,7 @@ router.get("/find", verifyAllprocess, async function (req, res, next) {
       page,
       pageSize
     );
-    return res.send({ users, totalCount, currentPage: page });
+    return res.send({ users, totalCount, currentPage: Number(page) });
   } catch (error) {
     next(error);
   }

@@ -105,14 +105,7 @@ const changePassword = async (hashedPassword, email) => {
   }
 };
 
-const findUserByDefaultFilter = async (
-  preference,
-  si,
-  gu,
-  hashtags,
-  page,
-  pageSize
-) => {
+const findUserByDefaultFilter = async (preference, si, gu, hashtags) => {
   try {
     logger.info(
       "user.repository.js findUserByDefaultFilter: " +
@@ -122,11 +115,7 @@ const findUserByDefaultFilter = async (
         ", " +
         gu +
         ", " +
-        hashtags +
-        ", " +
-        page +
-        ", " +
-        pageSize
+        hashtags
     );
 
     // 유저의 성향에 따른 쿼리 조건 설정
@@ -146,7 +135,7 @@ const findUserByDefaultFilter = async (
       GROUP BY u.id
     `;
 
-    const mainQuery = `
+    let mainQuery = `
     SELECT u.*, ur.si, ur.gu, s.common_hashtags
     FROM users u
     JOIN user_regions ur ON u.id = ur.user_id
@@ -155,8 +144,15 @@ const findUserByDefaultFilter = async (
     ) s ON u.id = s.id
     WHERE ${genderCondition} AND u.deleted_at IS NULL
       AND ur.si = $3 AND ur.gu = $4
-    LIMIT $5 OFFSET $6
   `;
+
+    // 전체 사용자 수 계산
+    const totalCount = await client.query(mainQuery, [
+      preference,
+      hashtags,
+      si,
+      gu,
+    ]);
 
     // Fetch the user data
     const preferenceUsers = await client.query(mainQuery, [
@@ -164,26 +160,7 @@ const findUserByDefaultFilter = async (
       hashtags,
       si,
       gu,
-      pageSize,
-      (page - 1) * pageSize,
     ]);
-
-    // Calculate the total count
-    const totalCountQuery = `
-    SELECT COUNT(*) AS total_count
-    FROM (
-      ${mainQuery}
-    ) AS subquery
-  `;
-    const totalCountResult = await client.query(totalCountQuery, [
-      preference,
-      hashtags,
-      si,
-      gu,
-      pageSize,
-      (page - 1) * pageSize,
-    ]);
-    const totalCount = totalCountResult.rows[0].total_count;
 
     // 사용자 평균 평점 계산 및 필터링
     const filteredUserInfos = [];
@@ -256,15 +233,10 @@ const findUserByDefaultFilter = async (
   }
 };
 
-const findUserByFilter = async (filter, page, pageSize) => {
+const findUserByFilter = async (filter) => {
   try {
     logger.info(
-      "user.repository.js findUserByFilter: " +
-        JSON.stringify(filter) +
-        ", " +
-        page +
-        ", " +
-        pageSize
+      "user.repository.js findUserByFilter: " + JSON.stringify(filter)
     );
 
     const { hashtags, minAge, maxAge, si, gu, minRate, maxRate } = filter;
@@ -319,21 +291,14 @@ const findUserByFilter = async (filter, page, pageSize) => {
       query += " WHERE " + whereClauses.join(" AND ");
     }
 
-    // LIMIT 및 OFFSET 추가
-    query +=
-      " LIMIT $" + (params.length + 1) + " OFFSET $" + (params.length + 2);
-    params.push(pageSize, (page - 1) * pageSize);
+    const totalCount = (await client.query(query, params)).rows.length;
 
-    console.log(query); // 최종 쿼리 출력
+    console.log("totalCount: " + totalCount);
+
     const userInfos = await client.query(query, params);
 
     console.log(userInfos.rows);
 
-    // 전체 사용자 수 계산
-    const totalCountQuery =
-      "SELECT COUNT(*) AS total_count FROM (" + query + ") AS subquery";
-    const totalCountResult = await client.query(totalCountQuery, params);
-    const totalCount = totalCountResult.rows[0].total_count;
     // 사용자 평균 평점 계산 및 필터링
     const filteredUserInfos = [];
     for (const userInfo of userInfos.rows) {
