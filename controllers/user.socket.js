@@ -110,7 +110,7 @@ module.exports = (server, app) => {
             if (room !== socketId) socket.leave(room);
           }
 
-          const { username } = data;
+          const username = data;
 
           if (!username || !validateUsername(username)) {
             return;
@@ -198,7 +198,6 @@ module.exports = (server, app) => {
         //유저가 메세지를 받았을때
         io.to(userActivate.get(userActivate.get(userInfo.id))).emit("alarm", {
           AlarmType: "MESSAGED",
-          username,
         });
         await userAlarmService.saveAlarmById(id, userInfo.id, "MESSAGED");
       } catch (error) {
@@ -210,7 +209,7 @@ module.exports = (server, app) => {
     socket.on("onlineStatus", async (data) => {
       try {
         logger.info("user.socket.js onlineStatus: " + JSON.stringify(data));
-        const { username } = data;
+        const username = data;
 
         if (!username) {
           return;
@@ -234,7 +233,7 @@ module.exports = (server, app) => {
     socket.on("likeUser", async (data) => {
       try {
         logger.info("user.socket.js likeUser: " + JSON.stringify(data));
-        const { username } = data;
+        const username = data;
 
         if (!username) {
           return;
@@ -252,13 +251,11 @@ module.exports = (server, app) => {
 
         await io.to(userActivate.get(userInfo.id)).emit("alarm", {
           alarmType: "LIKED",
-          username,
         }); //유저가 좋아요를 받았을때
 
         if (result) {
           await io.to(userActivate.get(userInfo.id)).emit("alarm", {
             alarmType: "MATCHED",
-            username: userInfo.username,
           });
           await io.to(userActivate.get(id)).emit("likeUser", {
             isMatched: true,
@@ -276,7 +273,7 @@ module.exports = (server, app) => {
     socket.on("dislikeUser", async (data) => {
       try {
         logger.info("user.socket.js dislikeUser: " + JSON.stringify(data));
-        const { username } = data;
+        const username = data;
 
         if (!username) {
           return;
@@ -294,7 +291,7 @@ module.exports = (server, app) => {
 
         if (result) {
           //연결된 유저가 좋아요를 취소했을때
-          await io.to(userAwctivate.get(userInfo.id)).emit("alarm", {
+          await io.to(userActivate.get(userInfo.id)).emit("alarm", {
             alarmType: "DISLIKED",
             username,
           });

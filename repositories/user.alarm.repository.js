@@ -49,6 +49,7 @@ const findAllAlarmsById = async (id) => {
       `
             SELECT * FROM user_alarm_histories
             WHERE alarmed_id = $1 AND deleted_at IS NULL
+            ORDER BY created_at DESC
             `,
       [id]
     );

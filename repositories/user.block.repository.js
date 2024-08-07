@@ -92,21 +92,27 @@ const deleteBlockUser = async (blockedUserId, userId) => {
   }
 };
 
-const filterBlockedUser = async (userId, userInfos) => {
+const filterBlockedUser = async (id, userInfos) => {
   try {
-    //logger.info(
-    //  "user.block.repository.js filterBlockedUser: " +
-    //    userId +
-    //    ", " +
-    //    JSON.stringify(userInfos)
-    //);
+    logger.info(
+      "user.block.repository.js filterBlockedUser: " +
+        id +
+        ", " +
+        JSON.stringify(userInfos)
+    );
+    //logger.info("user.block.repository.js filterBlockedUser: " + id);
     const blockedUserInfos = await client.query(
       "SELECT blocked_id FROM user_block_histories WHERE user_id = $1 AND deleted_at IS NULL",
-      [userId]
+      [id]
     );
     const blockedIds = blockedUserInfos.rows.map((row) => row.blocked_id);
 
-    return userInfos.filter((userInfo) => !blockedIds.includes(userInfo.id));
+    return userInfos.filter(
+      (userInfo) =>
+        userInfo &&
+        userInfo.id !== undefined &&
+        !blockedIds.includes(userInfo.id)
+    );
   } catch (error) {
     logger.error(
       "user.block.repository.js filterBlockedUser: " + error.message

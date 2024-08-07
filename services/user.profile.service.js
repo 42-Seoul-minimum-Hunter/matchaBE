@@ -57,6 +57,11 @@ const getUserProfile = async (username, userId) => {
       isBlocked = false;
     }
 
+    const likeInfo = await userLikeRepository.getLikeUserHistoryById(
+      userId,
+      userInfo.id
+    );
+
     const user = {
       username: userInfo.username,
       lastName: userInfo.last_name,
@@ -74,6 +79,7 @@ const getUserProfile = async (username, userId) => {
       rate: rate,
       isBlocked: isBlocked,
       isOnline: false,
+      isLiked: likeInfo.length > 0 ? true : false,
     };
 
     if (userId !== userInfo.id) {

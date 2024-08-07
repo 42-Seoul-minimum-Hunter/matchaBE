@@ -7,7 +7,12 @@ const logger = require("../configs/logger");
 
 const likeUserByUsername = async (likedUsername, userId) => {
   try {
-    logger.info("user.like.service.js likeUserByUsername: " + likedUsername + ", " + userId)
+    logger.info(
+      "user.like.service.js likeUserByUsername: " +
+        likedUsername +
+        ", " +
+        userId
+    );
     const likedUserInfo = await userRepository.findUserByUsername(
       likedUsername
     );
@@ -15,14 +20,26 @@ const likeUserByUsername = async (likedUsername, userId) => {
       const error = new Error("Like user not found.");
       error.status = 404;
       throw error;
+    } else if (likedUserInfo.id === userId) {
+      const error = new Error("You can't like yourself.");
+      error.status = 400;
+      throw error;
     }
     await userLikeRepository.likeUserById(userId, likedUserInfo.id);
     await userAlarmRepository.saveAlarmById(userId, likedUserInfo.id, "LIKED");
 
     if (await userLikeRepository.checkUserLikeBoth(likedUserInfo.id, userId)) {
       await userChatRepository.generateChatRoom(likedUserInfo.id, userId);
-      await userAlarmRepository.saveAlarmById(userId, likedUserInfo.id, "MATCHED");
-      await userAlarmRepository.saveAlarmById(likedUserInfo.id, userId, "MATCHED");
+      await userAlarmRepository.saveAlarmById(
+        userId,
+        likedUserInfo.id,
+        "MATCHED"
+      );
+      await userAlarmRepository.saveAlarmById(
+        likedUserInfo.id,
+        userId,
+        "MATCHED"
+      );
       return true;
     } else {
       return false;
@@ -35,7 +52,12 @@ const likeUserByUsername = async (likedUsername, userId) => {
 
 const dislikeUserByUsername = async (likedUsername, userId) => {
   try {
-    logger.info("user.like.service.js dislikeUserByUsername: " + likedUsername + ", " + userId)
+    logger.info(
+      "user.like.service.js dislikeUserByUsername: " +
+        likedUsername +
+        ", " +
+        userId
+    );
     const likedUserInfo = await userRepository.findUserByUsername(
       likedUsername
     );
@@ -47,20 +69,28 @@ const dislikeUserByUsername = async (likedUsername, userId) => {
     await userLikeRepository.dislikeUserByUsername(likedUserInfo.id, userId);
     if (await userChatRepository.checkChatRoomExist(likedUserInfo.id, userId)) {
       await userChatRepository.deleteChatRoom(likedUserInfo.id, userId);
-      await userAlarmRepository.saveAlarmById(userId, likedUserInfo.id, "DISLIKED");
+      await userAlarmRepository.saveAlarmById(
+        userId,
+        likedUserInfo.id,
+        "DISLIKED"
+      );
       return true;
     } else {
       return false;
     }
   } catch (error) {
-    logger.error("user.like.service.js dislikeUserByUsername: " + error.message);
+    logger.error(
+      "user.like.service.js dislikeUserByUsername: " + error.message
+    );
     throw error;
   }
 };
 
 const validateLike = async (userId, username) => {
   try {
-    logger.info("user.like.service.js validateLike: " + userId + ", " + username)
+    logger.info(
+      "user.like.service.js validateLike: " + userId + ", " + username
+    );
     const userInfo = await userRepository.findUserByUsername(username);
 
     if (!userInfo) {
