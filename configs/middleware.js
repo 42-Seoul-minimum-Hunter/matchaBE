@@ -103,8 +103,6 @@ module.exports = {
   verifyAllprocess,
   verifyCreateUserSession,
 
-  verifyResetPassword,
-
   checkOauthLogin,
   verifyChangePassword,
 };
