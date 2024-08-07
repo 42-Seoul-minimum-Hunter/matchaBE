@@ -109,7 +109,9 @@ const verifyTwoFactorCode = (code) => {
     logger.info("auth.service.js verifyTwoFactorCode: " + code);
     const secret = process.env.TWOFACTOR_SECRET;
 
-    if (totp.verify({ secret, code })) {
+    console.log("totp verify: " + totp.verify({ token: code, secret: secret }));
+
+    if (totp.verify({ token: code, secret: secret }) === true) {
       return true;
     } else {
       return false;

@@ -61,14 +61,14 @@ router.get("/me", verifyAllprocess, async function (req, res, next) {
 router.get("/settings", verifyAllprocess, async function (req, res, next) {
   try {
     logger.info("user.profile.js GET /user/profile/settings");
-    const user = await userProfileService.getSettings(req.jwtInfo.id);
+    const user = await userProfileService.getSettingsInfo(req.jwtInfo.id);
     return res.send(user);
   } catch (error) {
     next(error);
   }
 });
 
-/* PUT /user/profile/update
+/* POST /user/profile/update
 email : String 사용자 이메일
 password : String 사용자 비밀번호 => hash로 변환 예정
 lastName : String 사용자 이름
@@ -84,10 +84,10 @@ profileImages : String 사용자 프로필 이미지 => BASE64로 반환 예정
 }
 */
 
-router.put("/update", verifyAllprocess, async function (req, res, next) {
+router.post("/update", verifyAllprocess, async function (req, res, next) {
   try {
     logger.info(
-      "user.profile.js PUT /user/profile/update: " + JSON.stringify(req.body)
+      "user.profile.js POST /user/profile/update: " + JSON.stringify(req.body)
     );
     const user = {
       email: req.body.email || undefined,
@@ -126,10 +126,12 @@ router.put("/update", verifyAllprocess, async function (req, res, next) {
       }
     }
 
+    let hashtags = user.hashtags;
+
     if (hashtags === "[]") {
-      hashtags = undefined;
+      user.hashtags = undefined;
     } else if (hashtags) {
-      hashtags = hashtags.replace(/[\[\]']/g, "").split(",");
+      user.hashtags = hashtags.replace(/[\[\]']/g, "").split(",");
     }
 
     if (!validateEmail(user.email)) {

@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const {
+  verifyTwoFactor,
   verifyAllprocess,
   verifyRegistEmailSession,
 } = require("../configs/middleware.js");
@@ -210,7 +211,7 @@ router.get("/callback", async function (req, res, next) {
  */
 router.post(
   "/twofactor/create",
-  verifyAllprocess,
+  verifyTwoFactor,
   async function (req, res, next) {
     try {
       logger.info("auth.js POST /auth/twofactor/create");
@@ -258,7 +259,7 @@ router.post(
 /* POST /auth/twoFactor/verify
 code : String 2FA 인증 코드
 */
-router.post("/twofactor/verify", verifyAllprocess, function (req, res, next) {
+router.post("/twofactor/verify", verifyTwoFactor, function (req, res, next) {
   try {
     logger.info(
       "auth.js POST /auth/twofactor/verify: " + JSON.stringify(req.body)
