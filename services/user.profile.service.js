@@ -199,13 +199,16 @@ const updateUser = async (UserUpdateDto, userId) => {
     await authRepository.updateTwoFactorById(userId, UserUpdateDto.isTwofa);
 
     await userRepository.updateUserById(UserUpdateDto, userId);
-    await userHashtagRepository.saveHashtagById(UserUpdateDto.hashtags, userId);
-    await userRegionRepository.saveRegionById(
+    await userHashtagRepository.updateHashtagById(
+      UserUpdateDto.hashtags,
+      userId
+    );
+    await userRegionRepository.updateRegionById(
       UserUpdateDto.si,
       UserUpdateDto.gu,
       userId
     );
-    await userProfileImageRepository.saveProfileImagesById(
+    await userProfileImageRepository.updateProfileImagesById(
       UserUpdateDto.profileImages,
       userId
     );

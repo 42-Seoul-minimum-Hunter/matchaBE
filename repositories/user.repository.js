@@ -487,27 +487,40 @@ const updateUserById = async (UserUpdateDto, id) => {
 
     const duplicatedEmail = await findUserByEmail(email);
     if (duplicatedEmail) {
-      const error = new Error("Email already exists.");
-      error.status = 409;
-      throw error;
+      await client.query(
+        `
+              UPDATE users
+              SET 
+                  last_name = $1,
+                  first_name = $2,
+                  gender = $3,
+                  preference = $4,
+                  biography = $5,
+                  age = $6,
+                  updated_at = now()
+              WHERE id = $7
+              RETURNING *
+          `,
+        [lastName, firstName, gender, preference, biography, age, id]
+      );
+    } else {
+      await client.query(
+        `
+              UPDATE users
+              SET email = $1,
+                  last_name = $2,
+                  first_name = $3,
+                  gender = $4,
+                  preference = $5,
+                  biography = $6,
+                  age = $7,
+                  updated_at = now()
+              WHERE id = $8
+              RETURNING *
+          `,
+        [email, lastName, firstName, gender, preference, biography, age, id]
+      );
     }
-
-    await client.query(
-      `
-            UPDATE users
-            SET email = $1,
-                last_name = $2,
-                first_name = $3,
-                gender = $4,
-                preference = $5,
-                biography = $6,
-                age = $7,
-                updated_at = now()
-            WHERE id = $8
-            RETURNING *
-        `,
-      [email, lastName, firstName, gender, preference, biography, age, id]
-    );
   } catch (error) {
     logger.error("user.repository.js updateUserById: " + error);
     throw error;
