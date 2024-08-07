@@ -65,6 +65,7 @@ const getUserProfile = async (username, userId) => {
       preference: userInfo.preference,
       biography: userInfo.biography,
       age: userInfo.age,
+      connectedAt: userInfo.connected_at,
 
       hashtags: hashtagInfo[0],
       profileImages: profileImageInfo[0],
@@ -72,6 +73,7 @@ const getUserProfile = async (username, userId) => {
       gu: regionInfo[0].gu,
       rate: rate,
       isBlocked: isBlocked,
+      isOnline: false,
     };
 
     if (userId !== userInfo.id) {

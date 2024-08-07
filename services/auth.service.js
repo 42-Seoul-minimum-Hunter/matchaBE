@@ -30,7 +30,6 @@ const loginByUsernameAndPassword = async (username, password) => {
       error.status = 400;
       throw error;
     }
-
     return userInfo;
   } catch (error) {
     logger.error(

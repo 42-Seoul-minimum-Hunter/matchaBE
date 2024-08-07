@@ -74,7 +74,7 @@ app.use(express.json());
 
 app.set("socket.io", io);
 app.use("/user", userRouter);
-app.use("/user/rating", userRateRouter);
+app.use("/user/rate", userRateRouter);
 app.use("/user/report", userReportRouter);
 app.use("/user/profile", userProfileRouter);
 app.use("/user/alarm", userAlarmRouter);

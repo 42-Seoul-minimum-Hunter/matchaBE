@@ -75,6 +75,8 @@ router.post("/login", async function (req, res, next) {
 
     res.set("Authorization", `Bearer ${cookie}`);
 
+    await userService.updateConnectedAtById(user.id);
+
     return res.send(authInfo.is_twofa);
   } catch (error) {
     next(error);
@@ -198,6 +200,9 @@ router.get("/callback", async function (req, res, next) {
       });
 
       res.set("Authorization", `Bearer ${jwtToken}`);
+
+      await userService.updateConnectedAtById(user.id);
+
       return res.send(authInfo.is_twofa);
     }
   } catch (error) {
@@ -376,6 +381,10 @@ router.get("/register/email/verify", async function (req, res, next) {
 
     //console.log(req.session.userInfo);
     req.session.save();
+
+    const userInfo = await userService.findOneUserByEmail(decoded.email);
+
+    await userService.updateConnectedAtById(userInfo.id);
 
     return res.redirect(process.env.REGISTRATION_URL);
   } catch (error) {

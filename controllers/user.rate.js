@@ -4,7 +4,10 @@ const { verifyAllprocess } = require("../configs/middleware.js");
 
 const userRateSerivce = require("../services/user.rate.service.js");
 
-/* POST /user/raㅈString 평가 대상사용자 닉네임
+const logger = require("../configs/logger.js");
+
+/* POST /user/rate
+ratedUsername 평가 대상사용자 닉네임
 rateScore : Float 평가 점수
 */
 
@@ -13,12 +16,10 @@ router.post("/", verifyAllprocess, async function (req, res, next) {
     logger.info("user.rate.js POST /user/rate: " + JSON.stringify(req.body));
     const ratedUsername = req.body.ratedUsername;
     var rateScore = req.body.rateScore;
-    if (!ratedUsername || !rateScore) {
-      return res.status(400).send("ratedUsername, rateScore를 입력하세요.");
+    if (!ratedUsername || rateScore === undefined) {
+      return res.status(400).send("Please enter ratedUsername and rateScore");
     } else if (rateScore < 0.0 || rateScore > 5.0) {
-      return res
-        .status(400)
-        .send("rateScore는 0에서 5 사이의 값을 입력하세요.");
+      return res.status(400).send("Rate score must be between 0.0 and 5.0");
     } else {
       await userRateSerivce.rateUser(
         ratedUsername,

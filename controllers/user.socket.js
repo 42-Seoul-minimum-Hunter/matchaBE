@@ -76,7 +76,7 @@ module.exports = (server, app) => {
       }
 
       socket.jwtInfo = decoded;
-      userId = socket.jwtInfo;
+      userId = socket.jwtInfo.id;
 
       if (!userId) {
         await socket.disconnect();
@@ -103,8 +103,8 @@ module.exports = (server, app) => {
       // 유저가 채팅방에 들어갔을때
       socket.on("joinChatRoom", async (data) => {
         try {
-          logger.info("user.socket.js joinChatRoom: " + data);
-          const socketId = userActivate.get(id);
+          logger.info("user.socket.js joinChatRoom: " + JSON.stringify(data));
+          const socketId = userActivate.get(userId);
           var rooms = io.sockets.adapter.sids[socketId];
           for (var room in rooms) {
             if (room !== socketId) socket.leave(room);
@@ -122,7 +122,7 @@ module.exports = (server, app) => {
           }
 
           const chatRoomInfo = await userChatService.findOneChatRoomById(
-            id,
+            userId,
             userInfo.id
           );
 
@@ -161,7 +161,7 @@ module.exports = (server, app) => {
     // 채팅 받아서 저장하고, 그 채팅 보내서 보여주기
     socket.on("sendMessage", async (data) => {
       try {
-        logger.info("user.socket.js sendMessage: " + data);
+        logger.info("user.socket.js sendMessage: " + JSON.stringify(data));
         const { message, username } = data;
 
         if (!message || !username) {
@@ -175,7 +175,7 @@ module.exports = (server, app) => {
         }
 
         const chatRoomInfo = await userChatService.findOneChatRoomById(
-          id,
+          userId,
           userInfo.id
         );
 
@@ -209,7 +209,7 @@ module.exports = (server, app) => {
 
     socket.on("onlineStatus", async (data) => {
       try {
-        logger.info("user.socket.js onlineStatus: " + data);
+        logger.info("user.socket.js onlineStatus: " + JSON.stringify(data));
         const { username } = data;
 
         if (!username) {
@@ -245,9 +245,10 @@ module.exports = (server, app) => {
           return;
         }
 
-        console.log(id);
-
-        const result = await userLikeService.likeUserByUsername(username, id);
+        const result = await userLikeService.likeUserByUsername(
+          username,
+          userId
+        );
 
         await io.to(userActivate.get(userInfo.id)).emit("alarm", {
           alarmType: "LIKED",
@@ -274,7 +275,7 @@ module.exports = (server, app) => {
 
     socket.on("dislikeUser", async (data) => {
       try {
-        logger.info("user.socket.js dislikeUser: " + data);
+        logger.info("user.socket.js dislikeUser: " + JSON.stringify(data));
         const { username } = data;
 
         if (!username) {
@@ -288,7 +289,7 @@ module.exports = (server, app) => {
 
         const result = await userLikeService.dislikeUserByUsername(
           username,
-          id
+          userId
         );
 
         if (result) {
@@ -306,12 +307,14 @@ module.exports = (server, app) => {
 
     socket.on("visitUserProfile", async (data) => {
       try {
-        logger.info("user.socket.js visitUserProfile: " + data);
-        const { username } = data;
+        logger.info("user.socket.js visitUserProfile: " + JSON.stringify(data));
+        const username = data;
+
+        console.log(username);
 
         if (!username) {
           const error = new Error("username is null");
-          error.name = "BadRequest";
+          error.name = "Bad Request";
           throw error;
         }
 
@@ -319,19 +322,18 @@ module.exports = (server, app) => {
 
         if (!userInfo) {
           const error = new Error("userInfo is null");
-          error.name = "BadRequest";
+          error.name = "Bad Request";
           throw error;
         }
 
         await io.to(userActivate.get(userInfo.id)).emit("alarm", {
           alarmType: "VISITED",
-          username,
         }); //유저의 프로필을 방문했을때
 
-        await userViewService.saveVisitHistoryById(username, id);
+        await userViewService.saveVisitHistoryById(username, userId);
       } catch (error) {
         logger.error("user.socket.js visitUserProfile error: " + error.message);
-        return false;
+        return;
       }
     });
 
@@ -339,12 +341,13 @@ module.exports = (server, app) => {
       try {
         logger.info("user.socket.js getAlarms");
 
-        const alarms = await userAlarmService.findAllAlarmsById(id);
-        await userAlarmService.deleteAllAlarmsById(id);
-        return alarms;
+        const alarms = await userAlarmService.findAllAlarmsById(userId);
+        await userAlarmService.deleteAllAlarmsById(userId);
+
+        await io.to(userActivate.get(userId)).emit("getAlarms", alarms);
       } catch (error) {
         logger.error("user.socket.js getAlarms error: " + error.message);
-        return false;
+        return;
       }
     });
 
@@ -426,3 +429,13 @@ module.exports = (server, app) => {
 socket.exports = {
   userActivate,
 };
+
+// EMIT : 요청 보내는거
+// ON : 요청 받는거
+
+// client -> server getAlarms
+
+// server -> 해당 유저의 쌓인 모든 알람을 보내고, DB에서 삭제 === deleted_at = now()
+// server -> client emit getAlarms (알람들을 보내줌)
+
+// client ON

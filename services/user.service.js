@@ -100,16 +100,17 @@ const findUserByFilter = async (id, filter, page, pageSize) => {
       const userHashtagInfo = await userHashtagRepository.findHashtagById(id);
 
       filteredInfo = await userRepository.findUserByDefaultFilter(
+        id,
         userInfo.preference,
         userRegionInfo[0].si,
         userRegionInfo[0].gu,
         userHashtagInfo[0]
       );
     } else {
-      filteredInfo = await userRepository.findUserByFilter(filter);
+      filteredInfo = await userRepository.findUserByFilter(filter, id);
     }
 
-    console.log("filteredInfo: " + JSON.stringify(filteredInfo));
+    //console.log("filteredInfo: " + JSON.stringify(filteredInfo));
     users = filteredInfo.users;
     totalCount = filteredInfo.totalCount;
     filteredByBlock = await userBlockRepository.filterBlockedUser(id, users);
@@ -159,6 +160,16 @@ const findOneUserByEmail = async (email) => {
   }
 };
 
+const updateConnectedAtById = async (id) => {
+  try {
+    logger.info("auth.service.js updateConnectedAtById: " + id);
+    await userRepository.updateConnectedAtById(id);
+  } catch (error) {
+    logger.error("auth.service.js updateConnectedAtById: " + error.message);
+    throw error;
+  }
+};
+
 module.exports = {
   createUser,
   unregister,
@@ -167,4 +178,5 @@ module.exports = {
   findOneUserByUsername,
   findOneUserById,
   findOneUserByEmail,
+  updateConnectedAtById,
 };

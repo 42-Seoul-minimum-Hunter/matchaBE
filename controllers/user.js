@@ -209,6 +209,7 @@ maxRate : Number 사용자 평점
 si : String 사용자 시
 gu : String 사용자 구
 */
+//TODO: 자기자신 검색시 제외
 router.get("/find", verifyAllprocess, async function (req, res, next) {
   try {
     logger.info("user.js GET /user/find: " + JSON.stringify(req.query));
@@ -221,8 +222,10 @@ router.get("/find", verifyAllprocess, async function (req, res, next) {
       si,
       gu,
       page = 1,
-      pageSize = 20,
+      pageSize = 15,
     } = req.query;
+
+    //console.log(hashtags);
 
     if (hashtags === "[]") {
       hashtags = undefined;
@@ -266,6 +269,7 @@ router.get("/find", verifyAllprocess, async function (req, res, next) {
       page,
       pageSize
     );
+
     return res.send({ users, totalCount, currentPage: Number(page) });
   } catch (error) {
     next(error);

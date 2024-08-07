@@ -105,10 +105,12 @@ const changePassword = async (hashedPassword, email) => {
   }
 };
 
-const findUserByDefaultFilter = async (preference, si, gu, hashtags) => {
+const findUserByDefaultFilter = async (id, preference, si, gu, hashtags) => {
   try {
     logger.info(
       "user.repository.js findUserByDefaultFilter: " +
+        id +
+        ", " +
         preference +
         ", " +
         si +
@@ -191,35 +193,40 @@ const findUserByDefaultFilter = async (preference, si, gu, hashtags) => {
           return 0;
         })
         .map(async (userInfo) => {
-          const { rows } = await client.query(
-            "SELECT profile_images FROM user_profile_images WHERE user_id = $1",
-            [userInfo.id]
-          );
-          const profileImages = rows.length > 0 ? rows[0].profile_images : null;
+          if (userInfo.id !== id) {
+            const { rows } = await client.query(
+              "SELECT profile_images FROM user_profile_images WHERE user_id = $1",
+              [userInfo.id]
+            );
+            const profileImages =
+              rows.length > 0 ? rows[0].profile_images : null;
 
-          const userHashtags = await client.query(
-            `SELECT hashtags FROM user_hashtags WHERE user_id = $1`,
-            [userInfo.id]
-          );
+            const userHashtags = await client.query(
+              `SELECT hashtags FROM user_hashtags WHERE user_id = $1`,
+              [userInfo.id]
+            );
 
-          console.log("hashtag: " + userHashtags.rows[0].hashtags);
+            //console.log("hashtag: " + userHashtags.rows[0].hashtags);
 
-          const commonHashtags = userHashtags.rows[0].hashtags.filter((value) =>
-            hashtags.includes(value)
-          ).length;
+            const commonHashtags = userHashtags.rows[0].hashtags.filter(
+              (value) => hashtags.includes(value)
+            ).length;
 
-          const userRegions = userRegionRepository.findRegionById(userInfo.id);
+            const userRegions = userRegionRepository.findRegionById(
+              userInfo.id
+            );
 
-          return {
-            id: userInfo.id,
-            username: userInfo.username,
-            age: userInfo.age,
-            profileImages: profileImages ? profileImages[0] : null,
-            rate: userInfo.rate,
-            commonHashtags: commonHashtags,
-            si: userRegions.si,
-            gu: userRegions.gu,
-          };
+            return {
+              id: userInfo.id,
+              username: userInfo.username,
+              age: userInfo.age,
+              profileImages: profileImages ? profileImages[0] : null,
+              rate: userInfo.rate,
+              commonHashtags: commonHashtags,
+              si: userRegions.si,
+              gu: userRegions.gu,
+            };
+          }
         })
     );
 
@@ -233,10 +240,13 @@ const findUserByDefaultFilter = async (preference, si, gu, hashtags) => {
   }
 };
 
-const findUserByFilter = async (filter) => {
+const findUserByFilter = async (filter, id) => {
   try {
     logger.info(
-      "user.repository.js findUserByFilter: " + JSON.stringify(filter)
+      "user.repository.js findUserByFilter: " +
+        JSON.stringify(filter) +
+        ", " +
+        id
     );
 
     const { hashtags, minAge, maxAge, si, gu, minRate, maxRate } = filter;
@@ -293,11 +303,11 @@ const findUserByFilter = async (filter) => {
 
     const totalCount = (await client.query(query, params)).rows.length;
 
-    console.log("totalCount: " + totalCount);
+    //console.log("totalCount: " + totalCount);
 
     const userInfos = await client.query(query, params);
 
-    console.log(userInfos.rows);
+    //console.log(userInfos.rows);
 
     // 사용자 평균 평점 계산 및 필터링
     const filteredUserInfos = [];
@@ -352,23 +362,28 @@ const findUserByFilter = async (filter) => {
           return 0;
         })
         .map(async (userInfo) => {
-          const { rows } = await client.query(
-            "SELECT profile_images FROM user_profile_images WHERE user_id = $1",
-            [userInfo.id]
-          );
-          const profileImages = rows.length > 0 ? rows[0].profile_images : null;
+          if (id !== userInfo.id) {
+            const { rows } = await client.query(
+              "SELECT profile_images FROM user_profile_images WHERE user_id = $1",
+              [userInfo.id]
+            );
+            const profileImages =
+              rows.length > 0 ? rows[0].profile_images : null;
 
-          const userRegions = userRegionRepository.findRegionById(userInfo.id);
+            const userRegions = userRegionRepository.findRegionById(
+              userInfo.id
+            );
 
-          return {
-            id: userInfo.id,
-            username: userInfo.username,
-            age: userInfo.age,
-            profileImages: profileImages ? profileImages[0] : null,
-            rate: userInfo.rate,
-            si: userRegions.si,
-            gu: userRegions.gu,
-          };
+            return {
+              id: userInfo.id,
+              username: userInfo.username,
+              age: userInfo.age,
+              profileImages: profileImages ? profileImages[0] : null,
+              rate: userInfo.rate,
+              si: userRegions.si,
+              gu: userRegions.gu,
+            };
+          }
         })
     );
 
@@ -507,6 +522,21 @@ const updateUserValidByEmail = async (email) => {
   }
 };
 
+const updateConnectedAtById = async (id) => {
+  try {
+    logger.info("user.repository.js updateConnectedAtById: " + id);
+    await client.query(
+      `UPDATE users
+             SET connected_at = now(), updated_at = now()
+             WHERE id = $1`,
+      [id]
+    );
+  } catch (error) {
+    logger.error("user.repository.js updateConnectedAtById: " + error);
+    throw error;
+  }
+};
+
 module.exports = {
   createUser,
   deleteUserById,
@@ -522,4 +552,5 @@ module.exports = {
 
   updateUserById,
   updateUserValidByEmail,
+  updateConnectedAtById,
 };

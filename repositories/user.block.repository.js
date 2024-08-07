@@ -104,9 +104,6 @@ const filterBlockedUser = async (userId, userInfos) => {
       "SELECT blocked_id FROM user_block_histories WHERE user_id = $1 AND deleted_at IS NULL",
       [userId]
     );
-    console.log(
-      "blockedUserInfos rows" + JSON.stringify(blockedUserInfos.rows)
-    );
     const blockedIds = blockedUserInfos.rows.map((row) => row.blocked_id);
 
     return userInfos.filter((userInfo) => !blockedIds.includes(userInfo.id));
