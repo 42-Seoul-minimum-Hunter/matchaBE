@@ -26,10 +26,7 @@ const { validateUsername } = require("../configs/validate");
 - 유저간 연결 (채팅), 알림은 10초 이내에 이루어져야 한다
 */
 
-const userActivate = new Map();
-
-var userId;
-
+//TODO: 소켓 에러 상황 처리
 module.exports = (server, app) => {
   const io = socket(server, {
     cors: {
@@ -44,6 +41,11 @@ module.exports = (server, app) => {
       credentials: true,
     },
   });
+
+  const userActivate = new Map();
+  //var userId;
+  app.set("userActivate", userActivate);
+
   // 소캣 연결
   io.on("connection", async (socket) => {
     try {
@@ -92,11 +94,14 @@ module.exports = (server, app) => {
       socket.on("getChatList", async () => {
         try {
           logger.info("user.socket.js getChatList");
+          const userId = [...userActivate.entries()].find(
+            ([key, value]) => value === socket.id
+          )?.[0];
           const chatList = await userChatService.findAllChatRooms(userId);
-          return chatList;
+          await io.to(socket.id).emit("getChatList", chatList);
         } catch (error) {
           logger.error("user.socket.js getChatList error: " + error.message);
-          return false;
+          return;
         }
       });
 
@@ -104,6 +109,9 @@ module.exports = (server, app) => {
       socket.on("joinChatRoom", async (data) => {
         try {
           logger.info("user.socket.js joinChatRoom: " + JSON.stringify(data));
+          const userId = [...userActivate.entries()].find(
+            ([key, value]) => value === socket.id
+          )?.[0];
           const socketId = userActivate.get(userId);
           var rooms = io.sockets.adapter.sids[socketId];
           for (var room in rooms) {
@@ -128,23 +136,34 @@ module.exports = (server, app) => {
 
           if (!chatRoomInfo) {
             return;
-            return;
           }
 
           const chatHistories =
             await userChatService.findAllChatHistoriesByRoomId(chatRoomInfo.id);
 
-          if (chatHistories) {
-            const chatHistory = chatHistories.map(async (chat) => {
-              const userInfo = await userReposiotry.findUserById(chat.userId);
-              return {
-                content: chat.content,
-                username: userInfo.username,
-                createdAt: chat.created_at,
-              };
-            });
+          console.log(chatHistories);
 
-            await io.to(socketId).emit("joinChatRoom", chatHistory);
+          if (chatHistories) {
+            const chatHistory = await Promise.all(
+              chatHistories.map(async (chat) => {
+                const userInfo = await userReposiotry.findUserById(
+                  chat.sender_id
+                );
+                return {
+                  message: chat.content,
+                  username: userInfo.username,
+                  createdAt: chat.created_at,
+                };
+              })
+            );
+
+            const filteredChatHistory = chatHistory.filter(
+              (history) => history !== null
+            );
+
+            await io.to(socketId).emit("getMessages", filteredChatHistory);
+          } else {
+            await io.to(socketId).emit("getMessages", []);
           }
 
           await socket.join(chatRoomInfo.id);
@@ -162,6 +181,9 @@ module.exports = (server, app) => {
     socket.on("sendMessage", async (data) => {
       try {
         logger.info("user.socket.js sendMessage: " + JSON.stringify(data));
+        const userId = [...userActivate.entries()].find(
+          ([key, value]) => value === socket.id
+        )?.[0];
         const { message, username } = data;
 
         if (!message || !username) {
@@ -195,6 +217,7 @@ module.exports = (server, app) => {
         );
         io.to(chatRoomInfo.id).emit("message", param);
 
+        //TODO: 같은 채팅방에 없고 온라인 상태인 유저에게 알림을 보내야함
         //유저가 메세지를 받았을때
         io.to(userActivate.get(userActivate.get(userInfo.id))).emit("alarm", {
           AlarmType: "MESSAGED",
@@ -206,26 +229,19 @@ module.exports = (server, app) => {
       }
     });
 
-    socket.on("onlineStatus", async (data) => {
+    socket.on("leaveChatRoom", async (data) => {
       try {
-        logger.info("user.socket.js onlineStatus: " + JSON.stringify(data));
-        const username = data;
-
-        if (!username) {
-          return;
-        }
-
-        const userInfo = await userReposiotry.findUserByUsername(username);
-
-        if (!userInfo) {
-          return;
-        } else if (userActivate.get(userInfo.id)) {
-          io.to(userActivate.get(userId)).emit("onlineStatus", true);
-        } else {
-          io.to(userActivate.get(userId)).emit("onlineStatus", false);
+        logger.info("user.socket.js leaveChatRoom: " + JSON.stringify(data));
+        const userId = [...userActivate.entries()].find(
+          ([key, value]) => value === socket.id
+        )?.[0];
+        const socketId = userActivate.get(userId);
+        var rooms = io.sockets.adapter.sids[socketId];
+        for (var room in rooms) {
+          if (room !== socketId) socket.leave(room);
         }
       } catch (error) {
-        logger.error("user.socket.js onlineStatus error: " + error.message);
+        logger.error("user.socket.js leaveChatRoom error: " + error.message);
         return;
       }
     });
@@ -233,6 +249,9 @@ module.exports = (server, app) => {
     socket.on("likeUser", async (data) => {
       try {
         logger.info("user.socket.js likeUser: " + JSON.stringify(data));
+        const userId = [...userActivate.entries()].find(
+          ([key, value]) => value === socket.id
+        )?.[0];
         const username = data;
 
         if (!username) {
@@ -253,16 +272,19 @@ module.exports = (server, app) => {
           alarmType: "LIKED",
         }); //유저가 좋아요를 받았을때
 
-        if (result) {
+        if (result === true) {
           await io.to(userActivate.get(userInfo.id)).emit("alarm", {
             alarmType: "MATCHED",
           });
-          await io.to(userActivate.get(id)).emit("likeUser", {
-            isMatched: true,
+          await io.to(userActivate.get(userId)).emit("alarm", {
+            alarmType: "MATCHED",
           });
-          await io.to(userActivate.get(userInfo.id)).emit("likeUser", {
-            isMatched: true,
-          });
+          //await io.to(userActivate.get(userId)).emit("likeUser", {
+          //  isMatched: true,
+          //});
+          //await io.to(userActivate.get(userInfo.id)).emit("likeUser", {
+          //  isMatched: true,
+          //});
         }
       } catch (error) {
         logger.error("user.socket.js likeUser error: " + error.message);
@@ -273,6 +295,9 @@ module.exports = (server, app) => {
     socket.on("dislikeUser", async (data) => {
       try {
         logger.info("user.socket.js dislikeUser: " + JSON.stringify(data));
+        const userId = [...userActivate.entries()].find(
+          ([key, value]) => value === socket.id
+        )?.[0];
         const username = data;
 
         if (!username) {
@@ -305,6 +330,9 @@ module.exports = (server, app) => {
     socket.on("visitUserProfile", async (data) => {
       try {
         logger.info("user.socket.js visitUserProfile: " + JSON.stringify(data));
+        const userId = [...userActivate.entries()].find(
+          ([key, value]) => value === socket.id
+        )?.[0];
         const username = data;
 
         console.log(username);
@@ -337,6 +365,9 @@ module.exports = (server, app) => {
     socket.on("getAlarms", async () => {
       try {
         logger.info("user.socket.js getAlarms");
+        const userId = [...userActivate.entries()].find(
+          ([key, value]) => value === socket.id
+        )?.[0];
 
         const alarms = await userAlarmService.findAllAlarmsById(userId);
         await userAlarmService.deleteAllAlarmsById(userId);
@@ -421,10 +452,6 @@ module.exports = (server, app) => {
     //  }
     //});
   });
-};
-
-socket.exports = {
-  userActivate,
 };
 
 // EMIT : 요청 보내는거

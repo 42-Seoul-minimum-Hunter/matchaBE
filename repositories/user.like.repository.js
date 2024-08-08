@@ -55,9 +55,14 @@ const likeUserById = async (userId, likedUserId) => {
   }
 };
 
-const dislikeUserByUsername = async (likeUserId) => {
+const dislikeUserByUsername = async (likeUserId, userId) => {
   try {
-    logger.info("user.like.repository.js dislikeUserByUsername: " + likeUserId);
+    logger.info(
+      "user.like.repository.js dislikeUserByUsername: " +
+        likeUserId +
+        ", " +
+        userId
+    );
     const existingLikeHistory = await client.query(
       `
             SELECT * 
@@ -153,7 +158,13 @@ const checkUserLikeBoth = async (userId, likeUserId) => {
       [likeUserId, userId]
     );
 
-    return likeUserHistories.rows;
+    console.log(likeUserHistories.rows);
+
+    if (!likeUserHistories) {
+      return false;
+    }
+
+    return likeUserHistories.rows.length < 2 ? false : true;
   } catch (error) {
     logger.info("user.like.repository.js checkUserLikeBoth: " + error.message);
     throw error;

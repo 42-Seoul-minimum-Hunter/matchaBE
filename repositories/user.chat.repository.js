@@ -87,7 +87,7 @@ const generateChatRoom = async (chatUserId, userId) => {
       await client.query(
         `
                 UPDATE user_chat_rooms
-                SET deleted_at = NULL, created_at = NULL
+                SET deleted_at = NULL
                 WHERE id = $1
                 `,
         [existingChatRoom.rows[0].id]
@@ -322,6 +322,39 @@ const saveSendedChatById = async (roomId, senderId, content) => {
   }
 };
 
+const checkChatRoomExist = async (userId, chatedId) => {
+  try {
+    logger.info(
+      "user.chat.repository.js checkChatRoomExist: " + userId + ", " + chatedId
+    );
+    if (userId >= chatedId) {
+      const temp = userId;
+      userId = chatedId;
+      chatedId = temp;
+    }
+
+    const chatRoom = await client.query(
+      `
+        SELECT *
+        FROM user_chat_rooms
+        WHERE user_id = $1 AND chated_id = $2 AND deleted_at IS NULL
+        INTERSECT
+        SELECT *
+        FROM user_chat_rooms
+        WHERE user_id = $2 AND chated_id = $1 AND deleted_at IS NULL
+        `,
+      [userId, chatedId]
+    );
+
+    return chatRoom.rows.length > 0;
+  } catch (error) {
+    logger.error(
+      "user.chat.repository.js checkChatRoomExist: " + error.message
+    );
+    throw error;
+  }
+};
+
 module.exports = {
   findAllChatRooms,
   getRecentChat,
@@ -334,4 +367,6 @@ module.exports = {
   getChatHistoriesById,
   findOneChatRoomById,
   saveSendedChatById,
+
+  checkChatRoomExist,
 };

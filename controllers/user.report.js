@@ -7,7 +7,6 @@ const userReportSerivce = require("../services/user.report.service.js");
 
 /* POST /user/report
 reportedUsername : String 신고 대상 사용자 닉네임
-reason : String(ENUM) 신고 사유
 */
 
 //TODO: reason ENUM 확인
@@ -16,16 +15,12 @@ router.post("/", verifyAllprocess, async function (req, res, next) {
     logger.info(
       "user.report.js POST /user/report: " + JSON.stringify(req.body)
     );
-    const { reportedUsername, reason } = req.body;
-    if (!reportedUsername || !reason) {
-      return res.status(400).send("reportedUsername, reason를 입력하세요.");
+    const { reportedUsername } = req.body;
+    if (!reportedUsername) {
+      return res.status(400).send("reportedUsername is required");
     }
 
-    await userReportSerivce.reportUser(
-      reportedUsername,
-      reason,
-      req.jwtInfo.id
-    );
+    await userReportSerivce.reportUser(reportedUsername, req.jwtInfo.id);
     return res.send();
   } catch (error) {
     next(error);

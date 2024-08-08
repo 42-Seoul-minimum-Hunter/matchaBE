@@ -26,7 +26,7 @@ router.post("/", verifyAllprocess, async function (req, res, next) {
       }
     );
 
-    return res.send(response.data.choices[0].message.content);
+    return res.json({ reply: response.data.choices[0].message.content });
   } catch (error) {
     next(error);
   }
