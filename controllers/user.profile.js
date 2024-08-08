@@ -18,9 +18,6 @@ const userProfileService = require("../services/user.profile.service.js");
 const authService = require("../services/auth.service.js");
 
 const logger = require("../configs/logger.js");
-
-const { userActivate } = require("./user.socket.js");
-
 /* GET /user/profile?username=john
 username : String 사용자 닉네임
 */
@@ -32,6 +29,8 @@ router.get("/", verifyAllprocess, async function (req, res, next) {
     logger.info(
       "user.profile.js GET /user/profile: " + JSON.stringify(req.query)
     );
+    const userActivate = req.app.get("userActivate");
+    console.log(userActivate);
     const { username } = req.query;
     if (!username) {
       return res.status(400).send("username is required.");
@@ -43,7 +42,7 @@ router.get("/", verifyAllprocess, async function (req, res, next) {
     if (!user) {
       return res.status(404).send("User not found.");
     } else if (userActivate) {
-      user.isOnline = userActivate[req.jwtInfo.id] ? true : false;
+      user.isOnline = userActivate.get(user.id) ? true : false;
     }
     return res.send(user);
   } catch (error) {

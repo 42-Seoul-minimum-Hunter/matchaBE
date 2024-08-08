@@ -209,7 +209,6 @@ maxRate : Number 사용자 평점
 si : String 사용자 시
 gu : String 사용자 구
 */
-//TODO: 자기자신 검색시 제외
 router.get("/find", verifyAllprocess, async function (req, res, next) {
   try {
     logger.info("user.js GET /user/find: " + JSON.stringify(req.query));

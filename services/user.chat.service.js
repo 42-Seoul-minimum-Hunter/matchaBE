@@ -8,7 +8,7 @@ const logger = require("../configs/logger");
 const findAllChatRooms = async (userId) => {
   try {
     logger.info("user.chat.service.js findAllChatRooms: " + userId);
-    const chatRoomInfos = await userChatRepository.getChatInfo(userId);
+    const chatRoomInfos = await userChatRepository.findAllChatRooms(userId);
     if (!chatRoomInfos) {
       return null;
     }

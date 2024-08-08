@@ -90,6 +90,11 @@ app.use((err, req, res, next) => {
 
 app.use(morgan("combined", { stream: logger.stream })); // morgan 로그 설정
 
+// WebSocket 서버 실행
+server.listen(wsPort, () => {
+  logger.info(`WebSocket server running on port ${wsPort}...`);
+});
+
 // 서버 실행
 app.listen(port, async () => {
   logger.info(`App running on port ${port}...`);
@@ -164,11 +169,6 @@ app.listen(port, async () => {
   } catch (err) {
     console.error("Error creating tables:", err);
   }
-});
-
-// WebSocket 서버 실행
-server.listen(wsPort, () => {
-  logger.info(`WebSocket server running on port ${wsPort}...`);
 });
 
 io.use((socket, res, next) => {

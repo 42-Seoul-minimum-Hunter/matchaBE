@@ -137,15 +137,15 @@ VALUES
 (702, 696, 4, '2020-01-01 00:00:00');
 
 
---INSERT INTO user_like_histories
---(user_id, liked_id, created_at)
---VALUES
---(701, 702, '2020-01-01 00:00:00');
+INSERT INTO user_like_histories
+(user_id, liked_id, created_at)
+VALUES
+(701, 702, '2020-01-01 00:00:00');
 
---INSERT INTO user_like_histories
---(user_id, liked_id, created_at)
---VALUES
---(702, 701, '2020-01-01 00:00:00');
+INSERT INTO user_like_histories
+(user_id, liked_id, created_at)
+VALUES
+(702, 701, '2020-01-01 00:00:00');
 
 INSERT INTO user_chat_rooms
 (user_id, chated_id, created_at, deleted_at)
@@ -157,17 +157,17 @@ INSERT INTO user_chat_rooms
 VALUES
 (701, 703, '2020-01-01 00:00:00', NULL);
 
---INSERT INTO user_chat_histories
---(room_id, sender_id, content, created_at)
---VALUES
---(1, 702, 'hello', '2020-01-01 00:00:00');
-
 INSERT INTO user_chat_histories
 (room_id, sender_id, content, created_at)
 VALUES
-(2, 701, 'world', '2020-01-01 00:00:00');
+(1, 702, 'hello', '2020-01-01 00:00:00');
 
-INSERT INTO user_alarm_histories 
-(user_id, alarmed_id, alarm_type, created_at)
-VALUES
-(2, 701, 'world', '2020-01-01 00:00:00');
+--INSERT INTO user_chat_histories
+--(room_id, sender_id, content, created_at)
+--VALUES
+--(2, 701, 'world', '2020-01-01 00:00:00');
+
+--INSERT INTO user_alarm_histories 
+--(user_id, alarmed_id, alarm_type, created_at)
+--VALUES
+--(2, 701, 'world', '2020-01-01 00:00:00');

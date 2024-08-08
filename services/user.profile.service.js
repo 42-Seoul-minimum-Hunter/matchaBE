@@ -63,6 +63,7 @@ const getUserProfile = async (username, userId) => {
     );
 
     const user = {
+      id: userInfo.id,
       username: userInfo.username,
       lastName: userInfo.last_name,
       firstName: userInfo.first_name,
@@ -121,6 +122,7 @@ const getMyInfo = async (userId) => {
       preference: userInfo.preference,
       biography: userInfo.biography,
       age: userInfo.age,
+      isOnline: true,
 
       hashtags: hashtagInfo[0],
       profileImages: profileImageInfo[0],
