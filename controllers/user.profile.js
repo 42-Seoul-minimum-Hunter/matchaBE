@@ -22,7 +22,6 @@ const logger = require("../configs/logger.js");
 username : String 사용자 닉네임
 */
 
-//TODO: 해당 유저 LIKE 정보
 //TODO: 매치 유무 확인
 router.get("/", verifyAllprocess, async function (req, res, next) {
   try {

@@ -26,6 +26,21 @@ const saveAlarmById = async (userId, alarmedId, alarmType) => {
         ", " +
         alarmType
     );
+
+    if (alarmType === "VISITED" || alarmType === "MESSAGED") {
+      const result = await client.query(
+        `
+              SELECT * FROM user_alarm_histories
+              WHERE user_id = $1 AND alarmed_id = $2 AND alarm_type = $3
+              AND created_at < NOW() - INTERVAL '24 hours'
+              `,
+        [userId, alarmedId, alarmType]
+      );
+
+      if (result.rows.length > 0) {
+        return;
+      }
+    }
     await client.query(
       `
             INSERT INTO user_alarm_histories
@@ -66,6 +81,7 @@ const findAllAlarmsById = async (id) => {
 const deleteAllAlarmsById = async (id) => {
   try {
     logger.info("user.alarm.repository.js deleteAllAlarmsById: " + id);
+
     await client.query(
       `
       UPDATE user_alarm_histories

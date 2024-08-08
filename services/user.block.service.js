@@ -2,6 +2,7 @@ const logger = require("../configs/logger");
 
 const userBlockRepository = require("../repositories/user.block.repository");
 const userRepository = require("../repositories/user.repository");
+const userLikeRepository = require("../repositories/user.like.repository");
 
 const addBlockUser = async (blockedUsername, userId) => {
   try {
@@ -21,6 +22,17 @@ const addBlockUser = async (blockedUsername, userId) => {
       error.status = 400;
       throw error;
     }
+
+    const likeInfo = await userLikeRepository.getLikeUserHistoryById(
+      userId,
+      blockedUserInfo.id
+    );
+    if (likeInfo.length > 0) {
+      const error = new Error("You cannot block a user you like.");
+      error.status = 400;
+      throw error;
+    }
+
     await userBlockRepository.addBlockUser(blockedUserInfo.id, userId);
   } catch (error) {
     logger.error("user.block.service.js addBlockUser: " + error.message);

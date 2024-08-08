@@ -9,7 +9,6 @@ const userReportSerivce = require("../services/user.report.service.js");
 reportedUsername : String 신고 대상 사용자 닉네임
 */
 
-//TODO: reason ENUM 확인
 router.post("/", verifyAllprocess, async function (req, res, next) {
   try {
     logger.info(

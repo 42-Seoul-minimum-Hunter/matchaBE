@@ -3,6 +3,7 @@ const logger = require("../configs/logger");
 const userAlarmRepository = require("../repositories/user.alarm.repository");
 const userRepository = require("../repositories/user.repository");
 
+//TODO: 알림 저장 24시간 이내 중복 방문 기록이 생기는 문제 해결 필요
 const saveAlarmById = async (id, alarmedId, alarmType) => {
   try {
     logger.info(
@@ -19,7 +20,7 @@ const saveAlarmById = async (id, alarmedId, alarmType) => {
       error.status = 404;
       throw error;
     }
-    await userAlarmRepository.addAlarm(id, alarmedId, alarmType);
+    await userAlarmRepository.saveAlarmById(id, alarmedId, alarmType);
   } catch (error) {
     logger.error("user.alarm.service.js saveAlarmById: " + error.message);
     throw error;

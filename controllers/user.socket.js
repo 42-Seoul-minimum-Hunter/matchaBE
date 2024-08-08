@@ -1,16 +1,12 @@
 const socket = require("socket.io");
 const jwt = require("jsonwebtoken");
 
-const userReposiotry = require("../repositories/user.repository");
+const userService = require("../services/user.service");
 const userChatService = require("../services/user.chat.service");
 const userLikeService = require("../services/user.like.service");
 const userViewService = require("../services/user.view.service");
 const userAlarmService = require("../services/user.alarm.service");
 const userBlockService = require("../services/user.block.service");
-
-const userAlarmRepository = require("../repositories/user.alarm.repository");
-
-const { verifyAllprocess, verifySocket } = require("../configs/middleware");
 
 const logger = require("../configs/logger");
 const { validateUsername } = require("../configs/validate");
@@ -125,7 +121,7 @@ module.exports = (server, app) => {
             return;
           }
 
-          const userInfo = await userReposiotry.findUserByUsername(username);
+          const userInfo = await userService.findOneUserByUsername(username);
           if (!userInfo) {
             return;
           }
@@ -147,7 +143,7 @@ module.exports = (server, app) => {
           if (chatHistories) {
             const chatHistory = await Promise.all(
               chatHistories.map(async (chat) => {
-                const userInfo = await userReposiotry.findUserById(
+                const userInfo = await userService.findOneUserById(
                   chat.sender_id
                 );
                 return {
@@ -191,7 +187,7 @@ module.exports = (server, app) => {
           return;
         }
 
-        const userInfo = await userReposiotry.findUserByUsername(username);
+        const userInfo = await userService.findOneUserByUsername(username);
 
         if (!userInfo) {
           return;
@@ -218,11 +214,11 @@ module.exports = (server, app) => {
         );
         io.to(chatRoomInfo.id).emit("message", param);
 
-        //TODO: 같은 채팅방에 없고 온라인 상태인 유저에게 알림을 보내야함
-        //유저가 메세지를 받았을때
-        io.to(userActivate.get(userActivate.get(userInfo.id))).emit("alarm", {
-          AlarmType: "MESSAGED",
-        });
+        if (io.sockets.adapter.rooms.get(chatRoomInfo.id) === undefined) {
+          io.to(userActivate.get(userActivate.get(userInfo.id))).emit("alarm", {
+            AlarmType: "MESSAGED",
+          });
+        }
         await userAlarmService.saveAlarmById(id, userInfo.id, "MESSAGED");
       } catch (error) {
         logger.error("user.socket.js sendMessage error: " + error.message);
@@ -258,7 +254,7 @@ module.exports = (server, app) => {
         if (!username) {
           return;
         }
-        const userInfo = await userReposiotry.findUserByUsername(username);
+        const userInfo = await userService.findOneUserByUsername(username);
 
         if (!userInfo) {
           return;
@@ -305,7 +301,7 @@ module.exports = (server, app) => {
           return;
         }
 
-        const userInfo = await userReposiotry.findUserByUsername(username);
+        const userInfo = await userService.findOneUserByUsername(username);
         if (!userInfo) {
           return;
         }
@@ -344,7 +340,7 @@ module.exports = (server, app) => {
           throw error;
         }
 
-        const userInfo = await userReposiotry.findUserByUsername(username);
+        const userInfo = await userService.findOneUserByUsername(username);
 
         if (!userInfo) {
           const error = new Error("userInfo is null");
@@ -419,48 +415,5 @@ module.exports = (server, app) => {
         return;
       }
     });
-
-    // 채팅방 나가기(채팅방에서 아에 퇴장)
-    //socket.on("leave-room", async (data) => {
-    //  let { roomKey, userKey } = data;
-    //  const leaveUser = await Participant.findOne({
-    //    where: { roomKey, userKey },
-    //    include: [
-    //      { model: User, attributes: ["nickname"] },
-    //      { model: Room, attributes: ["title", "userKey"] },
-    //    ],
-    //  });
-
-    //  // 호스트가 나갔을 때
-    //  if (userKey === leaveUser.Room.userKey) {
-    //    let param = { nickname: leaveUser.User.nickname };
-    //    socket.broadcast.to(leaveUser.Room.title).emit("byeHost", param);
-    //  } else {
-    //    // 일반유저가 나갔을 때(호스트X)
-    //    await Chat.create({
-    //      roomKey,
-    //      userKey: 12, // 관리자 유저키
-    //      chat: `${leaveUser.User.nickname}님이 퇴장했습니다.`,
-    //    });
-
-    //    let param = { nickname: leaveUser.User.nickname };
-    //    io.to(leaveUser.Room.title).emit("bye", param);
-    //    //이 코드는 현재 클라이언트 소켓이 참여하고 있는 모든 방(room)에서 해당 소켓을 제외시키는 역할을 합니다.
-    //    var rooms = io.sockets.adapter.sids[socket.id];
-    //    for (var room in rooms) {
-    //      socket.leave(room);
-    //    }
-    //  }
-    //});
   });
 };
-
-// EMIT : 요청 보내는거
-// ON : 요청 받는거
-
-// client -> server getAlarms
-
-// server -> 해당 유저의 쌓인 모든 알람을 보내고, DB에서 삭제 === deleted_at = now()
-// server -> client emit getAlarms (알람들을 보내줌)
-
-// client ON
