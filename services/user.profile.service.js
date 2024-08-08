@@ -21,9 +21,9 @@ const getUserProfile = async (username, userId) => {
     );
     const userInfo = await userRepository.findUserByUsername(username);
     if (!userInfo) {
-      const err = new Error("User not found");
-      err.statusCode = 404;
-      throw err;
+      const error = new Error("User not found");
+      error.status = 404;
+      throw error;
     }
 
     //console.log("user info", userInfo.rows[0]);
@@ -53,7 +53,7 @@ const getUserProfile = async (username, userId) => {
 
     let isBlocked = true;
 
-    if (!blockInfo || blockInfo.length === 0) {
+    if (!blockInfo) {
       isBlocked = false;
     }
 

@@ -40,7 +40,9 @@ router.get("/", verifyAllprocess, async function (req, res, next) {
       username,
       req.jwtInfo.id
     );
-    if (userActivate) {
+    if (!user) {
+      return res.status(404).send("User not found.");
+    } else if (userActivate) {
       user.isOnline = userActivate[req.jwtInfo.id] ? true : false;
     }
     return res.send(user);

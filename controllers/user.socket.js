@@ -61,6 +61,7 @@ module.exports = (server, app) => {
       const token = socket.handshake.auth.authorization;
 
       if (!token) {
+        logger.error("user.socket.js connection error: token is null");
         await socket.disconnect();
         return;
       }
