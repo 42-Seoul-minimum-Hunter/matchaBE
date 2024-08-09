@@ -382,10 +382,6 @@ router.get("/register/email/verify", async function (req, res, next) {
     //console.log(req.session.userInfo);
     req.session.save();
 
-    const userInfo = await userService.findOneUserByEmail(decoded.email);
-
-    await userService.updateConnectedAtById(userInfo.id);
-
     return res.redirect(process.env.REGISTRATION_URL);
   } catch (error) {
     next(error);
