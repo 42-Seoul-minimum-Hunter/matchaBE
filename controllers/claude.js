@@ -1,8 +1,9 @@
-// controllers/claude.js
 const express = require("express");
 const router = express.Router();
-const axios = require("axios");
+
 const logger = require("../configs/logger.js");
+
+const claudeService = require("../services/claude.service.js");
 
 const { verifyAllprocess } = require("../configs/middleware.js");
 
@@ -10,21 +11,16 @@ const { verifyAllprocess } = require("../configs/middleware.js");
 // Request body: { message: string }
 router.post("/", verifyAllprocess, async function (req, res, next) {
   try {
-    logger.info("POST /claude");
-    const { message } = req.body;
-    const response = await axios.post(
-      process.env.CLAUDE_API_URL,
-      {
-        model: "gpt-4o-mini",
-        messages: [{ role: "user", content: message }],
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.CLAUDE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    logger.info("claude.js POST /claude: " + req.body.message);
+    const message = req.body.message;
+
+    if (!message) {
+      const error = new Error("Invalid request");
+      error.status = 400;
+      throw error;
+    }
+
+    const response = await claudeService.getResponseClaude(message);
 
     return res.json({ reply: response.data.choices[0].message.content });
   } catch (error) {
