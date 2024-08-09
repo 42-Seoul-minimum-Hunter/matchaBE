@@ -138,8 +138,6 @@ module.exports = (server, app) => {
           const chatHistories =
             await userChatService.findAllChatHistoriesByRoomId(chatRoomInfo.id);
 
-          console.log(chatHistories);
-
           if (chatHistories) {
             const chatHistory = await Promise.all(
               chatHistories.map(async (chat) => {
@@ -162,6 +160,8 @@ module.exports = (server, app) => {
           } else {
             await io.to(socketId).emit("getMessages", []);
           }
+
+          console.log("chatRoomInfo.id: " + chatRoomInfo.id);
 
           await socket.join(chatRoomInfo.id);
         } catch (error) {
@@ -209,17 +209,30 @@ module.exports = (server, app) => {
 
         await userChatService.saveSendedChatById(
           chatRoomInfo.id,
-          userInfo.id,
+          userId,
           message
         );
-        io.to(chatRoomInfo.id).emit("message", param);
 
-        if (io.sockets.adapter.rooms.get(chatRoomInfo.id) === undefined) {
-          io.to(userActivate.get(userActivate.get(userInfo.id))).emit("alarm", {
-            AlarmType: "MESSAGED",
-          });
+        console.log(await io.sockets.adapter.rooms.get(chatRoomInfo.id));
+
+        //await io.to(chatRoomInfo.id).emit("getMessages", param);
+        await socket.to(chatRoomInfo.id).emit("getMessages", param);
+
+        if (
+          (await io.sockets.adapter.rooms.get(chatRoomInfo.id)) === undefined
+        ) {
+          await io
+            .to(userActivate.get(userActivate.get(userInfo.id)))
+            .emit("alarm", {
+              AlarmType: "MESSAGED",
+            });
         }
-        await userAlarmService.saveAlarmById(id, userInfo.id, "MESSAGED");
+        await userAlarmService.saveAlarmById(userId, userInfo.id, "MESSAGED");
+
+        const chatHistories =
+          await userChatService.findAllChatHistoriesByRoomId(chatRoomInfo.id);
+
+        console.log(chatHistories);
       } catch (error) {
         logger.error("user.socket.js sendMessage error: " + error.message);
         return;

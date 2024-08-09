@@ -246,8 +246,8 @@ const getChatHistoriesById = async (roomId) => {
       `
             SELECT * 
             FROM user_chat_histories
-            WHERE id = $1 
-            ORDER BY created_at DESC
+            WHERE room_id = $1 
+            ORDER BY created_at ASC
         `,
       [roomId]
     );
@@ -308,7 +308,7 @@ const saveSendedChatById = async (roomId, senderId, content) => {
         ) VALUES (
             $1,
             $2,
-            $3
+            $3,
             now()
         )
       `,
