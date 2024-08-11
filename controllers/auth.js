@@ -426,7 +426,6 @@ router.post("/reset/email/create", async function (req, res, next) {
   }
 });
 
-//세션으로 인증된 유저라는 것을 확인
 /* GET /auth/reset/email/verify
 code : String 인증 코드
 */
@@ -460,10 +459,18 @@ router.get("/reset/email/verify", async function (req, res, next) {
   }
 });
 
+/* GET /auth/check/access
+ */
+
+router.get("/check/access"),
+  verifyAllprocess,
+  async function (req, res, next) {
+    try {
+      logger.info("auth.js GET /auth/check/access");
+      return res.send("Access verified.");
+    } catch (error) {
+      next(error);
+    }
+  };
+
 module.exports = router;
-
-//LOGIN
-//ISVALID 유무에 따라 달라짐 왜 달라지냐! 그냥 회원가하하고 나가는 경우가 다다고 판단함
-
-//LOGIN -> ISVALID == TRUE -> 이 사람은 이일일 인증 한사람이니까 2FA로 가라
-//LOGIN -> ISVALID == FALSE -> 이 쥐새끼 같은놈 하고 이메일 인증 페이지로 가라

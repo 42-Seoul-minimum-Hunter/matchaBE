@@ -109,10 +109,10 @@ module.exports = (server, app) => {
           const userId = [...userActivate.entries()].find(
             ([key, value]) => value === socket.id
           )?.[0];
-          const socketId = userActivate.get(userId);
-          var rooms = io.sockets.adapter.sids[socketId];
+          const socketId = await userActivate.get(userId);
+          var rooms = await io.sockets.adapter.sids[socketId];
           for (var room in rooms) {
-            if (room !== socketId) socket.leave(room);
+            if (room !== socketId) await socket.leave(room);
           }
 
           const username = data;
@@ -164,6 +164,8 @@ module.exports = (server, app) => {
           console.log("chatRoomInfo.id: " + chatRoomInfo.id);
 
           await socket.join(chatRoomInfo.id);
+          //chatRoomInfo.id == 1
+          // 1 701, 702의 대화
         } catch (error) {
           logger.error("user.socket.js joinChatRoom error: " + error.message);
           throw error;
@@ -204,7 +206,7 @@ module.exports = (server, app) => {
         const param = {
           message,
           username,
-          time: new Date(),
+          createdAt: new Date(),
         };
 
         await userChatService.saveSendedChatById(
@@ -214,44 +216,49 @@ module.exports = (server, app) => {
         );
 
         console.log(await io.sockets.adapter.rooms.get(chatRoomInfo.id));
+        console.log(await userActivate.get(userInfo.id));
 
-        //await io.to(chatRoomInfo.id).emit("getMessages", param);
-        await socket.to(chatRoomInfo.id).emit("getMessages", param);
+        await io.to(chatRoomInfo.id).emit("sendMessage", param);
+        //await io
+        //.to(await userActivate.get(userInfo.id))
+        //.emit("getMessages", param);
+        //await socket.to(chatRoomInfo.id).emit("getMessages", param);
 
-        if (
-          (await io.sockets.adapter.rooms.get(chatRoomInfo.id)) === undefined
-        ) {
-          await io
-            .to(userActivate.get(userActivate.get(userInfo.id)))
-            .emit("alarm", {
+        const chatRoomExistUsers = await io.sockets.adapter.rooms.get(
+          chatRoomInfo.id
+        );
+
+        for (const existUserSocketId of chatRoomExistUsers) {
+          console.log("existUserSocketId: " + existUserSocketId);
+          if (existUserSocketId !== userActivate.get(userInfo.id)) {
+            await io.to(await userActivate.get(userInfo.id)).emit("alarm", {
               AlarmType: "MESSAGED",
             });
+          }
         }
         await userAlarmService.saveAlarmById(userId, userInfo.id, "MESSAGED");
 
         const chatHistories =
           await userChatService.findAllChatHistoriesByRoomId(chatRoomInfo.id);
-
-        console.log(chatHistories);
       } catch (error) {
         logger.error("user.socket.js sendMessage error: " + error.message);
         return;
       }
     });
 
-    socket.on("leaveChatRoom", async (data) => {
+    socket.on("leaveRoom", async (data) => {
       try {
-        logger.info("user.socket.js leaveChatRoom: " + JSON.stringify(data));
+        logger.info("user.socket.js leaveRoom: " + JSON.stringify(data));
         const userId = [...userActivate.entries()].find(
           ([key, value]) => value === socket.id
         )?.[0];
-        const socketId = userActivate.get(userId);
+        const socketId = await userActivate.get(userId);
         var rooms = io.sockets.adapter.sids[socketId];
         for (var room in rooms) {
-          if (room !== socketId) socket.leave(room);
+          if (room !== socketId) await socket.leave(room);
         }
       } catch (error) {
-        logger.error("user.socket.js leaveChatRoom error: " + error.message);
+        logger.error("user.socket.js leaveRoom error: " + error.message);
         return;
       }
     });
@@ -289,12 +296,6 @@ module.exports = (server, app) => {
           await io.to(userActivate.get(userId)).emit("alarm", {
             alarmType: "MATCHED",
           });
-          //await io.to(userActivate.get(userId)).emit("likeUser", {
-          //  isMatched: true,
-          //});
-          //await io.to(userActivate.get(userInfo.id)).emit("likeUser", {
-          //  isMatched: true,
-          //});
         }
       } catch (error) {
         logger.error("user.socket.js likeUser error: " + error.message);
@@ -361,9 +362,7 @@ module.exports = (server, app) => {
           throw error;
         }
 
-        await io.to(userActivate.get(userInfo.id)).emit("alarm", {
-          alarmType: "VISITED",
-        }); //유저의 프로필을 방문했을때
+        await io.to(userActivate.get(userInfo.id)).emit("alarm", {}); //유저의 프로필을 방문했을때
 
         await userViewService.saveVisitHistoryById(username, userId);
       } catch (error) {

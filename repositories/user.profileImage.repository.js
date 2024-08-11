@@ -17,9 +17,12 @@ client.connect();
 
 const saveProfileImagesById = async (profileImages, userId) => {
   try {
-    logger.info("user.profileImage.repository.js saveProfileImagesById: " + userId);
+    logger.info(
+      "user.profileImage.repository.js saveProfileImagesById: " + userId
+    );
     const encodedProfileImages = profileImages.map((image) => {
       return Buffer.from(image).toString("base64");
+      //return image;
     });
 
     const result = await client.query(
@@ -31,9 +34,10 @@ const saveProfileImagesById = async (profileImages, userId) => {
              RETURNING profile_images`,
       [userId, encodedProfileImages]
     );
-
   } catch (error) {
-    logger.error("user.profileImage.repository.js saveProfileImagesById: " + error);
+    logger.error(
+      "user.profileImage.repository.js saveProfileImagesById: " + error
+    );
     throw error;
   }
 };
@@ -51,7 +55,9 @@ const updateProfileImagesById = async (profileImages, userId) => {
       [encodedProfileImages, userId]
     );
   } catch (error) {
-    logger.error("user.profileImage.repository.js updateProfileImagesById: " + error);
+    logger.error(
+      "user.profileImage.repository.js updateProfileImagesById: " + error
+    );
     throw error;
   }
 };
@@ -63,9 +69,17 @@ const findProfileImagesById = async (id) => {
       [id]
     );
 
-    return profileImageInfo.rows.map((row) => row.profile_images);
+    const decodedProfileImages = profileImageInfo.rows.map((row) =>
+      row.profile_images.map((image) => Buffer.from(image, "base64").toString())
+    );
+
+    return decodedProfileImages;
+
+    //return profileImageInfo.rows.map((row) => row.profile_images);
   } catch (error) {
-    logger.error("user.profileImage.repository.js findProfileImagesById: " + error);
+    logger.error(
+      "user.profileImage.repository.js findProfileImagesById: " + error
+    );
     throw error;
   }
 };
