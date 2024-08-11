@@ -61,7 +61,7 @@ INSERT INTO users
 gender, preference, biography, age, connected_at,
 updated_at, created_at, deleted_at)
 VALUES 
-('yeomin3@student.42seoul.kr', 'User3', 'password', 'min', 'yeomin', 'Male', 'Female',
+('yeomin@student.42seoul.kr', 'User3', 'password', 'min', 'yeomin', 'Male', 'Female',
 'hello, world!', '22', '2020-01-01 00:00:00', '2020-01-01 00:00:00', '2020-01-01 00:00:00', NULL);
 
 INSERT INTO auth

@@ -128,7 +128,7 @@ const verifyTwoFactorCode = (code) => {
 const createRegistURL = async (email, sessionInfo) => {
   try {
     logger.info("auth.service.js createRegistURL: " + email);
-    //const code = crypto.randomBytes(20).toString("hex");
+
     const userTimezone = "Asia/Seoul"; // 사용자의 시간대
     const expirationDate = moment().tz(userTimezone).add(5, "minutes").toDate(); // 5분 후 만료
 
@@ -137,8 +137,6 @@ const createRegistURL = async (email, sessionInfo) => {
       expirationDate: expirationDate,
     };
 
-    //sessionInfo.expirationDate = expirationDate;
-    //const code = generateJWT(sessionInfo);
     const code = generateJWT(jwtToken);
 
     // 이메일 내용 구성
@@ -174,7 +172,6 @@ const createResetPasswordURL = async (email) => {
       throw error;
     }
 
-    //const code = crypto.randomBytes(20).toString("hex");
     const userTimezone = "Asia/Seoul"; // 사용자의 시간대
     const expirationDate = moment()
       .tz(userTimezone)
@@ -202,6 +199,8 @@ const createResetPasswordURL = async (email) => {
       subject: "[MATCHA] 비밀번호 초기화 URL",
       text: emailContent,
     });
+
+    return code;
   } catch (error) {
     logger.error("auth.service.js createResetPasswordURL: " + error.message);
     throw error;
