@@ -10,6 +10,7 @@ const userService = require("../services/user.service.js");
 const bcypt = require("bcrypt");
 const moment = require("moment-timezone");
 const jwt = require("jsonwebtoken");
+const Expire = require("expirable");
 
 const {
   validateEmail,
@@ -18,6 +19,11 @@ const {
 } = require("../configs/validate.js");
 
 const logger = require("../configs/logger.js");
+
+const registerPasswordList = new Expire({
+  expire: "5 minutes", // Default expire time for items
+  interval: "2 minutes", // Interval to check and remove expired items
+});
 
 require("dotenv").config();
 
@@ -331,7 +337,12 @@ router.post(
 
       const { email } = req.session.userInfo;
 
-      await authService.createRegistURL(email, req.session.userInfo);
+      const code = await authService.createRegistURL(
+        email,
+        req.session.userInfo
+      );
+
+      registerPasswordList.set(code, req.session.userInfo.password);
 
       return res.send();
     } catch (error) {
@@ -361,7 +372,9 @@ router.get("/register/email/verify", async function (req, res, next) {
 
     const decoded = jwt.verify(code, process.env.JWT_SECRET);
 
-    //console.log(decoded);
+    const password = registerPasswordList.get(code);
+
+    console.log(password);
 
     if (!decoded) {
       return res.status(400).send("Invalid code.");
@@ -369,11 +382,13 @@ router.get("/register/email/verify", async function (req, res, next) {
       return res.status(400).send("Code expired.");
     } else if (decoded.isValid === true) {
       return res.status(400).send("Code already verified.");
+    } else if (!password) {
+      return res.status(400).send("Code Expired.");
     }
 
     req.session.userInfo = {
       email: decoded.email,
-      password: decoded.password,
+      password: password,
       isOauth: decoded.isOauth,
       accessToken: decoded.accessToken,
       isValid: true,

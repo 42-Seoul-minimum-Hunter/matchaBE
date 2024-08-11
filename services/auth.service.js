@@ -132,9 +132,14 @@ const createRegistURL = async (email, sessionInfo) => {
     const userTimezone = "Asia/Seoul"; // 사용자의 시간대
     const expirationDate = moment().tz(userTimezone).add(5, "minutes").toDate(); // 5분 후 만료
 
-    sessionInfo.expirationDate = expirationDate;
+    const jwtToken = {
+      email: email,
+      expirationDate: expirationDate,
+    };
 
-    const code = generateJWT(sessionInfo);
+    //sessionInfo.expirationDate = expirationDate;
+    //const code = generateJWT(sessionInfo);
+    const code = generateJWT(jwtToken);
 
     // 이메일 내용 구성
     const emailContent = `안녕하세요
@@ -150,6 +155,8 @@ const createRegistURL = async (email, sessionInfo) => {
       subject: "[MATCHA] 회원가입 인증 URL",
       text: emailContent,
     });
+
+    return code;
   } catch (error) {
     logger.error("auth.service.js createRegistURL: " + error.message);
     throw error;
@@ -203,6 +210,7 @@ const createResetPasswordURL = async (email) => {
 
 const generateJWT = (obj) => {
   try {
+    logger.info("auth.service.js generateJWT: " + JSON.stringify(obj));
     const jwtToken = jwt.sign(obj, process.env.JWT_SECRET, {
       expiresIn: "24h",
     });
