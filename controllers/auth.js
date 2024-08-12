@@ -152,15 +152,15 @@ router.delete("/logout", function (req, res, next) {
   }
 });
 
-/* GET /auth/callback
+/* POST /auth/callback
 code : String OAuth 인증 코드
 */
-router.get("/callback", async function (req, res, next) {
+router.post("/callback", async function (req, res, next) {
   try {
     logger.info(
-      "auth.js GET /auth/callback: " + JSON.stringify(req.query.code)
+      "auth.js POST /auth/callback: " + JSON.stringify(req.body.code)
     );
-    const code = req.query.code;
+    const code = req.body.code;
     if (!code) {
       return res.status(401).send("Code not found.");
     }

@@ -4,6 +4,9 @@ const userBlockRepository = require("../repositories/user.block.repository");
 const userRepository = require("../repositories/user.repository");
 const userLikeRepository = require("../repositories/user.like.repository");
 
+//TODO: 차단 전략
+//TODO: 사용자가 좋아한다고 했는데, 좋아한 유저로부터 차단을 당하면 어떻게 될지
+//TODO: 사용자가 좋아한다고 했다가, 차단한 경우 어떻게 할건지
 const addBlockUser = async (blockedUsername, userId) => {
   try {
     logger.info(
