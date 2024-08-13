@@ -7,6 +7,7 @@ const userRateRepository = require("../repositories/user.rate.repository");
 const userBlockRepository = require("../repositories/user.block.repository");
 const userAlarmRepository = require("../repositories/user.alarm.repository");
 const userLikeRepository = require("../repositories/user.like.repository");
+const userChatRepository = require("../repositories/user.chat.repository");
 
 const userRepository = require("../repositories/user.repository");
 
@@ -57,7 +58,17 @@ const getUserProfile = async (username, userId) => {
       isBlocked = false;
     }
 
-    const likeInfo = await userLikeRepository.getLikeUserHistoryById(
+    const sendedlikedInfo = await userLikeRepository.getLikeUserHistoryById(
+      userId,
+      userInfo.id
+    );
+
+    const receivedlikedInfo = await userLikeRepository.getLikeUserHistoryById(
+      userInfo.id,
+      userId
+    );
+
+    const chatRoomInfo = await userChatRepository.findOneChatRoomById(
       userId,
       userInfo.id
     );
@@ -80,7 +91,9 @@ const getUserProfile = async (username, userId) => {
       rate: rate,
       isBlocked: isBlocked,
       isOnline: false,
-      isLiked: likeInfo.length > 0 ? true : false,
+      isSendedLiked: sendedlikedInfo.length > 0 ? true : false,
+      isReceivedLiked: receivedlikedInfo.length > 0 ? true : false,
+      isConnected: chatRoomInfo.length > 0 ? true : false,
     };
 
     if (userId !== userInfo.id) {

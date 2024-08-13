@@ -157,10 +157,8 @@ code : String OAuth 인증 코드
 */
 router.post("/callback", async function (req, res, next) {
   try {
-    logger.info(
-      "auth.js POST /auth/callback: " + JSON.stringify(req.body.code)
-    );
-    const code = req.body.code;
+    logger.info("auth.js POST /auth/callback: " + JSON.stringify(req.body));
+    const code = req.body;
     if (!code) {
       return res.status(401).send("Code not found.");
     }
