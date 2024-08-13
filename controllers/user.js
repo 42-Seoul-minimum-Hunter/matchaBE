@@ -31,9 +31,6 @@ const {
 const userSerivce = require("../services/user.service.js");
 const authService = require("../services/auth.service.js");
 
-const multer = require("multer");
-const mime = require("mime-types");
-
 /* POST /user/create
 email : String 사용자 이메일
 username : String 사용자 닉네임
