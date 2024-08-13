@@ -3,7 +3,7 @@ INSERT INTO users
 gender, preference, biography, age, connected_at,
 updated_at, created_at, deleted_at)
 VALUES 
-('koryum30@gmail.com', 'User1', 'password', 'min', 'yeomin', 'Male', 'Female',
+('koryum30@gmail.com', 'User1', 'Password1!', 'min', 'yeomin', 'Male', 'Female',
 'hello, world!', '22', '2020-01-01 00:00:00', '2020-01-01 00:00:00', '2020-01-01 00:00:00', NULL);
 
 INSERT INTO auth
@@ -31,7 +31,7 @@ INSERT INTO users
 gender, preference, biography, age,connected_at,
 updated_at, created_at, deleted_at)
 VALUES 
-('miyu@student.42seoul.kr', 'User2', 'password', 'min', 'yeomin', 'Female', 'Male',
+('miyu@student.42seoul.kr', 'User2', 'Password1!', 'min', 'yeomin', 'Female', 'Male',
 'hello, world!', '22', '2020-01-01 00:00:00', '2020-01-01 00:00:00', '2020-01-01 00:00:00', NULL);
 
 INSERT INTO auth
@@ -61,7 +61,7 @@ INSERT INTO users
 gender, preference, biography, age, connected_at,
 updated_at, created_at, deleted_at)
 VALUES 
-('yeomin@student.42seoul.kr', 'User3', 'password', 'min', 'yeomin', 'Male', 'Female',
+('yeomin@student.42seoul.kr', 'User3', 'Password1!', 'min', 'yeomin', 'Male', 'Female',
 'hello, world!', '22', '2020-01-01 00:00:00', '2020-01-01 00:00:00', '2020-01-01 00:00:00', NULL);
 
 INSERT INTO auth
@@ -91,7 +91,7 @@ VALUES
 --gender, preference, biography, age, connected_at,
 --updated_at, created_at, deleted_at)
 --VALUES 
---('oooo0413@naver.com', 'User4', 'password', 'min', 'yeomin', 'Male', 'Female',
+--('oooo0413@naver.com', 'User4', 'Password1!', 'min', 'yeomin', 'Male', 'Female',
 --'hello, world!', '22', '2020-01-01 00:00:00', '2020-01-01 00:00:00', '2020-01-01 00:00:00', NULL);
 
 --INSERT INTO auth

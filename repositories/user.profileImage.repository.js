@@ -20,10 +20,6 @@ const saveProfileImagesById = async (profileImages, userId) => {
     logger.info(
       "user.profileImage.repository.js saveProfileImagesById: " + userId
     );
-    const encodedProfileImages = profileImages.map((image) => {
-      return Buffer.from(image).toString("base64");
-      //return image;
-    });
 
     const result = await client.query(
       `INSERT INTO user_profile_images (
@@ -32,7 +28,7 @@ const saveProfileImagesById = async (profileImages, userId) => {
                 updated_at
             ) VALUES ($1, $2, now())
              RETURNING profile_images`,
-      [userId, encodedProfileImages]
+      [userId, profileImages]
     );
   } catch (error) {
     logger.error(
@@ -44,15 +40,11 @@ const saveProfileImagesById = async (profileImages, userId) => {
 
 const updateProfileImagesById = async (profileImages, userId) => {
   try {
-    const encodedProfileImages = profileImages.map((image) => {
-      return Buffer.from(image).toString("base64");
-    });
-
     await client.query(
       `UPDATE user_profile_images
             SET profile_images = $1
             WHERE user_id = $2`,
-      [encodedProfileImages, userId]
+      [profileImages, userId]
     );
   } catch (error) {
     logger.error(
@@ -69,8 +61,14 @@ const findProfileImagesById = async (id) => {
       [id]
     );
 
+    // Decoding each Base64 encoded image URL
     const decodedProfileImages = profileImageInfo.rows.map((row) =>
-      row.profile_images.map((image) => Buffer.from(image, "base64").toString())
+      row.profile_images.map((image) => {
+        // Separate the MIME type prefix (e.g., "data:image/png;base64,") from the Base64 string
+        const base64String = image.split(",")[1];
+        // Decode the Base64 string
+        return Buffer.from(base64String, "base64").toString();
+      })
     );
 
     return decodedProfileImages;

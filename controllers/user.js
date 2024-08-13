@@ -18,6 +18,8 @@ const {
   validateHashtags,
   validateSi,
   validateGu,
+  validateSortInfo,
+  validateProfileImages,
 } = require("../configs/validate.js");
 
 const {
@@ -28,6 +30,9 @@ const {
 
 const userSerivce = require("../services/user.service.js");
 const authService = require("../services/auth.service.js");
+
+const multer = require("multer");
+const mime = require("mime-types");
 
 /* POST /user/create
 email : String 사용자 이메일
@@ -66,8 +71,13 @@ router.post(
         hashtags: req.body.hashtags || undefined,
         si: req.body.si || undefined,
         gu: req.body.gu || undefined,
-        profileImages: req.body.profileImages || undefined,
       };
+
+      const profileImages = req.body.profileImages || undefined;
+
+      if (!profileImages) {
+        return res.status(400).send("Please enter the profileImages field.");
+      }
 
       const requiredFields = [
         "username",
@@ -81,7 +91,6 @@ router.post(
         "hashtags",
         "si",
         "gu",
-        "profileImages",
       ];
 
       for (const field of requiredFields) {
@@ -89,6 +98,24 @@ router.post(
           return res.status(400).send(`Please enter the ${field} field.`);
         }
       }
+
+      userInfo.profileImages = profileImages.map((file) => {
+        // Determine the MIME type of the image (e.g., image/png, image/jpeg)
+        const mimeType = file.mimetype;
+
+        // Validate MIME type
+        if (!mimeType.startsWith("image/")) {
+          return res.status(400).send("Please enter a valid image file.");
+        }
+
+        // Convert the image buffer to a Base64 string
+        const base64String = file.buffer.toString("base64");
+
+        // Create the data URL format
+        return `data:${mimeType};base64,${base64String}`;
+      });
+
+      console.log("userInfo.profileImages: ", userInfo.profileImages);
 
       if (!validateUsername(userInfo.username)) {
         return res
@@ -117,6 +144,8 @@ router.post(
         return res.status(400).send("Please enter a valid si.");
       } else if (!validateGu(userInfo.si, userInfo.gu)) {
         return res.status(400).send("Please enter a valid gu.");
+      } else if (!validateProfileImages(userInfo.profileImages)) {
+        return res.status(400).send("Please enter a valid profileImages.");
       }
 
       const { email, password, isOauth, accessToken } = req.userInfo;
@@ -222,6 +251,7 @@ router.get("/find", verifyAllprocess, async function (req, res, next) {
       gu,
       page = 1,
       pageSize = 15,
+      sortInfo,
     } = req.query;
 
     //console.log(hashtags);
@@ -240,6 +270,7 @@ router.get("/find", verifyAllprocess, async function (req, res, next) {
       maxRate: maxRate ? Number(maxRate) : undefined,
       si: si || undefined,
       gu: gu || undefined,
+      sortInfo: sortInfo || undefined,
     };
 
     if (minAge && maxAge && Number(minAge) > Number(maxAge)) {
@@ -260,6 +291,8 @@ router.get("/find", verifyAllprocess, async function (req, res, next) {
       return res.status(400).send("평점은 정수로 입력해주세요.");
     } else if (maxRate && !Number.isInteger(maxRate) && maxRate < 0) {
       return res.status(400).send("평점은 정수로 입력해주세요.");
+    } else if (sortInfo && !validateSortInfo(sortInfo)) {
+      return res.status(400).send("Please enter a valid sortInfo.");
     }
 
     const { users, totalCount } = await userSerivce.findUserByFilter(

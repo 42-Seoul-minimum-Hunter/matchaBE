@@ -478,6 +478,26 @@ function validateEmail(email) {
   return emailRegex.test(email);
 }
 
+function validateSortInfo(sortInfo) {
+  if (
+    !sortInfo === "ascAge" ||
+    !sortInfo === "ascRate" ||
+    !sortInfo === "dscAge" ||
+    !sortInfo === "dscRate"
+  ) {
+    return false;
+  }
+  return true;
+}
+
+function validateProfileImages(profileImages) {
+  //TODO: 프로필 이미지 개수 설정
+  if (profileImages.length !== 5) {
+    return false;
+  }
+  return true;
+}
+
 module.exports = {
   validateUsername,
   validatePassword,
@@ -490,4 +510,6 @@ module.exports = {
   validateSi,
   validateGu,
   validateEmail,
+  validateSortInfo,
+  validateProfileImages,
 };

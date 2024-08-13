@@ -249,7 +249,8 @@ const findUserByFilter = async (filter, id) => {
         id
     );
 
-    const { hashtags, minAge, maxAge, si, gu, minRate, maxRate } = filter;
+    const { hashtags, minAge, maxAge, si, gu, minRate, maxRate, sortInfo } =
+      filter;
 
     let query = "SELECT u.* FROM users u";
     const params = [];
@@ -357,9 +358,25 @@ const findUserByFilter = async (filter, id) => {
     const UserInfo = await Promise.all(
       filteredUserInfos
         .sort((a, b) => {
-          if (a.rate < b.rate) return 1;
-          if (a.rate > b.rate) return -1;
-          return 0;
+          if (!sortInfo || sortInfo === "dscRate") {
+            if (a.rate < b.rate) return 1;
+            if (a.rate > b.rate) return -1;
+            return 0;
+          } else {
+            if (sortInfo === "ascAge") {
+              if (a.age < b.age) return -1;
+              if (a.age > b.age) return 1;
+              return 0;
+            } else if (sortInfo === "ascRate") {
+              if (a.rate < b.rate) return -1;
+              if (a.rate > b.rate) return 1;
+              return 0;
+            } else if (sortInfo === "dscAge") {
+              if (a.age < b.age) return 1;
+              if (a.age > b.age) return -1;
+              return 0;
+            }
+          }
         })
         .map(async (userInfo) => {
           if (id !== userInfo.id) {

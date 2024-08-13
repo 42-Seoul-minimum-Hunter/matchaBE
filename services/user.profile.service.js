@@ -91,9 +91,11 @@ const getUserProfile = async (username, userId) => {
       rate: rate,
       isBlocked: isBlocked,
       isOnline: false,
-      isSendedLiked: sendedlikedInfo.length > 0 ? true : false,
-      isReceivedLiked: receivedlikedInfo.length > 0 ? true : false,
-      isLinked: chatRoomInfo.length > 0 ? true : false,
+      isSendedLiked:
+        sendedlikedInfo && sendedlikedInfo.length > 0 ? true : false,
+      isReceivedLiked:
+        receivedlikedInfo && receivedlikedInfo.length > 0 ? true : false,
+      isLinked: chatRoomInfo && chatRoomInfo.length > 0 ? true : false,
     };
 
     if (userId !== userInfo.id) {

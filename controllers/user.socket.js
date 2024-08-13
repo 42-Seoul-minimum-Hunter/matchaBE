@@ -341,7 +341,7 @@ module.exports = (server, app) => {
     socket.on("visitUserProfile", async (data) => {
       try {
         logger.info("user.socket.js visitUserProfile: " + JSON.stringify(data));
-        const userId = [...userActivate.entries()].find(
+        const userId = await [...userActivate.entries()].find(
           ([key, value]) => value === socket.id
         )?.[0];
         const username = data;

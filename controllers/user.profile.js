@@ -13,6 +13,7 @@ const {
   validateHashtags,
   validateSi,
   validateGu,
+  validateProfileImages,
 } = require("../configs/validate.js");
 const userProfileService = require("../services/user.profile.service.js");
 const authService = require("../services/auth.service.js");
@@ -106,9 +107,14 @@ router.post("/update", verifyAllprocess, async function (req, res, next) {
       hashtags: req.body.hashtags || undefined,
       si: req.body.si || undefined,
       gu: req.body.gu || undefined,
-      profileImages: req.body.profileImages || undefined,
       isTwofa: req.body.isTwofa,
     };
+
+    const profileImages = req.body.profileImages || undefined;
+
+    if (!profileImages) {
+      return res.status(400).send("Please enter the profileImages field.");
+    }
 
     const requiredFields = [
       "email",
@@ -122,7 +128,6 @@ router.post("/update", verifyAllprocess, async function (req, res, next) {
       "hashtags",
       "si",
       "gu",
-      "profileImages",
       "isTwofa",
     ];
 
@@ -131,6 +136,22 @@ router.post("/update", verifyAllprocess, async function (req, res, next) {
         return res.status(400).send(`Please enter the ${field} field.`);
       }
     }
+
+    userInfo.profileImages = profileImages.map((file) => {
+      // Determine the MIME type of the image (e.g., image/png, image/jpeg)
+      const mimeType = file.mimetype;
+
+      // Validate MIME type
+      if (!mimeType.startsWith("image/")) {
+        return res.status(400).send("Please enter a valid image file.");
+      }
+
+      // Convert the image buffer to a Base64 string
+      const base64String = file.buffer.toString("base64");
+
+      // Create the data URL format
+      return `data:${mimeType};base64,${base64String}`;
+    });
 
     // hashtags 처리
     if (Array.isArray(user.hashtags)) {
@@ -148,18 +169,18 @@ router.post("/update", verifyAllprocess, async function (req, res, next) {
     }
 
     // profileImages 처리
-    if (Array.isArray(user.profileImages)) {
-      user.profileImages = user.profileImages
-        .map((image) => image.trim())
-        .filter((image) => image); // 각 이미지의 공백 제거 및 빈 이미지 필터링
-    } else if (typeof user.profileImages === "string") {
-      user.profileImages = user.profileImages
-        .split(",")
-        .map((image) => image.trim())
-        .filter((image) => image);
-    } else {
-      user.profileImages = undefined; // 다른 타입일 경우 undefined로 설정
-    }
+    //if (Array.isArray(user.profileImages)) {
+    //  user.profileImages = user.profileImages
+    //    .map((image) => image.trim())
+    //    .filter((image) => image); // 각 이미지의 공백 제거 및 빈 이미지 필터링
+    //} else if (typeof user.profileImages === "string") {
+    //  user.profileImages = user.profileImages
+    //    .split(",")
+    //    .map((image) => image.trim())
+    //    .filter((image) => image);
+    //} else {
+    //  user.profileImages = undefined; // 다른 타입일 경우 undefined로 설정
+    //}
 
     if (!validateEmail(user.email)) {
       return res.status(400).send("Please enter a valid email.");
@@ -187,6 +208,8 @@ router.post("/update", verifyAllprocess, async function (req, res, next) {
       return res.status(400).send("Please enter a valid twofa.");
     } else if (typeof user.isGpsAllowed === undefined) {
       return res.status(400).send("Please enter a valid gps allowed.");
+    } else if (!validateProfileImages(user.profileImages)) {
+      return res.status(400).send("Please enter a valid profileImages.");
     }
 
     await userProfileService.updateUser(user, req.jwtInfo.id);
