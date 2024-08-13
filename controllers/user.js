@@ -71,13 +71,8 @@ router.post(
         hashtags: req.body.hashtags || undefined,
         si: req.body.si || undefined,
         gu: req.body.gu || undefined,
+        profileImages: req.body.profileImages || undefined,
       };
-
-      const profileImages = req.body.profileImages || undefined;
-
-      if (!profileImages) {
-        return res.status(400).send("Please enter the profileImages field.");
-      }
 
       const requiredFields = [
         "username",
@@ -91,6 +86,7 @@ router.post(
         "hashtags",
         "si",
         "gu",
+        "profileImages",
       ];
 
       for (const field of requiredFields) {
@@ -99,23 +95,33 @@ router.post(
         }
       }
 
-      userInfo.profileImages = profileImages.map((file) => {
-        // Determine the MIME type of the image (e.g., image/png, image/jpeg)
-        const mimeType = file.mimetype;
+      // hashtags 처리
+      if (Array.isArray(user.hashtags)) {
+        user.hashtags = user.hashtags
+          .map((tag) => tag.trim())
+          .filter((tag) => tag); // 각 태그의 공백 제거 및 빈 태그 필터링
+      } else if (typeof user.hashtags === "string") {
+        user.hashtags = user.hashtags
+          .replace(/[\[\]']/g, "")
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter((tag) => tag);
+      } else {
+        user.hashtags = undefined; // 다른 타입일 경우 undefined로 설정
+      }
 
-        // Validate MIME type
-        if (!mimeType.startsWith("image/")) {
-          return res.status(400).send("Please enter a valid image file.");
+      // profileImages 처리
+      if (Array.isArray(user.profileImages)) {
+        if (user.profileImages.length < 5) {
+          return res.status(400).send("Please enter up to 5 images.");
         }
 
-        // Convert the image buffer to a Base64 string
-        const base64String = file.buffer.toString("base64");
-
-        // Create the data URL format
-        return `data:${mimeType};base64,${base64String}`;
-      });
-
-      console.log("userInfo.profileImages: ", userInfo.profileImages);
+        user.profileImages = user.profileImages.map((image) => {
+          return Buffer.from(image).toString("base64");
+        });
+      } else {
+        return res.status(400).send("Please enter the profileImages field.");
+      }
 
       if (!validateUsername(userInfo.username)) {
         return res

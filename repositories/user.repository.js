@@ -194,12 +194,15 @@ const findUserByDefaultFilter = async (id, preference, si, gu, hashtags) => {
         })
         .map(async (userInfo) => {
           if (userInfo.id !== id) {
-            const { rows } = await client.query(
+            const encodedProfileImageInfo = await client.query(
               "SELECT profile_images FROM user_profile_images WHERE user_id = $1",
               [userInfo.id]
             );
-            const profileImages =
-              rows.length > 0 ? rows[0].profile_images : null;
+
+            const profileImageInfo = Buffer.from(
+              encodedProfileImageInfo.rows[0].profile_images[0],
+              "base64"
+            ).toString("utf-8");
 
             const userHashtags = await client.query(
               `SELECT hashtags FROM user_hashtags WHERE user_id = $1`,
@@ -212,7 +215,7 @@ const findUserByDefaultFilter = async (id, preference, si, gu, hashtags) => {
               (value) => hashtags.includes(value)
             ).length;
 
-            const userRegions = userRegionRepository.findRegionById(
+            const userRegions = await userRegionRepository.findRegionById(
               userInfo.id
             );
 
@@ -355,7 +358,7 @@ const findUserByFilter = async (filter, id) => {
       }
     }
 
-    const UserInfo = await Promise.all(
+    const UserInfos = await Promise.all(
       filteredUserInfos
         .sort((a, b) => {
           if (!sortInfo || sortInfo === "dscRate") {
@@ -380,12 +383,15 @@ const findUserByFilter = async (filter, id) => {
         })
         .map(async (userInfo) => {
           if (id !== userInfo.id) {
-            const { rows } = await client.query(
+            const encodedProfileImageInfo = await client.query(
               "SELECT profile_images FROM user_profile_images WHERE user_id = $1",
               [userInfo.id]
             );
-            const profileImages =
-              rows.length > 0 ? rows[0].profile_images : null;
+
+            const profileImageInfo = Buffer.from(
+              encodedProfileImageInfo.rows[0].profile_images[0],
+              "base64"
+            ).toString("utf-8");
 
             const userRegions = userRegionRepository.findRegionById(
               userInfo.id
@@ -395,7 +401,7 @@ const findUserByFilter = async (filter, id) => {
               id: userInfo.id,
               username: userInfo.username,
               age: userInfo.age,
-              profileImages: profileImages ? profileImages[0] : null,
+              profileImages: profileImageInfo,
               rate: userInfo.rate,
               si: userRegions.si,
               gu: userRegions.gu,
@@ -405,7 +411,7 @@ const findUserByFilter = async (filter, id) => {
     );
 
     return {
-      users: UserInfo,
+      users: UserInfos,
       totalCount: totalCount,
     };
 

@@ -40,6 +40,13 @@ const saveProfileImagesById = async (profileImages, userId) => {
 
 const updateProfileImagesById = async (profileImages, userId) => {
   try {
+    logger.info(
+      "user.profileImage.repository.js updateProfileImagesById: " +
+        profileImages +
+        ", " +
+        userId
+    );
+
     await client.query(
       `UPDATE user_profile_images
             SET profile_images = $1
@@ -60,20 +67,12 @@ const findProfileImagesById = async (id) => {
       "SELECT profile_images FROM user_profile_images WHERE user_id = $1",
       [id]
     );
-
-    // Decoding each Base64 encoded image URL
     const decodedProfileImages = profileImageInfo.rows.map((row) =>
       row.profile_images.map((image) => {
-        // Separate the MIME type prefix (e.g., "data:image/png;base64,") from the Base64 string
-        const base64String = image.split(",")[1];
-        // Decode the Base64 string
-        return Buffer.from(base64String, "base64").toString();
+        return Buffer.from(image, "base64").toString("utf-8");
       })
     );
-
     return decodedProfileImages;
-
-    //return profileImageInfo.rows.map((row) => row.profile_images);
   } catch (error) {
     logger.error(
       "user.profileImage.repository.js findProfileImagesById: " + error
