@@ -93,7 +93,7 @@ const getUserProfile = async (username, userId) => {
       isOnline: false,
       isSendedLiked: sendedlikedInfo.length > 0 ? true : false,
       isReceivedLiked: receivedlikedInfo.length > 0 ? true : false,
-      isConnected: chatRoomInfo.length > 0 ? true : false,
+      isLinked: chatRoomInfo.length > 0 ? true : false,
     };
 
     if (userId !== userInfo.id) {
