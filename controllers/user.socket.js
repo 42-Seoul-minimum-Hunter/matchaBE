@@ -9,7 +9,7 @@ const userAlarmService = require("../services/user.alarm.service");
 const userBlockService = require("../services/user.block.service");
 
 const logger = require("../configs/logger");
-const { validateUsername } = require("../configs/validate");
+const { validateUsername, validateMessage } = require("../configs/validate");
 
 /* 필요한 기능
 - 유저는 다음 알림들을 실시간으로 보내야 한다
@@ -186,6 +186,8 @@ module.exports = (server, app) => {
         const { message, username } = data;
 
         if (!message || !username) {
+          return;
+        } else if (!validateMessage(message)) {
           return;
         }
 

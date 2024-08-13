@@ -60,7 +60,6 @@ const userReportRouter = require("./controllers/user.report.js");
 const userProfileRouter = require("./controllers/user.profile.js");
 const userAlarmRouter = require("./controllers/user.alarm.js");
 const authRouter = require("./controllers/auth.js");
-const userChatRouter = require("./controllers/user.chat.js");
 const userBlockRouter = require("./controllers/user.block.js");
 
 const socketRouter = require("./controllers/user.socket.js");
@@ -79,7 +78,6 @@ app.use("/user/report", userReportRouter);
 app.use("/user/profile", userProfileRouter);
 app.use("/user/alarm", userAlarmRouter);
 app.use("/user/block", userBlockRouter);
-app.use("/user/chat", userChatRouter);
 app.use("/auth", authRouter);
 app.use("/claude", claudeApi);
 

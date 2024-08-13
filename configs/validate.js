@@ -492,9 +492,16 @@ function validateSortInfo(sortInfo) {
 
 function validateProfileImages(profileImages) {
   //TODO: 프로필 이미지 개수 설정
-  if (profileImages.length !== 5) {
-    return false;
+
+  const urlRegex = /^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/i; // Matches a valid URL
+  const blobRegex = /^blob:.+$/; // Matches a valid Blob URL (browser-generated)
+
+  for (let image of profileImages) {
+    if (!urlRegex.test(image) && !blobRegex.test(image)) {
+      return false;
+    }
   }
+
   return true;
 }
 

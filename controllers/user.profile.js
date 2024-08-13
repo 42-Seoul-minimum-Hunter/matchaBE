@@ -150,8 +150,10 @@ router.post("/update", verifyAllprocess, async function (req, res, next) {
 
     // profileImages 처리
     if (Array.isArray(user.profileImages)) {
-      if (user.profileImages.length < 5) {
-        return res.status(400).send("Please enter up to 5 images.");
+      if (user.profileImages.length < 5 || user.profileImages.length > 7) {
+        return res.status(400).send("Please enter 5~7 profileImages.");
+      } else if (!validateProfileImages(user.profileImages)) {
+        return res.status(400).send("Please enter a valid profileImages.");
       }
 
       user.profileImages = user.profileImages.map((image) => {
@@ -160,6 +162,8 @@ router.post("/update", verifyAllprocess, async function (req, res, next) {
     } else {
       return res.status(400).send("Please enter the profileImages field.");
     }
+
+    console.log("user.profile: " + user.profileImages);
 
     if (!validateEmail(user.email)) {
       return res.status(400).send("Please enter a valid email.");

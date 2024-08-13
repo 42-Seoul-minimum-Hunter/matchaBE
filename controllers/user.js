@@ -109,8 +109,10 @@ router.post(
 
       // profileImages 처리
       if (Array.isArray(user.profileImages)) {
-        if (user.profileImages.length < 5) {
-          return res.status(400).send("Please enter up to 5 images.");
+        if (user.profileImages.length < 5 || user.profileImages.length > 7) {
+          return res.status(400).send("Please enter 5~7 profileImages.");
+        } else if (!validateProfileImages(userInfo.profileImages)) {
+          return res.status(400).send("Please enter a valid profileImages.");
         }
 
         user.profileImages = user.profileImages.map((image) => {
@@ -147,8 +149,6 @@ router.post(
         return res.status(400).send("Please enter a valid si.");
       } else if (!validateGu(userInfo.si, userInfo.gu)) {
         return res.status(400).send("Please enter a valid gu.");
-      } else if (!validateProfileImages(userInfo.profileImages)) {
-        return res.status(400).send("Please enter a valid profileImages.");
       }
 
       const { email, password, isOauth, accessToken } = req.userInfo;
