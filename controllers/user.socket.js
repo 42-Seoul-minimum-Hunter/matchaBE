@@ -98,7 +98,7 @@ module.exports = (server, app) => {
           await io.to(socket.id).emit("getChatList", chatList);
         } catch (error) {
           logger.error("user.socket.js getChatList error: " + error.message);
-          return;
+          io.to(socket.id).emit("error", error.message);
         }
       });
 
@@ -118,12 +118,12 @@ module.exports = (server, app) => {
           const username = data;
 
           if (!username || !validateUsername(username)) {
-            return;
+            throw new Error("username is null");
           }
 
           const userInfo = await userService.findOneUserByUsername(username);
           if (!userInfo) {
-            return;
+            throw new Error("userInfo is null");
           }
 
           const chatRoomInfo = await userChatService.findOneChatRoomById(
@@ -132,7 +132,7 @@ module.exports = (server, app) => {
           );
 
           if (!chatRoomInfo) {
-            return;
+            throw new Error("chatRoomInfo is null");
           }
 
           const chatHistories =
@@ -173,7 +173,7 @@ module.exports = (server, app) => {
       });
     } catch (error) {
       logger.error("user.socket.js connection error: " + error.message);
-      return;
+      io.to(socket.id).emit("error", error.message);
     }
 
     // 채팅 받아서 저장하고, 그 채팅 보내서 보여주기
@@ -186,15 +186,15 @@ module.exports = (server, app) => {
         const { message, username } = data;
 
         if (!message || !username) {
-          return;
+          throw new Error("message or username is null");
         } else if (!validateMessage(message)) {
-          return;
+          throw new Error("message is invalid");
         }
 
         const userInfo = await userService.findOneUserByUsername(username);
 
         if (!userInfo) {
-          return;
+          throw new Error("userInfo is null");
         }
 
         const chatRoomInfo = await userChatService.findOneChatRoomById(
@@ -203,7 +203,7 @@ module.exports = (server, app) => {
         );
 
         if (!chatRoomInfo) {
-          return;
+          throw new Error("chatRoomInfo is null");
         }
         const param = {
           message,
@@ -217,9 +217,6 @@ module.exports = (server, app) => {
           message
         );
 
-        console.log(await io.sockets.adapter.rooms.get(chatRoomInfo.id));
-        console.log(await userActivate.get(userInfo.id));
-
         await io.to(chatRoomInfo.id).emit("sendMessage", param);
         //await io
         //.to(await userActivate.get(userInfo.id))
@@ -231,7 +228,6 @@ module.exports = (server, app) => {
         );
 
         for (const existUserSocketId of chatRoomExistUsers) {
-          console.log("existUserSocketId: " + existUserSocketId);
           if (existUserSocketId !== userActivate.get(userInfo.id)) {
             await io.to(await userActivate.get(userInfo.id)).emit("alarm", {
               AlarmType: "MESSAGED",
@@ -244,7 +240,7 @@ module.exports = (server, app) => {
           await userChatService.findAllChatHistoriesByRoomId(chatRoomInfo.id);
       } catch (error) {
         logger.error("user.socket.js sendMessage error: " + error.message);
-        return;
+        io.to(socket.id).emit("error", error.message);
       }
     });
 
@@ -255,13 +251,13 @@ module.exports = (server, app) => {
           ([key, value]) => value === socket.id
         )?.[0];
         const socketId = await userActivate.get(userId);
-        var rooms = io.sockets.adapter.sids[socketId];
+        var rooms = io.sockets.adapter.sids[socket.id];
         for (var room in rooms) {
           if (room !== socketId) await socket.leave(room);
         }
       } catch (error) {
         logger.error("user.socket.js leaveRoom error: " + error.message);
-        return;
+        io.to(socket.id).emit("error", error.message);
       }
     });
 
@@ -274,12 +270,12 @@ module.exports = (server, app) => {
         const username = data;
 
         if (!username) {
-          return;
+          throw new Error("username is null");
         }
         const userInfo = await userService.findOneUserByUsername(username);
 
         if (!userInfo) {
-          return;
+          throw new Error("userInfo is null");
         }
 
         const result = await userLikeService.likeUserByUsername(
@@ -301,7 +297,7 @@ module.exports = (server, app) => {
         }
       } catch (error) {
         logger.error("user.socket.js likeUser error: " + error.message);
-        return;
+        io.to(socket.id).emit("error", error.message);
       }
     });
 
@@ -314,12 +310,12 @@ module.exports = (server, app) => {
         const username = data;
 
         if (!username) {
-          return;
+          throw new Error("username is null");
         }
 
         const userInfo = await userService.findOneUserByUsername(username);
         if (!userInfo) {
-          return;
+          throw new Error("userInfo is null");
         }
 
         const result = await userLikeService.dislikeUserByUsername(
@@ -336,7 +332,7 @@ module.exports = (server, app) => {
         }
       } catch (error) {
         logger.error("user.socket.js dislikeUser error: " + error.message);
-        return;
+        io.to(socket.id).emit("error", error.message);
       }
     });
 
@@ -348,20 +344,14 @@ module.exports = (server, app) => {
         )?.[0];
         const username = data;
 
-        console.log(username);
-
         if (!username) {
-          const error = new Error("username is null");
-          error.name = "Bad Request";
-          throw error;
+          throw new Error("username is null");
         }
 
         const userInfo = await userService.findOneUserByUsername(username);
 
         if (!userInfo) {
-          const error = new Error("userInfo is null");
-          error.name = "Bad Request";
-          throw error;
+          throw new Error("userInfo is null");
         }
 
         await io.to(userActivate.get(userInfo.id)).emit("alarm", {}); //유저의 프로필을 방문했을때
@@ -369,7 +359,7 @@ module.exports = (server, app) => {
         await userViewService.saveVisitHistoryById(username, userId);
       } catch (error) {
         logger.error("user.socket.js visitUserProfile error: " + error.message);
-        return;
+        io.to(socket.id).emit("error", error.message);
       }
     });
 
@@ -386,7 +376,7 @@ module.exports = (server, app) => {
         await io.to(userActivate.get(userId)).emit("getAlarms", alarms);
       } catch (error) {
         logger.error("user.socket.js getAlarms error: " + error.message);
-        return;
+        io.to(socket.id).emit("error", error.message);
       }
     });
 
@@ -422,11 +412,10 @@ module.exports = (server, app) => {
         if (userKey) {
           userActivate.delete(userKey);
         } else {
-          console.log(`Could not find user key for socket ${socket.id}`);
+          throw new Error(`Could not find user key for socket ${socket.id}`);
         }
       } catch (error) {
         logger.error("user.socket.js disconnect error: " + error.message);
-        return;
       }
     });
   });

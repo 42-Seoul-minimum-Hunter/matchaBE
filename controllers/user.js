@@ -305,7 +305,9 @@ router.get("/find", verifyAllprocess, async function (req, res, next) {
       pageSize
     );
 
-    return res.send({ users, totalCount, currentPage: Number(page) });
+    sortInfo = sortInfo ? sortInfo : "dscRate";
+
+    return res.send({ users, totalCount, currentPage: Number(page), sortInfo });
   } catch (error) {
     next(error);
   }

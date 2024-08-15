@@ -505,6 +505,11 @@ function validateProfileImages(profileImages) {
   return true;
 }
 
+function validateMessage(message) {
+  const messageRegex = /^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};:"\\|,.\/?]{1,255}$/;
+  return messageRegex.test(message);
+}
+
 module.exports = {
   validateUsername,
   validatePassword,
@@ -519,4 +524,5 @@ module.exports = {
   validateEmail,
   validateSortInfo,
   validateProfileImages,
+  validateMessage,
 };
