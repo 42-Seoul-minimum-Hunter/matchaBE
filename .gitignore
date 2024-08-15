@@ -131,3 +131,5 @@ dist
 
 socket.client.js
 client*.html
+
+.idea/*
