@@ -341,10 +341,17 @@ module.exports = (server, app) => {
           throw new Error("userInfo is null");
         }
 
+        const chatRoomInfo = await userChatService.findOneChatRoomById(
+          userId,
+          userInfo.id
+        );
+
         const result = await userLikeService.dislikeUserByUsername(
           username,
           userId
         );
+
+        socket.had;
 
         if (typeof result === "undefined") {
           throw new Error("Bad Request");
@@ -359,9 +366,15 @@ module.exports = (server, app) => {
           await io.to(userActivate.get(userInfo.id)).emit("alarm", {
             alarmType: "UNMATCHED",
           });
-          await io.to(userActivate.get(userId)).emit("alarm", {
-            alarmType: "UNMATCHED",
-          });
+
+          if (
+            (await io.sockets.adapter.rooms.get(chatRoomInfo.id)) ===
+            (await userActivate.get(userInfo.id))
+          ) {
+            await io.to(userActivate.get(userId)).emit("alarm", {
+              alarmType: "UNMATCHED",
+            });
+          }
         }
       } catch (error) {
         logger.error("user.socket.js dislikeUser error: " + error.message);
