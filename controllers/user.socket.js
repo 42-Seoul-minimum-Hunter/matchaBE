@@ -271,6 +271,8 @@ module.exports = (server, app) => {
 
         if (!username) {
           throw new Error("username is null");
+        } else if (!userId) {
+          throw new Error("userId is null");
         }
         const userInfo = await userService.findOneUserByUsername(username);
 
@@ -286,6 +288,10 @@ module.exports = (server, app) => {
         await io.to(userActivate.get(userInfo.id)).emit("alarm", {
           alarmType: "LIKED",
         }); //유저가 좋아요를 받았을때
+
+        await io.to(userActivate.get(userId)).emit("alarm", {
+          alarmType: "LIKED",
+        }); //유저가 좋아요를 보냈을때
 
         if (result === true) {
           await io.to(userActivate.get(userInfo.id)).emit("alarm", {
@@ -311,6 +317,8 @@ module.exports = (server, app) => {
 
         if (!username) {
           throw new Error("username is null");
+        } else if (!userId) {
+          throw new Error("userId is null");
         }
 
         const userInfo = await userService.findOneUserByUsername(username);
@@ -323,13 +331,24 @@ module.exports = (server, app) => {
           userId
         );
 
-        if (result) {
-          //연결된 유저가 좋아요를 취소했을때
-          await io.to(userActivate.get(userInfo.id)).emit("alarm", {
-            alarmType: "DISLIKED",
-            username,
-          });
+        console.log(result);
+        if (typeof result === "undefined") {
+          throw new Error("Bad Request");
         }
+
+        //연결된 유저가 좋아요를 취소했을때
+        await io.to(userActivate.get(userInfo.id)).emit("alarm", {
+          alarmType: "DISLIKED",
+        });
+        await io.to(userActivate.get(userId)).emit("alarm", {
+          alarmType: "DISLIKED",
+        });
+
+        console.log("shoot");
+        //if (result === true) {
+        //} else {
+
+        //}
       } catch (error) {
         logger.error("user.socket.js dislikeUser error: " + error.message);
         io.to(socket.id).emit("error", error.message);
@@ -346,6 +365,8 @@ module.exports = (server, app) => {
 
         if (!username) {
           throw new Error("username is null");
+        } else if (!userId) {
+          throw new Error("userId is null");
         }
 
         const userInfo = await userService.findOneUserByUsername(username);

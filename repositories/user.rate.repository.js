@@ -82,7 +82,33 @@ const findRateInfoById = async (id) => {
   }
 };
 
+const findRateAvgByUserId = async (id) => {
+  try {
+    logger.info("user.rate.repository.js findRateAvgByUserId: " + id);
+    const meanRate = await client.query(
+      `
+            SELECT AVG(rate_score) AS mean_rate
+            FROM user_ratings
+            WHERE rated_id = $1
+        `,
+      [id]
+    );
+
+    if (meanRate.rows[0].mean_rate === null) {
+      return 0;
+    }
+
+    return meanRate.rows[0].mean_rate;
+  } catch (error) {
+    logger.error(
+      "user.rate.repository.js findRateAvgByUserId: " + error.message
+    );
+    throw error;
+  }
+};
+
 module.exports = {
   rateUser,
   findRateInfoById,
+  findRateAvgByUserId,
 };

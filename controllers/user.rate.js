@@ -26,7 +26,10 @@ router.post("/", verifyAllprocess, async function (req, res, next) {
         parseFloat(rateScore),
         req.jwtInfo.id
       );
-      return res.send();
+
+      const rateAvg = await userRateSerivce.findRateAvgByUserId(req.jwtInfo.id);
+
+      return res.send({ rateAvg });
     }
   } catch (error) {
     next(error);

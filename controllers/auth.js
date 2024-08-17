@@ -458,15 +458,13 @@ router.get("/reset/email/verify", async function (req, res, next) {
 /* GET /auth/check/access
  */
 
-router.get("/check/access"),
-  verifyAllprocess,
-  async function (req, res, next) {
-    try {
-      logger.info("auth.js GET /auth/check/access");
-      return res.send("Access verified.");
-    } catch (error) {
-      next(error);
-    }
-  };
+router.get("/check/access", verifyAllprocess, async function (req, res, next) {
+  try {
+    logger.info("auth.js GET /auth/check/access");
+    return res.send("Access verified.");
+  } catch (error) {
+    next(error);
+  }
+});
 
 module.exports = router;

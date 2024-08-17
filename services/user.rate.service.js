@@ -27,6 +27,18 @@ const rateUser = async (ratedUsername, rateScore, userId) => {
   }
 };
 
+const findRateAvgByUserId = async (userId) => {
+  try {
+    logger.info("user.rate.service.js findRateAvgByUserId: " + userId);
+    const meanRate = await userRateRepository.findRateAvgByUserId(userId);
+    return meanRate;
+  } catch (error) {
+    logger.error("user.rate.service.js findRateAvgByUserId: " + error.message);
+    throw error;
+  }
+};
+
 module.exports = {
   rateUser,
+  findRateAvgByUserId,
 };
