@@ -307,6 +307,8 @@ router.get("/find", verifyAllprocess, async function (req, res, next) {
 
     sortInfo = sortInfo ? sortInfo : "dscRate";
 
+    console.log(sortInfo);
+
     return res.send({ users, totalCount, currentPage: Number(page), sortInfo });
   } catch (error) {
     next(error);

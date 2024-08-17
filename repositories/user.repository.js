@@ -188,7 +188,7 @@ const findUserByDefaultFilter = async (id, preference, si, gu, hashtags) => {
     const UserInfo = await Promise.all(
       filteredUserInfos
         .sort((a, b) => {
-          if (!sortInfo || sortInfo === "dscRate") {
+          if (!sortInfo || sortInfo === "descRate") {
             if (a.rate < b.rate) return 1;
             if (a.rate > b.rate) return -1;
             return 0;
@@ -201,7 +201,7 @@ const findUserByDefaultFilter = async (id, preference, si, gu, hashtags) => {
               if (a.rate < b.rate) return -1;
               if (a.rate > b.rate) return 1;
               return 0;
-            } else if (sortInfo === "dscAge") {
+            } else if (sortInfo === "descAge") {
               if (a.age < b.age) return 1;
               if (a.age > b.age) return -1;
               return 0;
@@ -377,7 +377,7 @@ const findUserByFilter = async (filter, id) => {
     const UserInfos = await Promise.all(
       filteredUserInfos
         .sort((a, b) => {
-          if (!sortInfo || sortInfo === "dscRate") {
+          if (!sortInfo || sortInfo === "descRate") {
             if (a.rate < b.rate) return 1;
             if (a.rate > b.rate) return -1;
             return 0;
@@ -390,7 +390,7 @@ const findUserByFilter = async (filter, id) => {
               if (a.rate < b.rate) return -1;
               if (a.rate > b.rate) return 1;
               return 0;
-            } else if (sortInfo === "dscAge") {
+            } else if (sortInfo === "descAge") {
               if (a.age < b.age) return 1;
               if (a.age > b.age) return -1;
               return 0;

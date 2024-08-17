@@ -481,8 +481,8 @@ function validateSortInfo(sortInfo) {
   if (
     !sortInfo === "ascAge" ||
     !sortInfo === "ascRate" ||
-    !sortInfo === "dscAge" ||
-    !sortInfo === "dscRate"
+    !sortInfo === "descAge" ||
+    !sortInfo === "descRate"
   ) {
     return false;
   }
