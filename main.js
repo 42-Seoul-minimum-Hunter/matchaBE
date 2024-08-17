@@ -25,12 +25,25 @@ const client = new Client({
 const app = express();
 
 const server = http.createServer(app);
-const io = socketIO(server);
+const io = socketIO(server, {
+  cors: {
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:3000",
+      "http://localhost:3001",
+    ],
+    credentials: false, // 쿠키를 주고받을 수 있도록 설정
+  },
+});
 
 //cors 허용
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:3000"],
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:3000",
+      "http://localhost:3001",
+    ],
     //origin: true,
     credentials: false,
   })

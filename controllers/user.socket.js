@@ -138,18 +138,22 @@ module.exports = (server, app) => {
           const chatHistories =
             await userChatService.findAllChatHistoriesByRoomId(chatRoomInfo.id);
 
+          console.log("chatHistories: " + JSON.stringify(chatHistories));
+
           if (chatHistories) {
             const chatHistory = await Promise.all(
               chatHistories.map(async (chat) => {
                 const userInfo = await userService.findOneUserById(
                   chat.sender_id
                 );
+
+                console.log("userInfo: " + JSON.stringify(userInfo));
                 if (!userInfo) {
                   return null;
                 }
                 return {
                   message: chat.content,
-                  username: userInfo.username,
+                  sender: userInfo.username,
                   createdAt: chat.created_at,
                 };
               })
@@ -157,6 +161,10 @@ module.exports = (server, app) => {
 
             const filteredChatHistory = chatHistory.filter(
               (history) => history !== null
+            );
+
+            console.log(
+              "filteredChatHistory: " + JSON.stringify(filteredChatHistory)
             );
 
             await io.to(socketId).emit("getMessages", filteredChatHistory);
@@ -186,31 +194,33 @@ module.exports = (server, app) => {
         const userId = [...userActivate.entries()].find(
           ([key, value]) => value === socket.id
         )?.[0];
-        const { message, username } = data;
+        const { message, reciever } = data;
 
-        if (!message || !username) {
+        if (!message || !reciever) {
           throw new Error("message or username is null");
         } else if (!validateMessage(message)) {
           throw new Error("message is invalid");
         }
 
-        const userInfo = await userService.findOneUserByUsername(username);
+        const recieverInfo = await userService.findOneUserByUsername(reciever);
 
-        if (!userInfo) {
+        if (!recieverInfo) {
           throw new Error("userInfo is null");
         }
 
         const chatRoomInfo = await userChatService.findOneChatRoomById(
           userId,
-          userInfo.id
+          recieverInfo.id
         );
+
+        const senderInfo = await userService.findOneUserById(userId);
 
         if (!chatRoomInfo) {
           throw new Error("chatRoomInfo is null");
         }
         const param = {
           message,
-          username,
+          sender: senderInfo.username,
           createdAt: new Date(),
         };
 

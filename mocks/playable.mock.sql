@@ -129,20 +129,20 @@ VALUES
 (699, 701, 3, '2020-01-01 00:00:00');
 
 
---INSERT INTO user_like_histories
---(user_id, liked_id, created_at)
---VALUES
---(701, 702, '2020-01-01 00:00:00');
+INSERT INTO user_like_histories
+(user_id, liked_id, created_at)
+VALUES
+(701, 702, '2020-01-01 00:00:00');
 
---INSERT INTO user_like_histories
---(user_id, liked_id, created_at)
---VALUES
---(702, 701, '2020-01-01 00:00:00');
+INSERT INTO user_like_histories
+(user_id, liked_id, created_at)
+VALUES
+(702, 701, '2020-01-01 00:00:00');
 
---INSERT INTO user_chat_rooms
---(user_id, chated_id, created_at, deleted_at)
---VALUES
---(701, 702, '2020-01-01 00:00:00', NULL);
+INSERT INTO user_chat_rooms
+(user_id, chated_id, created_at, deleted_at)
+VALUES
+(701, 702, '2020-01-01 00:00:00', NULL);
 
 INSERT INTO user_chat_rooms
 (user_id, chated_id, created_at, deleted_at)
