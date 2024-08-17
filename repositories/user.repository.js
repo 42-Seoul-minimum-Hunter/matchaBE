@@ -242,8 +242,8 @@ const findUserByDefaultFilter = async (id, preference, si, gu, hashtags) => {
               profileImages: profileImages ? profileImages[0] : null,
               rate: userInfo.rate,
               commonHashtags: commonHashtags,
-              si: userRegions.si,
-              gu: userRegions.gu,
+              si: userRegions[0].si,
+              gu: userRegions[0].gu,
             };
           }
         })
@@ -409,7 +409,7 @@ const findUserByFilter = async (filter, id) => {
               "base64"
             ).toString("utf-8");
 
-            const userRegions = userRegionRepository.findRegionById(
+            const userRegions = await userRegionRepository.findRegionById(
               userInfo.id
             );
 
@@ -419,12 +419,14 @@ const findUserByFilter = async (filter, id) => {
               age: userInfo.age,
               profileImages: profileImageInfo,
               rate: userInfo.rate,
-              si: userRegions.si,
-              gu: userRegions.gu,
+              si: userRegions[0].si,
+              gu: userRegions[0].gu,
             };
           }
         })
     );
+
+    //console.log("UserInfos: " + JSON.stringify(UserInfos));
 
     return {
       users: UserInfos,
