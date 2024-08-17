@@ -12,6 +12,7 @@ const rateUser = async (ratedUsername, rateScore, userId) => {
         ", " +
         userId
     );
+    console.log("hello world");
     const ratedUserInfo = await userRepository.findUserByUsername(
       ratedUsername
     );
