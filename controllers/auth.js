@@ -372,8 +372,6 @@ router.get("/register/email/verify", async function (req, res, next) {
 
     const password = registerPasswordList.get(code);
 
-    console.log(password);
-
     if (!decoded) {
       return res.status(400).send("Invalid code.");
     } else if (decoded.expirationDate < new Date()) {

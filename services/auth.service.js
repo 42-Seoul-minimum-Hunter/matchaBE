@@ -20,16 +20,11 @@ const loginByUsernameAndPassword = async (username, password) => {
     );
 
     const userInfo = await userRepository.findUserByUsername(username);
-
-    console.log(
-      "bcrpy compare: " + bcrypt.compare(password, userInfo.password)
-    );
-
     if (!userInfo) {
       const error = new Error("User not found");
       error.status = 404;
       throw error;
-    } else if (bcrypt.compare(password, userInfo.password) === false) {
+    } else if ((await bcrypt.compare(password, userInfo.password)) === false) {
       const error = new Error("Password not match");
       error.status = 400;
       throw error;

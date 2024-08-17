@@ -53,7 +53,6 @@ function validatePreference(preference) {
 // hashtags 검사 함수
 function validateHashtags(hashtags) {
   for (let hashtag of hashtags) {
-    console.log(hashtag);
     if (
       hashtag !== "ANIMALS" &&
       hashtag !== "ART" &&
