@@ -21,7 +21,7 @@ const reportUser = async (reportedUsername, userId) => {
 
     const likeInfo = await userLikeRepository.getLikeUserHistoryById(
       userId,
-      blockedUserInfo.id
+      reportedUserInfo.id
     );
     if (likeInfo.length > 0) {
       const error = new Error("You cannot block a user you like.");
