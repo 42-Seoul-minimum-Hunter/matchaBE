@@ -22,6 +22,12 @@ const rateUser = async (ratedUsername, rateScore, userId) => {
       throw error;
     }
     await userRateRepository.rateUser(ratedUserInfo.id, rateScore, userId);
+
+    const meanRate = await userRateRepository.findRateAvgByUserId(
+      ratedUserInfo.id
+    );
+
+    return meanRate;
   } catch (error) {
     logger.error("user.rate.service.js rateUser: " + error.message);
     throw error;

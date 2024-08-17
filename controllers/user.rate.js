@@ -21,13 +21,11 @@ router.post("/", verifyAllprocess, async function (req, res, next) {
     } else if (rateScore < 0.0 || rateScore > 5.0) {
       return res.status(400).send("Rate score must be between 0.0 and 5.0");
     } else {
-      await userRateSerivce.rateUser(
+      const rateAvg = await userRateSerivce.rateUser(
         ratedUsername,
         parseFloat(rateScore),
         req.jwtInfo.id
       );
-
-      const rateAvg = await userRateSerivce.findRateAvgByUserId(req.jwtInfo.id);
 
       return res.send({ rateAvg });
     }

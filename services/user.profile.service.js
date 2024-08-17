@@ -68,11 +68,6 @@ const getUserProfile = async (username, userId) => {
       userId
     );
 
-    const chatRoomInfo = await userChatRepository.findOneChatRoomById(
-      userId,
-      userInfo.id
-    );
-
     const user = {
       id: userInfo.id,
       username: userInfo.username,
@@ -95,7 +90,13 @@ const getUserProfile = async (username, userId) => {
         sendedlikedInfo && sendedlikedInfo.length > 0 ? true : false,
       isReceivedLiked:
         receivedlikedInfo && receivedlikedInfo.length > 0 ? true : false,
-      isMatched: chatRoomInfo && chatRoomInfo.length > 0 ? true : false,
+      isMatched:
+        sendedlikedInfo &&
+        sendedlikedInfo.length > 0 &&
+        receivedlikedInfo &&
+        receivedlikedInfo.length > 0
+          ? true
+          : false,
     };
 
     if (userId !== userInfo.id) {

@@ -144,6 +144,9 @@ module.exports = (server, app) => {
                 const userInfo = await userService.findOneUserById(
                   chat.sender_id
                 );
+                if (!userInfo) {
+                  return null;
+                }
                 return {
                   message: chat.content,
                   username: userInfo.username,
@@ -235,9 +238,6 @@ module.exports = (server, app) => {
           }
         }
         await userAlarmService.saveAlarmById(userId, userInfo.id, "MESSAGED");
-
-        const chatHistories =
-          await userChatService.findAllChatHistoriesByRoomId(chatRoomInfo.id);
       } catch (error) {
         logger.error("user.socket.js sendMessage error: " + error.message);
         io.to(socket.id).emit("error", error.message);
@@ -285,14 +285,13 @@ module.exports = (server, app) => {
           userId
         );
 
+        if (typeof result === "undefined") {
+          throw new Error("Bad Request");
+        }
+
         await io.to(userActivate.get(userInfo.id)).emit("alarm", {
           alarmType: "LIKED",
         }); //유저가 좋아요를 받았을때
-
-        await io.to(userActivate.get(userId)).emit("alarm", {
-          alarmType: "LIKED",
-        }); //유저가 좋아요를 보냈을때
-
         if (result === true) {
           await io.to(userActivate.get(userInfo.id)).emit("alarm", {
             alarmType: "MATCHED",
@@ -331,7 +330,6 @@ module.exports = (server, app) => {
           userId
         );
 
-        console.log(result);
         if (typeof result === "undefined") {
           throw new Error("Bad Request");
         }
@@ -340,15 +338,15 @@ module.exports = (server, app) => {
         await io.to(userActivate.get(userInfo.id)).emit("alarm", {
           alarmType: "DISLIKED",
         });
-        await io.to(userActivate.get(userId)).emit("alarm", {
-          alarmType: "DISLIKED",
-        });
 
-        console.log("shoot");
-        //if (result === true) {
-        //} else {
-
-        //}
+        if (result === true) {
+          await io.to(userActivate.get(userInfo.id)).emit("alarm", {
+            alarmType: "UNMATCHED",
+          });
+          await io.to(userActivate.get(userId)).emit("alarm", {
+            alarmType: "UNMATCHED",
+          });
+        }
       } catch (error) {
         logger.error("user.socket.js dislikeUser error: " + error.message);
         io.to(socket.id).emit("error", error.message);
