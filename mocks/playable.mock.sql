@@ -123,6 +123,11 @@ INSERT INTO user_ratings
 VALUES
 (702, 696, 4, '2020-01-01 00:00:00');
 
+INSERT INTO user_ratings
+(user_id, rated_id, rate_score, rated_at)
+VALUES
+(699, 701, 3, '2020-01-01 00:00:00');
+
 
 INSERT INTO user_like_histories
 (user_id, liked_id, created_at)
