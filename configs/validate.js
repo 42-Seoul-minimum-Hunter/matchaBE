@@ -505,7 +505,8 @@ function validateProfileImages(profileImages) {
 }
 
 function validateMessage(message) {
-  const messageRegex = /^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};:"\\|,.\/?]{1,255}$/;
+  const messageRegex =
+    /^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};:"\\|,.\/?\uAC00-\uD7AF]{1,255}$/;
   return messageRegex.test(message);
 }
 
