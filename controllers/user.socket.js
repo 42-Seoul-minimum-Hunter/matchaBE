@@ -188,24 +188,26 @@ module.exports = (server, app) => {
     }
 
     // 채팅 받아서 저장하고, 그 채팅 보내서 보여주기
+
+    //채팅 받는 사람 === username
     socket.on("sendMessage", async (data) => {
       try {
         logger.info("user.socket.js sendMessage: " + JSON.stringify(data));
         const userId = [...userActivate.entries()].find(
           ([key, value]) => value === socket.id
         )?.[0];
-        const { message, reciever } = data;
+        const { message, username } = data;
 
-        if (!message || !reciever) {
+        if (!message || !username) {
           throw new Error("message or username is null");
         } else if (!validateMessage(message)) {
           throw new Error("message is invalid");
         }
 
-        const recieverInfo = await userService.findOneUserByUsername(reciever);
+        const recieverInfo = await userService.findOneUserByUsername(username);
 
         if (!recieverInfo) {
-          throw new Error("userInfo is null");
+          throw new Error("recieverInfo is null");
         }
 
         const chatRoomInfo = await userChatService.findOneChatRoomById(
@@ -232,7 +234,7 @@ module.exports = (server, app) => {
 
         await io.to(chatRoomInfo.id).emit("sendMessage", param);
         //await io
-        //.to(await userActivate.get(userInfo.id))
+        //.to(await userActivate.get(recieverInfo.id))
         //.emit("getMessages", param);
         //await socket.to(chatRoomInfo.id).emit("getMessages", param);
 
@@ -241,13 +243,17 @@ module.exports = (server, app) => {
         );
 
         for (const existUserSocketId of chatRoomExistUsers) {
-          if (existUserSocketId !== userActivate.get(userInfo.id)) {
-            await io.to(await userActivate.get(userInfo.id)).emit("alarm", {
+          if (existUserSocketId !== userActivate.get(recieverInfo.id)) {
+            await io.to(await userActivate.get(recieverInfo.id)).emit("alarm", {
               AlarmType: "MESSAGED",
             });
           }
         }
-        await userAlarmService.saveAlarmById(userId, userInfo.id, "MESSAGED");
+        await userAlarmService.saveAlarmById(
+          userId,
+          recieverInfo.id,
+          "MESSAGED"
+        );
       } catch (error) {
         logger.error("user.socket.js sendMessage error: " + error.message);
         io.to(socket.id).emit("error", error.message);
