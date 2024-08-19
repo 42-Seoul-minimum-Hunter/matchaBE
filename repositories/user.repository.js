@@ -188,25 +188,9 @@ const findUserByDefaultFilter = async (id, preference, si, gu, hashtags) => {
     const UserInfo = await Promise.all(
       filteredUserInfos
         .sort((a, b) => {
-          if (!sortInfo || sortInfo === "descRate") {
-            if (a.rate < b.rate) return 1;
-            if (a.rate > b.rate) return -1;
-            return 0;
-          } else {
-            if (sortInfo === "ascAge") {
-              if (a.age < b.age) return -1;
-              if (a.age > b.age) return 1;
-              return 0;
-            } else if (sortInfo === "ascRate") {
-              if (a.rate < b.rate) return -1;
-              if (a.rate > b.rate) return 1;
-              return 0;
-            } else if (sortInfo === "descAge") {
-              if (a.age < b.age) return 1;
-              if (a.age > b.age) return -1;
-              return 0;
-            }
-          }
+          if (a.rate < b.rate) return 1;
+          if (a.rate > b.rate) return -1;
+          return 0;
         })
         .map(async (userInfo) => {
           if (userInfo.id !== id) {
@@ -239,7 +223,7 @@ const findUserByDefaultFilter = async (id, preference, si, gu, hashtags) => {
               id: userInfo.id,
               username: userInfo.username,
               age: userInfo.age,
-              profileImages: profileImages ? profileImages[0] : null,
+              profileImages: profileImageInfo,
               rate: userInfo.rate,
               commonHashtags: commonHashtags,
               si: userRegions[0].si,
