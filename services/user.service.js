@@ -26,6 +26,10 @@ const createUser = async (userInfo, email, password) => {
       const error = new Error("It has already been registered username");
       error.status = 409;
       throw error;
+    } else if (await userRepository.findUserByEmail(email)) {
+      const error = new Error("It has already been registered email");
+      error.status = 409;
+      throw error;
     }
 
     const userId = await userRepository.createUser(userInfo, email, password);
