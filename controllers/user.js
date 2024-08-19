@@ -93,29 +93,32 @@ router.post(
       }
 
       // hashtags 처리
-      if (Array.isArray(user.hashtags)) {
-        user.hashtags = user.hashtags
+      if (Array.isArray(userInfo.hashtags)) {
+        userInfo.hashtags = userInfo.hashtags
           .map((tag) => tag.trim())
           .filter((tag) => tag); // 각 태그의 공백 제거 및 빈 태그 필터링
-      } else if (typeof user.hashtags === "string") {
-        user.hashtags = user.hashtags
+      } else if (typeof userInfo.hashtags === "string") {
+        userInfo.hashtags = userInfo.hashtags
           .replace(/[\[\]']/g, "")
           .split(",")
           .map((tag) => tag.trim())
           .filter((tag) => tag);
       } else {
-        user.hashtags = undefined; // 다른 타입일 경우 undefined로 설정
+        userInfo.hashtags = undefined; // 다른 타입일 경우 undefined로 설정
       }
 
       // profileImages 처리
-      if (Array.isArray(user.profileImages)) {
-        if (user.profileImages.length < 5 || user.profileImages.length > 7) {
+      if (Array.isArray(userInfo.profileImages)) {
+        if (
+          userInfo.profileImages.length < 5 ||
+          userInfo.profileImages.length > 7
+        ) {
           return res.status(400).send("Please enter 5~7 profileImages.");
         } else if (!validateProfileImages(userInfo.profileImages)) {
           return res.status(400).send("Please enter a valid profileImages.");
         }
 
-        user.profileImages = user.profileImages.map((image) => {
+        userInfo.profileImages = userInfo.profileImages.map((image) => {
           return Buffer.from(image).toString("base64");
         });
       } else {
