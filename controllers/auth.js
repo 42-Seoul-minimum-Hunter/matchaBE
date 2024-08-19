@@ -192,31 +192,44 @@ router.get("/callback", async function (req, res, next) {
     } else {
       const authInfo = await authService.findAuthInfoById(user.id);
 
-      jwtToken = authService.generateJWT({
-        id: user.id,
-        email: user.email,
-        isOauth: true,
-        accessToken: oauthInfo.accessToken,
-        twofaVerified: false,
-      });
-
-      if (authInfo.is_twofa === false) {
-        jwtToken.twofaVerified = true;
-      }
-
-      res.cookie("jwt", jwtToken, {
-        //httpOnly: true,
-        //secure: false,
-      });
-
-      res.set("Authorization", `Bearer ${jwtToken}`);
-
-      await userService.updateConnectedAtById(user.id);
-
       if (authInfo.is_twofa === true) {
+        jwtToken = authService.generateJWT({
+          id: user.id,
+          email: user.email,
+          isOauth: true,
+          accessToken: oauthInfo.accessToken,
+          twofaVerified: false,
+        });
+
+        res.cookie("jwt", jwtToken, {
+          //httpOnly: true,
+          //secure: false,
+        });
+
+        res.set("Authorization", `Bearer ${jwtToken}`);
+
+        await userService.updateConnectedAtById(user.id);
+
         return res.redirect(process.env.FE_TWOFACTOR_URL);
       } else {
-        return res.send();
+        jwtToken = authService.generateJWT({
+          id: user.id,
+          email: user.email,
+          isOauth: true,
+          accessToken: oauthInfo.accessToken,
+          twofaVerified: true,
+        });
+
+        res.cookie("jwt", jwtToken, {
+          //httpOnly: true,
+          //secure: false,
+        });
+
+        res.set("Authorization", `Bearer ${jwtToken}`);
+
+        await userService.updateConnectedAtById(user.id);
+
+        return res.redirect(process.env.FE_MAIN_URL);
       }
     }
   } catch (error) {

@@ -1,5 +1,6 @@
 const socket = require("socket.io");
 const jwt = require("jsonwebtoken");
+const Filter = require("badwords-ko");
 
 const userService = require("../services/user.service");
 const userChatService = require("../services/user.chat.service");
@@ -37,6 +38,8 @@ module.exports = (server, app) => {
       credentials: true,
     },
   });
+
+  const filter = new Filter();
 
   const userActivate = new Map();
   //var userId;
@@ -196,13 +199,17 @@ module.exports = (server, app) => {
         const userId = [...userActivate.entries()].find(
           ([key, value]) => value === socket.id
         )?.[0];
-        const { message, username } = data;
+        const { username } = data;
+
+        let { message } = data;
 
         if (!message || !username) {
           throw new Error("message or username is null");
         } else if (!validateMessage(message)) {
           throw new Error("message is invalid");
         }
+
+        message = filter.clean(message);
 
         const recieverInfo = await userService.findOneUserByUsername(username);
 
