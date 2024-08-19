@@ -338,10 +338,6 @@ const checkChatRoomExist = async (userId, chatedId) => {
         SELECT *
         FROM user_chat_rooms
         WHERE user_id = $1 AND chated_id = $2 AND deleted_at IS NULL
-        INTERSECT
-        SELECT *
-        FROM user_chat_rooms
-        WHERE user_id = $2 AND chated_id = $1 AND deleted_at IS NULL
         `,
       [userId, chatedId]
     );

@@ -158,12 +158,16 @@ code : String OAuth 인증 코드
 router.post("/callback", async function (req, res, next) {
   try {
     logger.info("auth.js POST /auth/callback: " + JSON.stringify(req.body));
-    const code = req.body;
+    const code = req.body.code;
     if (!code) {
       return res.status(401).send("Code not found.");
     }
 
     const result = await authService.getOauthInfo(code);
+
+    if (!result) {
+      return res.status(401).send("Failed to get oauth info.");
+    }
 
     const { user, oauthInfo } = result;
 
@@ -258,6 +262,7 @@ router.post(
 
       res.send();
     } catch (error) {
+      logger.error("auth.js POST /auth/twofactor/create: " + error.message);
       next(error);
     }
   }
@@ -458,15 +463,13 @@ router.get("/reset/email/verify", async function (req, res, next) {
 /* GET /auth/check/access
  */
 
-router.get("/check/access"),
-  verifyAllprocess,
-  async function (req, res, next) {
-    try {
-      logger.info("auth.js GET /auth/check/access");
-      return res.send("Access verified.");
-    } catch (error) {
-      next(error);
-    }
-  };
+router.get("/check/access", verifyAllprocess, async function (req, res, next) {
+  try {
+    logger.info("auth.js GET /auth/check/access");
+    return res.send("Access verified.");
+  } catch (error) {
+    next(error);
+  }
+});
 
 module.exports = router;

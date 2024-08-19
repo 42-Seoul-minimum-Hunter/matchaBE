@@ -67,13 +67,13 @@ const dislikeUserByUsername = async (likedUsername, userId) => {
       throw error;
     }
     await userLikeRepository.dislikeUserByUsername(likedUserInfo.id, userId);
+    await userAlarmRepository.saveAlarmById(
+      userId,
+      likedUserInfo.id,
+      "DISLIKED"
+    );
     if (await userChatRepository.checkChatRoomExist(likedUserInfo.id, userId)) {
       await userChatRepository.deleteChatRoom(likedUserInfo.id, userId);
-      await userAlarmRepository.saveAlarmById(
-        userId,
-        likedUserInfo.id,
-        "DISLIKED"
-      );
       return true;
     } else {
       return false;

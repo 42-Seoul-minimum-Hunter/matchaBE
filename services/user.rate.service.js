@@ -12,6 +12,7 @@ const rateUser = async (ratedUsername, rateScore, userId) => {
         ", " +
         userId
     );
+    console.log("hello world");
     const ratedUserInfo = await userRepository.findUserByUsername(
       ratedUsername
     );
@@ -21,12 +22,30 @@ const rateUser = async (ratedUsername, rateScore, userId) => {
       throw error;
     }
     await userRateRepository.rateUser(ratedUserInfo.id, rateScore, userId);
+
+    const meanRate = await userRateRepository.findRateAvgByUserId(
+      ratedUserInfo.id
+    );
+
+    return meanRate;
   } catch (error) {
     logger.error("user.rate.service.js rateUser: " + error.message);
     throw error;
   }
 };
 
+const findRateAvgByUserId = async (userId) => {
+  try {
+    logger.info("user.rate.service.js findRateAvgByUserId: " + userId);
+    const meanRate = await userRateRepository.findRateAvgByUserId(userId);
+    return meanRate;
+  } catch (error) {
+    logger.error("user.rate.service.js findRateAvgByUserId: " + error.message);
+    throw error;
+  }
+};
+
 module.exports = {
   rateUser,
+  findRateAvgByUserId,
 };

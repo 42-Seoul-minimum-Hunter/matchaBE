@@ -138,15 +138,22 @@ module.exports = (server, app) => {
           const chatHistories =
             await userChatService.findAllChatHistoriesByRoomId(chatRoomInfo.id);
 
+          console.log("chatHistories: " + JSON.stringify(chatHistories));
+
           if (chatHistories) {
             const chatHistory = await Promise.all(
               chatHistories.map(async (chat) => {
                 const userInfo = await userService.findOneUserById(
                   chat.sender_id
                 );
+
+                console.log("userInfo: " + JSON.stringify(userInfo));
+                if (!userInfo) {
+                  return null;
+                }
                 return {
                   message: chat.content,
-                  username: userInfo.username,
+                  sender: userInfo.username,
                   createdAt: chat.created_at,
                 };
               })
@@ -154,6 +161,10 @@ module.exports = (server, app) => {
 
             const filteredChatHistory = chatHistory.filter(
               (history) => history !== null
+            );
+
+            console.log(
+              "filteredChatHistory: " + JSON.stringify(filteredChatHistory)
             );
 
             await io.to(socketId).emit("getMessages", filteredChatHistory);
@@ -177,6 +188,8 @@ module.exports = (server, app) => {
     }
 
     // 채팅 받아서 저장하고, 그 채팅 보내서 보여주기
+
+    //채팅 받는 사람 === username
     socket.on("sendMessage", async (data) => {
       try {
         logger.info("user.socket.js sendMessage: " + JSON.stringify(data));
@@ -191,23 +204,25 @@ module.exports = (server, app) => {
           throw new Error("message is invalid");
         }
 
-        const userInfo = await userService.findOneUserByUsername(username);
+        const recieverInfo = await userService.findOneUserByUsername(username);
 
-        if (!userInfo) {
-          throw new Error("userInfo is null");
+        if (!recieverInfo) {
+          throw new Error("recieverInfo is null");
         }
 
         const chatRoomInfo = await userChatService.findOneChatRoomById(
           userId,
-          userInfo.id
+          recieverInfo.id
         );
+
+        const senderInfo = await userService.findOneUserById(userId);
 
         if (!chatRoomInfo) {
           throw new Error("chatRoomInfo is null");
         }
         const param = {
           message,
-          username,
+          sender: senderInfo.username,
           createdAt: new Date(),
         };
 
@@ -219,7 +234,7 @@ module.exports = (server, app) => {
 
         await io.to(chatRoomInfo.id).emit("sendMessage", param);
         //await io
-        //.to(await userActivate.get(userInfo.id))
+        //.to(await userActivate.get(recieverInfo.id))
         //.emit("getMessages", param);
         //await socket.to(chatRoomInfo.id).emit("getMessages", param);
 
@@ -228,16 +243,17 @@ module.exports = (server, app) => {
         );
 
         for (const existUserSocketId of chatRoomExistUsers) {
-          if (existUserSocketId !== userActivate.get(userInfo.id)) {
-            await io.to(await userActivate.get(userInfo.id)).emit("alarm", {
+          if (existUserSocketId !== userActivate.get(recieverInfo.id)) {
+            await io.to(await userActivate.get(recieverInfo.id)).emit("alarm", {
               AlarmType: "MESSAGED",
             });
           }
         }
-        await userAlarmService.saveAlarmById(userId, userInfo.id, "MESSAGED");
-
-        const chatHistories =
-          await userChatService.findAllChatHistoriesByRoomId(chatRoomInfo.id);
+        await userAlarmService.saveAlarmById(
+          userId,
+          recieverInfo.id,
+          "MESSAGED"
+        );
       } catch (error) {
         logger.error("user.socket.js sendMessage error: " + error.message);
         io.to(socket.id).emit("error", error.message);
@@ -271,6 +287,8 @@ module.exports = (server, app) => {
 
         if (!username) {
           throw new Error("username is null");
+        } else if (!userId) {
+          throw new Error("userId is null");
         }
         const userInfo = await userService.findOneUserByUsername(username);
 
@@ -283,10 +301,13 @@ module.exports = (server, app) => {
           userId
         );
 
+        if (typeof result === "undefined") {
+          throw new Error("Bad Request");
+        }
+
         await io.to(userActivate.get(userInfo.id)).emit("alarm", {
           alarmType: "LIKED",
         }); //유저가 좋아요를 받았을때
-
         if (result === true) {
           await io.to(userActivate.get(userInfo.id)).emit("alarm", {
             alarmType: "MATCHED",
@@ -311,6 +332,8 @@ module.exports = (server, app) => {
 
         if (!username) {
           throw new Error("username is null");
+        } else if (!userId) {
+          throw new Error("userId is null");
         }
 
         const userInfo = await userService.findOneUserByUsername(username);
@@ -318,17 +341,40 @@ module.exports = (server, app) => {
           throw new Error("userInfo is null");
         }
 
+        const chatRoomInfo = await userChatService.findOneChatRoomById(
+          userId,
+          userInfo.id
+        );
+
         const result = await userLikeService.dislikeUserByUsername(
           username,
           userId
         );
 
-        if (result) {
-          //연결된 유저가 좋아요를 취소했을때
+        socket.had;
+
+        if (typeof result === "undefined") {
+          throw new Error("Bad Request");
+        }
+
+        //연결된 유저가 좋아요를 취소했을때
+        await io.to(userActivate.get(userInfo.id)).emit("alarm", {
+          alarmType: "DISLIKED",
+        });
+
+        if (result === true) {
           await io.to(userActivate.get(userInfo.id)).emit("alarm", {
-            alarmType: "DISLIKED",
-            username,
+            alarmType: "UNMATCHED",
           });
+
+          if (
+            (await io.sockets.adapter.rooms.get(chatRoomInfo.id)) ===
+            (await userActivate.get(userInfo.id))
+          ) {
+            await io.to(userActivate.get(userId)).emit("alarm", {
+              alarmType: "UNMATCHED",
+            });
+          }
         }
       } catch (error) {
         logger.error("user.socket.js dislikeUser error: " + error.message);
@@ -346,6 +392,8 @@ module.exports = (server, app) => {
 
         if (!username) {
           throw new Error("username is null");
+        } else if (!userId) {
+          throw new Error("userId is null");
         }
 
         const userInfo = await userService.findOneUserByUsername(username);

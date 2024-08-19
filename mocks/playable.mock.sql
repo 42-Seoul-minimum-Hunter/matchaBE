@@ -106,22 +106,27 @@ VALUES
 INSERT INTO user_ratings
 (user_id, rated_id, rate_score, rated_at)
 VALUES
+(699, 701, 3, '2020-01-01 00:00:00');
+
+INSERT INTO user_ratings
+(user_id, rated_id, rate_score, rated_at)
+VALUES
+(699, 702,  4, '2020-01-01 00:00:00');
+
+INSERT INTO user_ratings
+(user_id, rated_id, rate_score, rated_at)
+VALUES
+(696, 701, 3, '2020-01-01 00:00:00');
+
+INSERT INTO user_ratings
+(user_id, rated_id, rate_score, rated_at)
+VALUES
+(696, 702, 4, '2020-01-01 00:00:00');
+
+INSERT INTO user_ratings
+(user_id, rated_id, rate_score, rated_at)
+VALUES
 (701, 699, 3, '2020-01-01 00:00:00');
-
-INSERT INTO user_ratings
-(user_id, rated_id, rate_score, rated_at)
-VALUES
-(702, 699, 4, '2020-01-01 00:00:00');
-
-INSERT INTO user_ratings
-(user_id, rated_id, rate_score, rated_at)
-VALUES
-(701, 696, 3, '2020-01-01 00:00:00');
-
-INSERT INTO user_ratings
-(user_id, rated_id, rate_score, rated_at)
-VALUES
-(702, 696, 4, '2020-01-01 00:00:00');
 
 
 INSERT INTO user_like_histories
@@ -144,10 +149,10 @@ INSERT INTO user_chat_rooms
 VALUES
 (701, 703, '2020-01-01 00:00:00', NULL);
 
-INSERT INTO user_chat_histories
-(room_id, sender_id, content, created_at)
-VALUES
-(1, 702, 'hello', '2020-01-01 00:00:00');
+--INSERT INTO user_chat_histories
+--(room_id, sender_id, content, created_at)
+--VALUES
+--(1, 702, 'hello', '2020-01-01 00:00:00');
 
 --INSERT INTO user_chat_histories
 --(room_id, sender_id, content, created_at)

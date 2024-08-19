@@ -133,3 +133,5 @@ socket.client.js
 client*.html
 
 .idea/*
+
+.DS_Store
