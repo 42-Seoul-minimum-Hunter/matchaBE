@@ -155,10 +155,12 @@ router.delete("/logout", function (req, res, next) {
 /* POST /auth/callback
 code : String OAuth 인증 코드
 */
-router.post("/callback", async function (req, res, next) {
+
+//TODO: 기가입된 일반유저의 EMAIL로 OAUTH 하는 경우 막기
+router.get("/callback", async function (req, res, next) {
   try {
-    logger.info("auth.js POST /auth/callback: " + JSON.stringify(req.body));
-    const code = req.body.code;
+    logger.info("auth.js POST /auth/callback: " + JSON.stringify(req.query));
+    const code = req.query.code;
     if (!code) {
       return res.status(401).send("Code not found.");
     }
@@ -211,7 +213,11 @@ router.post("/callback", async function (req, res, next) {
 
       await userService.updateConnectedAtById(user.id);
 
-      return res.send(authInfo.is_twofa);
+      if (authInfo.is_twofa === true) {
+        return res.redirect(process.env.FE_TWOFACTOR_URL);
+      } else {
+        return res.send();
+      }
     }
   } catch (error) {
     next(error);
@@ -473,3 +479,7 @@ router.get("/check/access", verifyAllprocess, async function (req, res, next) {
 });
 
 module.exports = router;
+
+//분기 3개
+//객체 유무 분기
+//객체 내부에 Boolean값 분기
