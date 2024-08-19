@@ -9,6 +9,7 @@ const axios = require("axios");
 const logger = require("../configs/logger.js");
 const bcrypt = require("bcrypt");
 const moment = require("moment-timezone");
+const { access } = require("fs");
 
 const loginByUsernameAndPassword = async (username, password) => {
   try {
@@ -146,6 +147,8 @@ const createRegistURL = async (email, sessionInfo) => {
 
     const jwtToken = {
       email: email,
+      isOauth: sessionInfo.isOauth,
+      accessToken: sessionInfo.accessToken,
       expirationDate: expirationDate,
     };
 
