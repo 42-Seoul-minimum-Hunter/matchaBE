@@ -51,7 +51,17 @@ const getOauthInfo = async (code) => {
   try {
     logger.info("auth.service.js getOauthInfo: " + code);
     const accessToken = await getAccessTokens(code);
+    if (!accessToken) {
+      const error = new Error("Failed to get access token");
+      error.status = 400;
+      throw error;
+    }
     const oauthInfo = await getOAuthInfo(accessToken);
+    if (!oauthInfo) {
+      const error = new Error("Failed to get oauth info");
+      error.status = 400;
+      throw error;
+    }
     const user = await userRepository.findUserByEmail(oauthInfo.email);
 
     if (!user) {
@@ -70,8 +80,15 @@ const getOauthInfo = async (code) => {
       return { user: user, oauthInfo: oauthInfo };
     }
   } catch (error) {
-    logger.error("auth.service.js getOauthInfo: " + error.message);
-    throw error;
+    if (error.response && error.response.status === 401) {
+      logger.error(
+        "auth.service.js getOauthInfo: Unauthorized - " + error.message
+      );
+      error.status = 401; // Set status code explicitly
+    } else {
+      logger.error("auth.service.js getOauthInfo: " + error.message);
+    }
+    throw error; // Rethrow with proper status code
   }
 };
 
@@ -252,8 +269,6 @@ const getOAuthInfo = async (accessToken) => {
         Authorization: `Bearer ${accessToken}`,
       },
     });
-
-    console.log(response);
 
     if (response.status !== 200) {
       const error = new Error("Failed to get OAuth info");
