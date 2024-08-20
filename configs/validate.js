@@ -493,11 +493,29 @@ function validateSortInfo(sortInfo) {
 function validateProfileImages(profileImages) {
   //TODO: 프로필 이미지 개수 설정
 
+  // const urlRegex = /^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/i; // Matches a valid URL
+  // const blobRegex = /^blob:.+$/; // Matches a valid Blob URL (browser-generated)
+
+  // for (let image of profileImages) {
+  //   if (!urlRegex.test(image) && !blobRegex.test(image)) {
+  //     return false;
+  //   }
+  // }
+
+  // return true;
+
   const urlRegex = /^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/i; // Matches a valid URL
   const blobRegex = /^blob:.+$/; // Matches a valid Blob URL (browser-generated)
+  const dataUrlRegex = /^data:image\/[a-z]+;base64,/i;
+
+  // for 루프 내에서:
 
   for (let image of profileImages) {
-    if (!urlRegex.test(image) && !blobRegex.test(image)) {
+    if (
+      !urlRegex.test(image) &&
+      !blobRegex.test(image) &&
+      !dataUrlRegex.test(image)
+    ) {
       return false;
     }
   }
