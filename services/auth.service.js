@@ -70,7 +70,7 @@ const getOauthInfo = async (code) => {
     } else {
       const authInfo = await authRepository.findAuthInfoById(user.id);
       // oauth 사용자가 아닌 경우
-      if (authInfo.isOauth === false) {
+      if (authInfo.is_oauth === false) {
         const error = new Error("Not oauth user");
         error.status = 400;
         throw error;
