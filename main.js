@@ -5,7 +5,7 @@ const socketIO = require("socket.io");
 const morgan = require("morgan");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
-
+const bodyParser = require("body-parser");
 const { Client } = require("pg");
 const fs = require("fs");
 const path = require("path");
@@ -60,6 +60,17 @@ app.use(
     cookie: {
       maxAge: 1000 * 60 * 30, // 30분 (밀리초 단위)
     },
+  })
+);
+
+app.use(express.json({ limit: "100mb" }));
+app.use(express.urlencoded({ extended: true, limit: "100mb" }));
+app.use(bodyParser.json({ limit: "100mb" }));
+app.use(
+  bodyParser.urlencoded({
+    limit: "100mb",
+    extended: true,
+    parameterLimit: 50000,
   })
 );
 
