@@ -2,10 +2,6 @@ const express = require("express");
 const router = express.Router();
 const logger = require("../configs/logger.js");
 
-const { UserGender } = require("../enums/user.gender.enum.js");
-const { UserPreference } = require("../enums/user.preference.enum.js");
-const { UserHashtag } = require("../enums/user.hashtag.enum.js");
-
 const {
   validateEmail,
   validateUsername,
