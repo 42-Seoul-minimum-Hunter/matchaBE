@@ -105,11 +105,20 @@ const changePassword = async (hashedPassword, email) => {
   }
 };
 
-const findUserByDefaultFilter = async (id, preference, si, gu, hashtags) => {
+const findUserByDefaultFilter = async (
+  id,
+  gender,
+  preference,
+  si,
+  gu,
+  hashtags
+) => {
   try {
     logger.info(
       "user.repository.js findUserByDefaultFilter: " +
         id +
+        ", " +
+        gender +
         ", " +
         preference +
         ", " +
@@ -122,18 +131,23 @@ const findUserByDefaultFilter = async (id, preference, si, gu, hashtags) => {
 
     // 유저의 성향에 따른 쿼리 조건 설정
     let genderCondition;
-    if (preference === "none" || preference === "both") {
-      genderCondition = "u.gender IN ('Male', 'Female')";
-    } else {
-      genderCondition = "u.gender = $1";
+    if (preference === "NONE" || preference === "BOTH") {
+      genderCondition = "u.gender IN ('MALE', 'FEMALE')";
+    } else if (preference === "HETEROSEXUAL") {
+      genderCondition =
+        "u.gender = '" + (gender === "MALE" ? "FEMALE" : "MALE") + "'";
+    } else if (preference === "HOMOSEXUAL") {
+      genderCondition = "u.gender = '" + gender + "'";
     }
+
+    console.log(genderCondition);
 
     // 공통 해시태그 수 계산을 위한 서브쿼리
     const subQuery = `
       SELECT u.id, COUNT(uh.hashtags) AS common_hashtags
       FROM users u
       JOIN user_hashtags uh ON u.id = uh.user_id
-      WHERE $2 && uh.hashtags
+      WHERE $1 && uh.hashtags
       GROUP BY u.id
     `;
 
@@ -145,24 +159,23 @@ const findUserByDefaultFilter = async (id, preference, si, gu, hashtags) => {
       ${subQuery}
     ) s ON u.id = s.id
     WHERE ${genderCondition} AND u.deleted_at IS NULL
-      AND ur.si = $3 AND ur.gu = $4
+      AND ur.si = $2 AND ur.gu = $3
   `;
 
-    // 전체 사용자 수 계산
-    const totalCount = await client.query(mainQuery, [
-      preference,
-      hashtags,
-      si,
-      gu,
-    ]);
+    //// 전체 사용자 수 계산
+    //const totalCount = await client.query(mainQuery, [
+    //  preference,
+    //  hashtags,
+    //  si,
+    //  gu,
+    //]);
+
+    console.log("mainQuery: " + mainQuery);
 
     // Fetch the user data
-    const preferenceUsers = await client.query(mainQuery, [
-      preference,
-      hashtags,
-      si,
-      gu,
-    ]);
+    const preferenceUsers = await client.query(mainQuery, [hashtags, si, gu]);
+
+    console.log(preferenceUsers.rows);
 
     // 사용자 평균 평점 계산 및 필터링
     const filteredUserInfos = [];
@@ -182,8 +195,6 @@ const findUserByDefaultFilter = async (id, preference, si, gu, hashtags) => {
       userInfo.rate = rate;
       filteredUserInfos.push(userInfo);
     }
-
-    //console.log('infologs: ' + filteredUserInfos);
 
     const UserInfo = await Promise.all(
       filteredUserInfos
@@ -235,7 +246,7 @@ const findUserByDefaultFilter = async (id, preference, si, gu, hashtags) => {
 
     return {
       users: UserInfo,
-      totalCount: totalCount,
+      totalCount: preferenceUsers,
     };
   } catch (error) {
     logger.error("user.repository.js findUserByDefaultFilter: " + error);
@@ -431,7 +442,7 @@ const findUserByUsername = async (username) => {
       "SELECT * FROM users WHERE username = $1 AND deleted_at IS NULL",
       [username]
     );
-    if (rows.length === 0) {
+    if (!rows || rows.length === 0) {
       return null;
     }
 

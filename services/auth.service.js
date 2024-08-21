@@ -113,7 +113,9 @@ const createTwofactorCode = async (email) => {
       text: emailContent,
     });
 
-    return code;
+    logger.info("auth.service.js createTwofactorCode: " + code);
+
+    return String(code);
   } catch (error) {
     logger.error("auth.service.js createTwofactorCode: " + error.message);
     throw error;

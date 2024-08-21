@@ -32,7 +32,7 @@ function validateAge(age) {
 
 // gender 검사 함수
 function validateGender(gender) {
-  if (!gender === "Male" || !gender === "Female") {
+  if (!gender === "MALE" || !gender === "FEMALE") {
     return false;
   }
   return true;
@@ -41,8 +41,8 @@ function validateGender(gender) {
 // preference 검사 함수
 function validatePreference(preference) {
   if (
-    !preference === "Male" ||
-    !preference === "Female" ||
+    !preference === "MALE" ||
+    !preference === "FEMALE" ||
     !preference === "Both" ||
     !preference === "None"
   ) {

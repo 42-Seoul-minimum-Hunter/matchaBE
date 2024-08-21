@@ -103,8 +103,11 @@ const findUserByFilter = async (id, filter, page, pageSize) => {
       const userRegionInfo = await userRegionRepository.findRegionById(id);
       const userHashtagInfo = await userHashtagRepository.findHashtagById(id);
 
+      console.log(userInfo);
+
       filteredInfo = await userRepository.findUserByDefaultFilter(
         id,
+        userInfo.gender,
         userInfo.preference,
         userRegionInfo[0].si,
         userRegionInfo[0].gu,

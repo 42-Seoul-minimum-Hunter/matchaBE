@@ -83,8 +83,6 @@ router.post("/login", async function (req, res, next) {
 
     await userService.updateConnectedAtById(user.id);
 
-    console.log(authInfo);
-
     return res.send(authInfo.is_twofa);
   } catch (error) {
     next(error);
@@ -169,12 +167,7 @@ router.get("/callback", async function (req, res, next) {
     }
 
     const result = await authService.getOauthInfo(code);
-  } catch (error) {
-    res.setHeader("errorMessage", error.message);
-    return res.redirect(process.env.FE_ERROR_URL);
-  }
 
-  try {
     if (!result) {
       res.setHeader("errorMessage", "Failed to get oauth info.");
       return res.redirect(process.env.FE_ERROR_URL);
@@ -243,7 +236,8 @@ router.get("/callback", async function (req, res, next) {
       }
     }
   } catch (error) {
-    next(error);
+    res.setHeader("errorMessage", error.message);
+    return res.redirect(process.env.FE_ERROR_URL);
   }
 });
 

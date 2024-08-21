@@ -3,7 +3,7 @@ INSERT INTO users
 gender, preference, biography, age, connected_at,
 updated_at, created_at, deleted_at)
 VALUES 
-('koryum30@gmail.com', 'User1', '$2b$10$3LC7x6nhLRIdXXSgbZt3kupNF3skLsIwo/5zGnzfIrl59o8AI8jJi', 'min', 'yeomin', 'Male', 'Female',
+('koryum30@gmail.com', 'User1', '$2b$10$3LC7x6nhLRIdXXSgbZt3kupNF3skLsIwo/5zGnzfIrl59o8AI8jJi', 'min', 'yeomin', 'MALE', 'HETEROSEXUAL',
 'hello, world!', '22', '2020-01-01 00:00:00', '2020-01-01 00:00:00', '2020-01-01 00:00:00', NULL);
 
 INSERT INTO auth
@@ -28,7 +28,7 @@ INSERT INTO users
 gender, preference, biography, age,connected_at,
 updated_at, created_at, deleted_at)
 VALUES 
-('miyu@student.42seoul.kr', 'User2', '$2b$10$PowjissJN/5aREwXvWsPNORHWWOBIwN1vwOAhn55uBhKXc/rPWyPu', 'min', 'yeomin', 'Female', 'Male',
+('miyu@student.42seoul.kr', 'User2', '$2b$10$PowjissJN/5aREwXvWsPNORHWWOBIwN1vwOAhn55uBhKXc/rPWyPu', 'min', 'yeomin', 'FEMALE', 'HETEROSEXUAL',
 'hello, world!', '22', '2020-01-01 00:00:00', '2020-01-01 00:00:00', '2020-01-01 00:00:00', NULL);
 
 INSERT INTO auth
@@ -55,7 +55,7 @@ INSERT INTO users
 gender, preference, biography, age, connected_at,
 updated_at, created_at, deleted_at)
 VALUES 
-('yeomin@student.42seoul.kr', 'User3', '$2b$10$oLMOmKkhPnb9WZW8jRlp0.VsPcfYD9VKLRA7HqKyE7WKUZh3p7WLm', 'min', 'yeomin', 'Male', 'Female',
+('yeomin@student.42seoul.kr', 'User3', '$2b$10$oLMOmKkhPnb9WZW8jRlp0.VsPcfYD9VKLRA7HqKyE7WKUZh3p7WLm', 'min', 'yeomin', 'MALE', 'HETEROSEXUAL',
 'hello, world!', '22', '2020-01-01 00:00:00', '2020-01-01 00:00:00', '2020-01-01 00:00:00', NULL);
 
 INSERT INTO auth
@@ -81,7 +81,7 @@ VALUES
 --gender, preference, biography, age, connected_at,
 --updated_at, created_at, deleted_at)
 --VALUES 
---('oooo0413@naver.com', 'User4', '$2b$10$sTg.yQXe26KMBfMCeWkyTupMgTFIwCAn7TfdCyLjMTqgyBUeWttAO', 'min', 'yeomin', 'Male', 'Female',
+--('oooo0413@naver.com', 'User4', '$2b$10$sTg.yQXe26KMBfMCeWkyTupMgTFIwCAn7TfdCyLjMTqgyBUeWttAO', 'min', 'yeomin', 'MALE', 'HETEROSEXUAL',
 --'hello, world!', '22', '2020-01-01 00:00:00', '2020-01-01 00:00:00', '2020-01-01 00:00:00', NULL);
 
 --INSERT INTO auth

@@ -1,6 +1,7 @@
-const UserGender = {
-    MALE: 'male',
-    FEMALE: 'Female',
+const userGender = {
+  MALE: "MALE",
+  FEMALE: "FEMALE",
+  BOTH: "BOTH",
 };
 
-module.exports = UserGender;
+module.exports = userGender;
