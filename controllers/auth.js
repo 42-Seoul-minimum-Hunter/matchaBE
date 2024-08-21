@@ -164,19 +164,22 @@ router.get("/callback", async function (req, res, next) {
     logger.info("auth.js POST /auth/callback: " + JSON.stringify(req.query));
     const code = req.query.code;
     if (!code) {
-      return res.status(401).send("Code not found.");
+      res.header.errorMessage = "Code not found.";
+      return res.redirect(process.env.FE_LOGIN_URL);
     }
 
     const result = await authService.getOauthInfo(code);
 
     if (!result) {
-      return res.status(401).send("Failed to get oauth info.");
+      res.header.errorMessage = "Failed to get oauth info.";
+      return res.redirect(process.env.FE_LOGIN_URL);
     }
 
     const { user, oauthInfo } = result;
 
     if (!oauthInfo) {
-      return res.status(401).send("oauthInfo not found.");
+      res.header.errorMessage = "Failed to get oauth info.";
+      return res.redirect(process.env.FE_LOGIN_URL);
     }
 
     let jwtToken = null;
