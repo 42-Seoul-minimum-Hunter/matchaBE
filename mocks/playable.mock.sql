@@ -28,7 +28,7 @@ INSERT INTO users
 gender, preference, biography, age,connected_at,
 updated_at, created_at, deleted_at)
 VALUES 
-('miyu@studenta.42seoul.kr', 'User2', '$2b$10$PowjissJN/5aREwXvWsPNORHWWOBIwN1vwOAhn55uBhKXc/rPWyPu', 'min', 'yeomin', 'Female', 'Male',
+('miyu@student.42seoul.kr', 'User2', '$2b$10$PowjissJN/5aREwXvWsPNORHWWOBIwN1vwOAhn55uBhKXc/rPWyPu', 'min', 'yeomin', 'Female', 'Male',
 'hello, world!', '22', '2020-01-01 00:00:00', '2020-01-01 00:00:00', '2020-01-01 00:00:00', NULL);
 
 INSERT INTO auth
