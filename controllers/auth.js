@@ -83,6 +83,8 @@ router.post("/login", async function (req, res, next) {
 
     await userService.updateConnectedAtById(user.id);
 
+    console.log(authInfo);
+
     return res.send(authInfo.is_twofa);
   } catch (error) {
     next(error);

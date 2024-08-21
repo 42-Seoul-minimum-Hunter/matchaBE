@@ -15,6 +15,7 @@ const {
   validateGu,
   validateProfileImages,
 } = require("../configs/validate.js");
+const userService = require("../services/user.service.js");
 const userProfileService = require("../services/user.profile.service.js");
 const authService = require("../services/auth.service.js");
 
@@ -35,6 +36,13 @@ router.get("/", verifyAllprocess, async function (req, res, next) {
     if (!username) {
       return res.status(400).send("username is required.");
     }
+
+    const userInfo = await userService.findOneUserById(req.jwtInfo.id);
+
+    if (userInfo.username === username) {
+      return res.status(400).send("You can't see your profile.");
+    }
+
     const user = await userProfileService.getUserProfile(
       username,
       req.jwtInfo.id
