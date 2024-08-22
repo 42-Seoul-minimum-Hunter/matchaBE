@@ -131,7 +131,7 @@ const findUserByDefaultFilter = async (
 
     // 유저의 성향에 따른 쿼리 조건 설정
     let genderCondition;
-    if (preference === "NONE" || preference === "BOTH") {
+    if (preference === "ASEXUAL" || preference === "BISEXUAL") {
       genderCondition = "u.gender IN ('MALE', 'FEMALE')";
     } else if (preference === "HETEROSEXUAL") {
       genderCondition =
