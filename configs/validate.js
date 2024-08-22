@@ -32,23 +32,28 @@ function validateAge(age) {
 
 // gender 검사 함수
 function validateGender(gender) {
-  if (!gender === "MALE" || !gender === "FEMALE") {
-    return false;
+  if (
+    typeof gender === "undefined" ||
+    gender === "MALE" ||
+    gender === "FEMALE"
+  ) {
+    return true;
   }
-  return true;
+  return false;
 }
 
 // preference 검사 함수
 function validatePreference(preference) {
   if (
-    !preference === "MALE" ||
-    !preference === "FEMALE" ||
-    !preference === "Both" ||
-    !preference === "None"
+    typeof preference === "undefined" ||
+    preference === "BISEXUAL" ||
+    preference === "HETEROSEXUAL" ||
+    preference === "HOMOSEXUAL" ||
+    preference === "ASEXUAL"
   ) {
-    return false;
+    return true;
   }
-  return true;
+  return false;
 }
 
 // hashtags 검사 함수
