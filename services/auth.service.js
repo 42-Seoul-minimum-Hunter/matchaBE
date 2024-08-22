@@ -115,7 +115,7 @@ const createTwofactorCode = async (email) => {
 
     logger.info("auth.service.js createTwofactorCode: " + code);
 
-    return String(code);
+    return code;
   } catch (error) {
     logger.error("auth.service.js createTwofactorCode: " + error.message);
     throw error;
@@ -127,7 +127,13 @@ const verifyTwoFactorCode = (code) => {
     logger.info("auth.service.js verifyTwoFactorCode: " + code);
     const secret = process.env.TWOFACTOR_SECRET;
 
-    if (totp.verify({ token: String(code), secret: secret }) === true) {
+    //const isValid = totp.check(String(code), secret);
+    const isValid = totp.verify({ token: code, secret: secret });
+
+    console.log(isValid);
+
+    //if (totp.verify({ token: String(code), secret: secret }) === true) {
+    if (isValid === true) {
       return true;
     } else {
       return false;

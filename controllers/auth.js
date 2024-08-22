@@ -314,9 +314,9 @@ router.post("/twofactor/verify", verifyTwoFactor, function (req, res, next) {
       return res.status(400).send("Code expired.");
     }
 
-    const result = authService.verifyTwoFactorCode(code);
+    //const result = authService.verifyTwoFactorCode(code);
 
-    if (result === false) {
+    if (req.session.twofactorComponents.code !== code) {
       return res.status(400).send("Invalid code.");
     } else {
       const jwtToken = authService.generateJWT({
