@@ -182,7 +182,7 @@ module.exports = (server, app) => {
           // 1 701, 702의 대화
         } catch (error) {
           logger.error("user.socket.js joinChatRoom error: " + error.message);
-          throw error;
+          io.to(socket.id).emit("error", error.message);
         }
       });
     } catch (error) {
